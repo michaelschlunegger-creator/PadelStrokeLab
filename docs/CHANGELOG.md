@@ -1,0 +1,15 @@
+# Changelog
+
+## 16 October 2026 — Uncommitted foundation
+
+- Adopted current App Specifications `PSL-SPEC-001 v1.1` with a source revision snapshot; retained the iOS/watchOS 27 mandate and immutable v2.0 PDF/history.
+- Added local `PadelCore` value models for preliminary practice metadata, self-assessment categories and revision/identity validation, with bounded versioned JSON encoding.
+- Added honest preparation screens on phone and Watch, including playing-arm confirmation that resets when the selected arm changes.
+- Linked the shared package into both app targets and moved all app/test deployment targets to 27.0; signing identities and target structure remain intact.
+- Added integrity tests and recorded local automation evidence.
+
+This is not a recorder or a completed Stage 1/WP1. No capture, scoring, sync, session persistence, model or AI capability is claimed. No commit, push, PR, merge or release has occurred.
+
+## 16 October 2026 — GitHub storage amendment
+
+The owner directed saving code in GitHub. Recorded GitHub as the development source of truth, retained the local Xcode checkout and limited Drive to user-facing specifications/Word documents and historical backups. Authorized foundation publication on the existing branch and a draft review PR; no merge or release approval. Production and test sources remain identical to the verified foundation manifest.
