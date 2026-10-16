@@ -6,7 +6,7 @@ An iPhone and Apple Watch prototype investigating whether Watch signals can pred
 
 The first local foundation contains preparation screens and a shared, tested Swift package for preliminary practice metadata and self-reference labels. **Recording controls, motion capture, durable sessions, transfer and scoring are not implemented.** No physical feasibility or general-player accuracy claim has been established.
 
-Work is on `chore/project-governance`, based on `f21bfab4dd6da9f96d7104bdfa3f06c5e4c92ea8`. The owner has authorized saving the foundation to GitHub on this branch; publication details are recorded in the handover. See [Gate Card](GATE_CARD.md), [Plan](docs/PLAN.md), [Testing](docs/TESTING.md) and [Handover](docs/HANDOVER.md) for exact evidence and remaining gates.
+Work is on `chore/project-governance`, based on `f21bfab4dd6da9f96d7104bdfa3f06c5e4c92ea8`. The foundation is saved in GitHub through [draft PR #1](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/1); publication details are recorded in the handover. See [Gate Card](GATE_CARD.md), [Plan](docs/PLAN.md), [Testing](docs/TESTING.md) and [Handover](docs/HANDOVER.md) for exact evidence and remaining gates.
 
 ## Authority
 

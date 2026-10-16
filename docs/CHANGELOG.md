@@ -13,3 +13,7 @@ This is not a recorder or a completed Stage 1/WP1. No capture, scoring, sync, se
 ## 16 October 2026 — GitHub storage amendment
 
 The owner directed saving code in GitHub. Recorded GitHub as the development source of truth, retained the local Xcode checkout and limited Drive to user-facing specifications/Word documents and historical backups. Authorized foundation publication on the existing branch and a draft review PR; no merge or release approval. Production and test sources remain identical to the verified foundation manifest.
+
+## 16 October 2026 — Foundation published for review
+
+Saved the foundation as `7ae8a9855a52251b588e7cc4cb7ab2aa1fd7ebd0` on GitHub branch `chore/project-governance` and opened draft PR #1 against unchanged `main`. Subsequent publication records change documentation only. No merge, release, recording or new validation claim.

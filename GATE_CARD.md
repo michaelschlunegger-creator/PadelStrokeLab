@@ -8,9 +8,9 @@ Task: first preparation foundation for WP1, following owner authorization to sta
 
 Risk: Level 3 for preliminary metadata integrity/serialization, bounded to one domain. No sensor/workout, transport, persistence of recordings, concurrent capture, scoring or AI implementation.
 
-Repository: `/Users/mschlunegger/Documents/GitHub/PadelStrokeLab`. Branch: `chore/project-governance`. HEAD/base/local and live remote main: `f21bfab4dd6da9f96d7104bdfa3f06c5e4c92ea8`; ahead/behind 0/0; no upstream; no PR. Origin: https://github.com/michaelschlunegger-creator/PadelStrokeLab.git.
+Repository: `/Users/mschlunegger/Documents/GitHub/PadelStrokeLab`. Branch: `chore/project-governance`, upstream `origin/chore/project-governance`. Implementation commit: `7ae8a9855a52251b588e7cc4cb7ab2aa1fd7ebd0`, verified pushed. Base and unchanged live remote main: `f21bfab4dd6da9f96d7104bdfa3f06c5e4c92ea8`. [Draft PR #1](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/1) is open. GitHub now stores the code and development record; see [ADR 002](docs/adr/002-source-of-truth.md).
 
-The existing generated project/governance files were already untracked and README already modified before foundation work. All remain uncommitted; no main edit, commit, push, PR, merge or release occurred. Exact tested source is identified by [the source manifest](docs/testing/261016_Foundation_Code_State.sha256), SHA-256 `ae46545352968c0a6bd00f15df0aa01df26c53f8e2ecd9b475e4e71fcc27e0ca`.
+The generated project/governance files and prior README work were preserved in the initial foundation commit. Source was published after the owner directed using GitHub. No merge or release occurred. Exact tested source is identified by [the source manifest](docs/testing/261016_Foundation_Code_State.sha256), SHA-256 `ae46545352968c0a6bd00f15df0aa01df26c53f8e2ecd9b475e4e71fcc27e0ca`. Publication/handover changes after implementation are documentation-only.
 
 Current product authority and immutable snapshot: [Product Authority](docs/PRODUCT_AUTHORITY.md). v1.1 supersedes conflicting older coach/study assumptions. The historical v2.0 PDF remains unchanged at `939c5858420124a4fe3753e3812c7ad594f3a2755c7225b7f2ebe6c13238af25`.
 
@@ -39,7 +39,7 @@ Failure paths include silent metadata coercion, lost provenance, duplicate attem
 
 ## Gate status
 
-- **G0 VERIFIED:** repository, branch/base/remote, 0/0 state, uncommitted scope, no PR and exact source fingerprint reconciled.
+- **G0 VERIFIED:** repository, base, pushed implementation commit, matching upstream, draft PR and source fingerprint reconciled. See [publication evidence](docs/testing/261016_GitHub_Publication_v1.0.md).
 - **G1 SCOPED:** approved owner direction narrowed by [architecture](docs/architecture/001-prototype-foundation.md) to this six-file preparation foundation; one Level 3 domain.
 - **G2 DEFINED:** [test contract](docs/testing/FOUNDATION_TEST_CONTRACT.md) defined before initial production changes; added negative tests verify the existing contract.
 - **G3 VERIFIED LOCALLY:** shared models/codec, preparation views, package integration and OS 27 deployment changes implemented within scope.
@@ -47,8 +47,8 @@ Failure paths include silent metadata coercion, lost provenance, duplicate attem
 - **G5 NOT RUN:** CI for an exact approved pushed HEAD remains open.
 - **G6 NOT RUN:** independent review of committed HEAD remains open. Implementation review is not the independent final verdict.
 - **G7 NOT RUN:** no physical iPhone/Watch evidence; simulator results do not establish installation, sensor, connectivity, battery or court feasibility.
-- **G8 PUBLICATION AUTHORIZED:** the owner directed saving the foundation in GitHub. Commit/push and a draft review PR are in scope; merge and release remain unauthorized.
+- **G8 DRAFT PUBLISHED:** foundation committed and pushed to the feature branch; draft PR #1 open. CI, independent review and physical gates remain open. Merge and release are unauthorized.
 
 ## One next action
 
-Publish the owner-authorized foundation on `chore/project-governance`, record its exact commit and open a draft pull request. Independent committed-HEAD review, clean CI and relevant physical-device evidence remain required; no merge-ready claim is made. [ADR 002](docs/adr/002-source-of-truth.md) records the owner’s storage decision.
+A new independent reviewer inspects the final committed PR HEAD without modifying files. CI and relevant physical-device evidence remain open; no merge-ready claim is made. Recording requires a subsequent bounded capture contract and implementation package.

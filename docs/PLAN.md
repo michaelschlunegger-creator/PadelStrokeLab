@@ -8,7 +8,7 @@ The approved seven stages are: personal recording tester; contact-signal feasibi
 
 The preparation foundation supports WP1 without completing it. It covers six production files: package manifest, two shared model/codec sources, two preparation views and Xcode project integration. No sensor, workout, transport, durable session, AI or community implementation is included.
 
-Local metadata tests and simulator builds/suites are recorded in [Testing](TESTING.md). CI, committed-HEAD independent review, relevant physical validation and approved publication/merge remain open.
+Local metadata tests and simulator builds/suites are recorded in [Testing](TESTING.md). CI, committed-HEAD independent review, relevant physical validation and approved merge remain open.
 
 ## Next increment
 
@@ -25,3 +25,7 @@ Do not turn proposed collection sizes, accuracy thresholds or the older PDF's st
 - Exact owner rubric and first short court protocol.
 - GitHub is the development source of truth; the active Xcode checkout remains local. See [ADR 002](adr/002-source-of-truth.md).
 - Initial foundation publication is owner-authorized; independent exact-HEAD review, clean CI, physical evidence and later merge approval remain open.
+
+## GitHub publication
+
+Foundation implementation commit `7ae8a9855a52251b588e7cc4cb7ab2aa1fd7ebd0` is pushed on `chore/project-governance`; [draft PR #1](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/1) is open. Documentation-only follow-ups preserve the tested source manifest. CI, independent exact-HEAD review, physical evidence and owner-approved merge remain open. Source synchronization to Drive is superseded by ADR 002.
