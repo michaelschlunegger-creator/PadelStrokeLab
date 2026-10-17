@@ -62,3 +62,15 @@ Signed generic-device builds for both apps and signature/profile checks passed. 
 The prior independent review of `9f91550755eb5d317a6603ebb0ebf1eab19bcaaa` found no blocking code defect but was BLOCKED on CI/physical gates. New workflow/documentation changes require a refreshed exact-HEAD review. This section supersedes the old pre-review G6 pending wording above.
 
 Current entry gates: G5 hosted CI pending; G6 refreshed committed-HEAD review pending; G7 physical acceptance not run. Next action: publish this preparation increment to the existing draft PR and obtain CI results. Keep the PR draft; no merge-ready verdict or physical success claim.
+
+## Current increment — unified premium UI, 17 October 2026
+
+Owner requests blue/yellow/white, modern premium presentation and Liquid Glass where appropriate on all implemented pages/subpages. [UI contract](docs/design/261017_Blue_Yellow_White_UI_Contract_v1.0.md) defines inventory, allowed production files, risk boundary and tests before implementation. Astra High implements this bounded Level2 presentation increment; PadelCore, recording/signing/permissions/CI behavior remain unchanged. Physical installation is on explicit owner hold pending simulator UI review. New source requires new builds, tests, fingerprint and independent exact-HEAD review; prior results are historical.
+
+### Current verification, superseding earlier UI statuses
+
+The [UI evidence](docs/testing/261017_PremiumUI_Local_Evidence_v1.0.md) and [25-file source manifest](docs/testing/261017_PremiumUI_Code_State.sha256) identify this increment. G0 reconciled local/remote cfea609, draftPR1, unchanged main f21bfab before publication. G1/G2 scoped by the UI contract; G3 five production files implemented. G4 core29, both final Release builds, three targeted phone flows and full14-execution phone/Watch suite passed. Failed Watch attempts01–03 and alternate phone/capture problems are retained, with fixes/limits documented.
+
+G5 remains blocked by hosted Watch runtime-profile failure on prior HEAD; fresh current CI must be inspected. G6 requires new independent exact-HEAD review. G7 physical installation is explicitly on owner hold, and earlier signed artifacts do not identify this new source. G8 remains draft/unmerged. Dark rendering and complete landscape visual acceptance remain open; Mac lock prevents finishing final live preview arrangement and restoring Reduce Transparency.
+
+**One next action:** owner unlocks the Mac to finish simulator UI review. This is a preparation UI preview, not a recording or release-ready app.

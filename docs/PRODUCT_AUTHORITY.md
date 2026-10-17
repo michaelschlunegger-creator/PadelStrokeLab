@@ -35,3 +35,7 @@ The [foundation architecture](architecture/001-prototype-foundation.md) and [tes
 ## Owner amendment — development storage, 16 October 2026
 
 The owner explicitly directed that code be saved in GitHub. [ADR 002](adr/002-source-of-truth.md) records GitHub as the development source of truth and the local Git checkout as the active Xcode workspace. Google Drive retains user-facing specifications and Word documents. Earlier source archives are historical backups. This amendment does not change the product scope or approve a merge/release.
+
+## Owner amendment — unified visual design, 17 October 2026
+
+The owner requests blue, yellow and white, modern professional presentation and native Apple Liquid Glass where appropriate across every implemented page/subpage. The [design contract](design/261017_Blue_Yellow_White_UI_Contract_v1.0.md) bounds this preparation-only increment. Shared presentation tokens apply to phone and Watch; long reading surfaces remain opaque. The owner explicitly requests simulator UI review before any physical installation. This changes visual direction, not recording scope or release approval.

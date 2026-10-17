@@ -21,3 +21,11 @@ Saved the foundation as `7ae8a9855a52251b588e7cc4cb7ab2aa1fd7ebd0` on GitHub bra
 ## 17 October 2026 — Physical foundation test preparation
 
 Added a bounded physical-test runbook and GitHub foundation verification workflow. Verified both existing app builds sign for the observed devices without changing provisioning, signing or runtime source. Installation and interactive physical observations remain pending; this increment adds no recording or scoring feature.
+
+## 17 October 2026 — premium preparation UI
+
+- Added shared PadelDesign blue/yellow/white tokens, opaque reading cards and native Liquid Glass action/navigation controls with Reduce Transparency fallback.
+- Added working phone practice/contact guides; restyled Watch setup and native picker without adding recording claims.
+- Exposed Watch selection/status accessibility metadata; added navigation, largest-text orientation and confirmation-reset/persistence UI regressions.
+- Both final Release builds and full14-execution simulator scheme pass; failed attempts and remaining visual/runtime/physical limits are retained in the current evidence.
+- Physical installs remain on owner hold. No merge or release.

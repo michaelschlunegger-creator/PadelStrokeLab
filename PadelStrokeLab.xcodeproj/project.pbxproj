@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A12000000000000000000001 /* PadelDesign in Frameworks */ = {isa = PBXBuildFile; productRef = A12000000000000000000003 /* PadelDesign */; };
+		A12000000000000000000002 /* PadelDesign in Frameworks */ = {isa = PBXBuildFile; productRef = A12000000000000000000004 /* PadelDesign */; };
 		A11000000000000000000001 /* PadelCore in Frameworks */ = {isa = PBXBuildFile; productRef = A11000000000000000000003 /* PadelCore */; };
 		A11000000000000000000002 /* PadelCore in Frameworks */ = {isa = PBXBuildFile; productRef = A11000000000000000000004 /* PadelCore */; };
 		604BE690303C4CCC003346ED /* PadelStrokeLab Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 604BE68F303C4CCC003346ED /* PadelStrokeLab Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -112,6 +114,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A11000000000000000000001 /* PadelCore in Frameworks */,
+				A12000000000000000000001 /* PadelDesign in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,6 +137,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A11000000000000000000002 /* PadelCore in Frameworks */,
+				A12000000000000000000002 /* PadelDesign in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -203,6 +207,7 @@
 			name = PadelStrokeLab;
 			packageProductDependencies = (
 				A11000000000000000000003 /* PadelCore */,
+				A12000000000000000000003 /* PadelDesign */,
 			);
 			productName = PadelStrokeLab;
 			productReference = 604BE66C303C4CCB003346ED /* PadelStrokeLab.app */;
@@ -272,6 +277,7 @@
 			name = "PadelStrokeLab Watch App";
 			packageProductDependencies = (
 				A11000000000000000000004 /* PadelCore */,
+				A12000000000000000000004 /* PadelDesign */,
 			);
 			productName = "PadelStrokeLab Watch App";
 			productReference = 604BE68F303C4CCC003346ED /* PadelStrokeLab Watch App.app */;
@@ -368,6 +374,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				A11000000000000000000005 /* XCLocalSwiftPackageReference "Packages/PadelCore" */,
+				A12000000000000000000005 /* XCLocalSwiftPackageReference "Packages/PadelDesign" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 604BE66D303C4CCB003346ED /* Products */;
@@ -1014,6 +1021,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/PadelCore;
 		};
+		A12000000000000000000005 /* XCLocalSwiftPackageReference "Packages/PadelDesign" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/PadelDesign;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1024,6 +1035,14 @@
 		A11000000000000000000004 /* PadelCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = PadelCore;
+		};
+		A12000000000000000000003 /* PadelDesign */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PadelDesign;
+		};
+		A12000000000000000000004 /* PadelDesign */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PadelDesign;
 		};
 /* End XCSwiftPackageProductDependency section */
 

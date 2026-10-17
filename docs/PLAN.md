@@ -29,3 +29,7 @@ Do not turn proposed collection sizes, accuracy thresholds or the older PDF's st
 ## GitHub publication
 
 Foundation implementation commit `7ae8a9855a52251b588e7cc4cb7ab2aa1fd7ebd0` is pushed on `chore/project-governance`; [draft PR #1](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/1) is open. Documentation-only follow-ups preserve the tested source manifest. CI, independent exact-HEAD review, physical evidence and owner-approved merge remain open. Source synchronization to Drive is superseded by ADR 002.
+
+## Simulator-first UI review — 17 October 2026
+
+Current presentation increment covers phone Practice, Practice guide, Contact reference, Watch preparation and native arm picker with shared blue/yellow/white styling and appropriate native Liquid Glass controls. See the [design contract](design/261017_Blue_Yellow_White_UI_Contract_v1.0.md). Physical installation is on owner hold until simulator UI review. Capture, AI, community and booking remain future stages. Refresh exact-source builds/tests/review for these changes; earlier foundation evidence is historical.
