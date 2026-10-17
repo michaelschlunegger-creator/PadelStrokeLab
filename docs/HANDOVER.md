@@ -31,3 +31,11 @@ The next coding increment needs an approved minimal capture/data contract, inclu
 ## Publication evidence
 
 [GitHub publication record](testing/261016_GitHub_Publication_v1.0.md) links the implementation commit to the source fingerprint and local test results. CI is not configured; this PR remains draft. The next required action is independent review of the final committed branch HEAD.
+
+## Physical-test preparation — 17 October 2026
+
+The owner requested readiness for physical testing using Astra High. This increment adds the bounded [runbook](testing/261017_Physical_Foundation_Runbook_v1.0.md) and a hosted GitHub workflow; application/test/configuration files in the existing source manifest remain unchanged.
+
+Preflight observed Xcode 27.0 (27A266a), iPhone 15 Pro with iOS 27.2 (24B5099f), and Apple Watch Ultra 2 with watchOS 27.0 (24R364), both available to Xcode over the network. Mac trust status does not independently establish the phone/Watch companion pairing. Both generic physical Debug builds passed, signature verification passed, and existing provisioning profiles include the respective observed hardware. These checks do not establish physical installation/launch. Full signed-build logs and result bundles are retained locally under `~/Library/Developer/Xcode/DerivedData/PadelStrokeLab-Physical-Foundation/` and contain sensitive signing/device information excluded from GitHub.
+
+Next: obtain clean hosted CI and refreshed review for the new committed HEAD, then guide the owner through one device action at a time. No recording, scoring or on-court feasibility claim is introduced. No merge/release is authorized.

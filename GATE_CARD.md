@@ -52,3 +52,13 @@ Failure paths include silent metadata coercion, lost provenance, duplicate attem
 ## One next action
 
 A new independent reviewer inspects the final committed PR HEAD without modifying files. CI and relevant physical-device evidence remain open; no merge-ready claim is made. Recording requires a subsequent bounded capture contract and implementation package.
+
+## Latest bounded increment — physical-test preparation, 17 October 2026
+
+Owner direction: prepare physical testing using Astra High. Allowed additions are `.github/workflows/foundation.yml`, the physical runbook and supporting testing/handover/gate/changelog updates only. Runtime source, tests, project configuration, permissions, entitlements, signing identities and source fingerprint remain unchanged. No capture implementation is in scope.
+
+Signed generic-device builds for both apps and signature/profile checks passed. iPhone 15 Pro / iOS 27.2 (24B5099f) and Watch Ultra 2 / watchOS 27.0 (24R364) were visible and available in Xcode; actual installation, launch and interactive acceptance remain unperformed. Raw device/signing details stay private locally.
+
+The prior independent review of `9f91550755eb5d317a6603ebb0ebf1eab19bcaaa` found no blocking code defect but was BLOCKED on CI/physical gates. New workflow/documentation changes require a refreshed exact-HEAD review. This section supersedes the old pre-review G6 pending wording above.
+
+Current entry gates: G5 hosted CI pending; G6 refreshed committed-HEAD review pending; G7 physical acceptance not run. Next action: publish this preparation increment to the existing draft PR and obtain CI results. Keep the PR draft; no merge-ready verdict or physical success claim.

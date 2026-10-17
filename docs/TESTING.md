@@ -13,3 +13,9 @@ No physical iPhone or Watch tests have been performed here. Relevant physical ev
 ## Publication identity
 
 The local evidence record predates the initial foundation commit. Its source manifest is rechecked before publication; documentation-only publication updates do not change those 22 tested files. Exact implementation commit and publication verification are recorded in [the handover](HANDOVER.md). Raw result bundles/logs remain local; summaries in this repository are the development evidence record.
+
+## Physical foundation preparation — 17 October 2026
+
+[Physical foundation runbook](testing/261017_Physical_Foundation_Runbook_v1.0.md) bounds the device checks to installation, launch, playing-arm setup and honest preparation-only messaging. The GitHub `Foundation checks` workflow reproduces core tests, both Release simulator builds and both existing full simulator suites on Xcode/OS 27; artifacts retain failure evidence without retries.
+
+Both generic physical Debug builds passed with existing signing settings and no provisioning updates. Signatures verified, and existing profiles include the observed iPhone and Watch. Device/profile identifiers and raw signing/connection logs stay outside this public repository. Installation, launch and human observations are not yet evidence. Run status and exact reviewed branch HEAD are recorded in draft PR #1; CI and refreshed independent review must precede the physical acceptance run.

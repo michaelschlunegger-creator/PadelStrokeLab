@@ -17,3 +17,7 @@ The owner directed saving code in GitHub. Recorded GitHub as the development sou
 ## 16 October 2026 — Foundation published for review
 
 Saved the foundation as `7ae8a9855a52251b588e7cc4cb7ab2aa1fd7ebd0` on GitHub branch `chore/project-governance` and opened draft PR #1 against unchanged `main`. Subsequent publication records change documentation only. No merge, release, recording or new validation claim.
+
+## 17 October 2026 — Physical foundation test preparation
+
+Added a bounded physical-test runbook and GitHub foundation verification workflow. Verified both existing app builds sign for the observed devices without changing provisioning, signing or runtime source. Installation and interactive physical observations remain pending; this increment adds no recording or scoring feature.
