@@ -1,0 +1,507 @@
+App Specifications
+PadelStrokeLab
+Product White Paper, Detailed Specifications and Scope of Works
+Document ID: PSL-SPEC-001 | Version 1.1 | Revised 16 October 2026 | Asia/Dubai
+Document control and status
+Purpose: the main user-facing development reference for PadelStrokeLab, covering the complete seven-stage product journey, its technical foundations, delivery scope, acceptance criteria and evidence requirements.
+Product Owner: the project owner. Delivery lead: Codex. Implementation: Codex. Build and device testing: Xcode with the Product Owner performing physical court tests. Independent review: a separate Codex review before each code PR merges. Cursor is not part of this workflow.
+Status: the Product Owner approved the seven-stage roadmap on 16 October 2026 and subsequently approved the owner-led, cost-controlled revision in version 1.1. The explicit direction and removal of mandatory coach involvement in personal feasibility testing are confirmed. Other detailed defaults labelled PROPOSED remain subject to review; no accuracy, device compatibility or public-readiness claim is implied.
+No application code, device installation, sensor performance, classification accuracy, compatibility or release readiness is established by this document. GitHub main was verified at f21bfab4dd6da9f96d7104bdfa3f06c5e4c92ea8 when preparing this baseline; it contained the initial README.
+Interpretation: SHALL denotes a required behavior within the applicable stage; SHOULD denotes the recommended approach; MAY denotes an optional extension. Future-stage requirements are planned scope and shall not be interpreted as requirements for the first tester.
+Changes to approved scope, public claims, privacy arrangements, release conditions or major architecture require a recorded decision and Product Owner approval. A failed feasibility gate triggers a revised plan; it does not permit quietly reducing the evidence standard.
+Contents
+1. Product purpose and value
+2. Confirmed direction and product boundaries
+3. What a clean hit means
+4. Seven-stage delivery roadmap
+5. People, roles and core journeys
+6. Platforms, devices and deployment
+7. Stage 1 — Personal on-court tester
+8. Stage 2 — Validate hit-quality detection
+9. Stage 3 — Personal training companion
+10. Stage 4 — Expanded technical capabilities
+11. Stage 5 — First social version and public launch
+12. Stage 6 — Challenges and rankings
+13. Stage 7 — Partners, teams, messaging and booking
+14. Measurement and learning methodology
+15. Apple Intelligence and coaching rules
+16. Application architecture and data model
+17. Offline operation, transfer and recovery
+18. Privacy, security and permissions
+19. User experience and accessibility
+20. Non-functional requirements
+21. Test strategy and evidence
+22. Scope of Works, deliverables and ownership
+23. Development workflow and document authority
+24. Risks, decisions and change control
+25. Traceability, release gates and next implementation package
+26. References and revision history
+1. Product purpose and value
+PadelStrokeLab is an individual padel improvement companion that develops into a community for learning, practising and playing together. Its first technical question is whether an Apple Watch worn on the racket arm provides sufficiently useful signals to distinguish clean contact from poor contact in a defined practice setting.
+The experience should connect a complete learning loop: choose a goal, record practice, review trustworthy findings, select one useful next action, practise again and, later, discuss or practise with other people.
+The product shall deliver understandable actions to recreational players while retaining technical detail for interested users and coaches. Technical depth belongs behind clear explanations. During play, the interface shall remain simple.
+The central differentiator is credible personal improvement with useful social support. Stroke counts, general fitness statistics or a generic social feed alone do not fulfil this purpose.
+The first tester is a research instrument for the Product Owner, not a finished commercial coach. The first public version combines a validated personal training experience with a small, moderated social experience. The wider platform develops only after the evidence and operating capability justify expansion.
+Success means that the player can understand what the app observed, what remains uncertain, and what to practise next. Repeatable personal findings and meaningful practice matter more than downloads or time spent scrolling. Independent or specialist review is used when justified by the intended claim, rather than assumed as a routine early expense.
+2. Confirmed direction and product boundaries
+2.1 Confirmed by the Product Owner
+• The product follows the seven stages in Section 4.
+• Codex performs implementation. Xcode builds and tests the iPhone and Watch applications. Independent Codex review remains mandatory for code PRs. The Product Owner approves merges and release decisions.
+• Apple Watch is included in the first prototype, together with an iPhone companion.
+• The Watch must be worn on the playing/racket arm. Left- and right-handed players must be supported.
+• The Product Owner starts testing personally at Stage 1, before social features are built.
+• Apple Intelligence is part of the product plan and is used where it adds defensible value.
+• Google Drive is the main user-facing workspace for specifications, planning, recordings, test evidence and project storage.
+• Xcode project files may be stored in a fully downloaded, locally mirrored Drive folder on the Mac. Xcode still runs locally; generated build data is kept outside the synced project. The local setup must be verified before use.
+• GitHub retains code history, reviews and approved implementation baselines. No direct unreviewed changes to main and no merges without Product Owner authorization.
+2.2 Working boundaries
+PROPOSED: the first pilot and first public release serve adults, use English initially and begin with one controlled community or club. Age policy, initial market and language are open decisions in Section 24.
+The first tester shall work without a social account or cloud analysis service. Recording shall not depend on an internet connection or continuous iPhone reachability. The Product Owner reports strong padel skills and a tennis background and shall be the initial tester and reference labeler. This is self-reported playing experience, not a claim of coaching certification.
+Owner-led feasibility: use the owner's normal practice and judgement of contact feel, starting with one familiar stroke. No paid coach, dedicated coaching session or large participant study is mandatory for the personal experiment. Optional video or a willing playing partner may help when useful; neither is a prerequisite for starting capture.
+Cost-control rule: begin with a bounded recording tool and simple signal inspection. Review evidence and remaining effort after each small package before committing to more complex modelling, wider recruitment or specialist input. Pause or revise the measurement approach if the signals are not promising.
+Outside-review trigger: consider targeted external review only for a specific unresolved label/signal question, a later technical-coaching feature requiring qualified assessment, or evidence needed for a defined public claim. First consider existing recordings, repeat self-labelling and voluntary partner observations. Before any paid input, record the question, deliverable, cost/time cap and Product Owner approval. Paid on-court coaching and recurring coaching sessions are not default deliverables.
+The product shall not promise exact ball speed, spin, sweet-spot contact, full-body biomechanics, tactical correctness or injury diagnosis from wrist motion alone. Such capabilities require separate evidence and approved scope.
+Open public messaging, court inventory, payments, subscriptions, Android, other wearables and medical use are excluded from Stages 1–3. They are not implied by the long-term vision.
+A launch date, development budget, subscription price and commercial service commitments are not yet agreed. This document defines scope and gates; it is not a fixed-price contract.
+3. What a clean hit means
+3.1 Separate dimensions
+Clean contact: an operational label indicating the quality of racket–ball contact during a specified stroke and drill. The initial categories are clean contact, mishit and uncertain.
+Technical execution: preparation, balance, visible contact position, movement and recovery assessed through an agreed coaching rubric. Wrist data alone does not establish all of these.
+Movement consistency: similarity of recorded motion across comparable attempts. Repeating a movement consistently does not prove correct technique.
+Shot outcome: whether a ball reaches the intended target or produces the intended result. This requires a target-drill record, observation or separately validated tracking.
+Match effectiveness: whether the shot was an appropriate competitive decision. This is distinct from contact, technique and movement consistency.
+3.2 Initial label rules
+For personal feasibility, the Product Owner shall write a practical clean-contact/mishit definition based on contact feel and experience. Distinguish contact quality from whether the ball reaches its target. Keep self-labelled judgements identified as such, retain an uncertain category and check label consistency. Coach approval is not a prerequisite for this personal experiment.
+Uncertain shall be a valid label. Disagreement, inadequate evidence, uncertain event matching or insufficient signal shall never be forced into clean or bad.
+No-contact swings, rest, ball collection, walking, racket taps and other non-stroke movement shall be recorded as separate event categories. They are necessary to measure false detections.
+The pilot may investigate impact-like signatures, timing, motion shape and other repeatable sensor features. These are candidate indicators, not verified measures of cleanliness.
+A claim shall identify its scope: player, stroke type, drill, device, analysis version and conditions. A personal forehand result shall not be presented as proof for all players or for volleys and overheads.
+3.3 Presentation rules
+The app shall display separate findings and data-quality information instead of a universal unexplained cleanliness number.
+A score may be introduced only after its definition, reference labels, validation method, calibration and limitations have been documented.
+“Insufficient evidence” is an acceptable result. Unknown results shall include a useful reason and a practical next action where possible.
+4. Seven-stage delivery roadmap
+Stage 1 — Personal on-court tester: record Watch signals, label attempts, preserve evidence and let the Product Owner begin playing and testing.
+Stage 2 — Validate hit-quality detection: evaluate whether the signals distinguish contact quality under a defined protocol, first personally and then with other players.
+Stage 3 — Personal training companion: provide supported session findings, progress, owner-defined practice goals and evidence-linked next actions, with Apple Intelligence explanations on compatible devices. A coach-authored library is not required for the personal companion.
+Stage 4 — Expanded technical capabilities: validate additional strokes and guided video review incrementally. Coach collaboration and specialist technique review are optional later capabilities, introduced only when needed and approved.
+Stage 5 — First social version and public launch: introduce private training circles and discussion, complete moderation and privacy operations, and release the validated product.
+Stage 6 — Challenges and rankings: start with participation and personal improvement; add judged technique showcases and validated comparisons later.
+Stage 7 — Partners, teams, messaging and booking: help people find suitable partners, organise play and connect to court or coaching services.
+The stages define the order of learning and dependency. Stage 4 continues incrementally after launch; every possible stroke is not a prerequisite for Stage 5. The public release supports only the explicitly validated subset.
+Stages 1–4 may use direct installation or a controlled beta. Stage 5 is the first planned public release. Each stage requires its own bounded implementation tasks and exit evidence. Approval of this roadmap does not authorize automatic publication, irreversible operations or unreviewed high-risk architecture.
+5. People, roles and core journeys
+5.1 User roles
+Pilot player: the Product Owner records sessions and labels attempts. A pilot does not need a public profile.
+Recreational player: seeks useful practice feedback, understandable progress and suitable training partners.
+Coach: an optional later contributor who may review a specific question, author technique guidance or access sessions explicitly shared by a player. No coach appointment, payment or participation is assumed for personal feasibility.
+Circle member: participates in a particular training group and sees only content shared to that group.
+Moderator: manages reports and community violations within a documented role. Moderator access does not automatically include private training recordings.
+Club organiser and booking partner: later roles for activities and external service coordination. Their data access and contractual responsibilities require separate design.
+5.2 Stage 1 journey
+Confirm equipment and playing arm; select a drill; create a session; record a short set; stop safely; match attempts to labels; review recording quality; transfer and verify the session; retain the original evidence.
+5.3 Personal companion journey
+Choose a practice goal; confirm setup; record practice; see supported findings and uncertainty; choose one evidence-linked next action or repeat a familiar drill; review compatible progress. The personal journey does not depend on coach participation.
+5.4 Social journey
+Create an account when needed; accept a circle invitation; choose a result or question to share; review the audience; publish; discuss; report or block if needed; retain control of private training history.
+5.5 Future play journey
+Set approximate location, availability, level, preferred side and intent; find a compatible partner or group; agree an activity; follow an external booking link; receive clear confirmation from the provider.
+6. Platforms, devices and deployment
+6.1 Proposed deployment baseline
+PROPOSED starting target: iPhone on iOS 26 or later and Apple Watch on watchOS 26 or later, subject to the owner's actual hardware, installed Xcode, required APIs and deployment checks. This is a planning recommendation, not a frozen compatibility commitment.
+Before the first build, record the exact iPhone and Watch models, OS versions, Mac, Xcode version, developer account/signing arrangement and available storage. Choose the oldest supported configurations deliberately and document exclusions.
+Apple Intelligence eligibility is separate from basic app compatibility. A supported recording device shall not be described as having generative features unless runtime availability confirms them.
+6.2 Capture capability
+The prototype shall evaluate Core Motion high-rate capture through supported public APIs, including CMBatchedSensorManager where supported. Apple's documentation describes batched high-rate accelerometer and device-motion streams during an active HealthKit workout. Device capability checks and actual sample timestamps are required [R1].
+The implementation shall log the requested stream, observed delivery rate, gaps, units, coordinate conventions, sensor limits where known and capability results. It shall not assume every Watch supports identical rates.
+A lower-rate fallback may record exploratory sessions, but shall use a distinct capability label and analysis eligibility rule. It shall not silently receive a score validated only for another capture mode.
+6.3 Device responsibilities
+Watch: user-controlled workout/capture session, motion acquisition, local durable storage and transfer status.
+iPhone: setup, session review, labels, analytics, progress, optional video and Apple Intelligence explanations.
+Mac/Xcode: development, installation, debugging, builds and test reports.
+Cloud: not required for initial recording. Accounts and social storage arrive only when the corresponding architecture and privacy gate is approved.
+6.4 Installation
+Stage 1 shall include installation and launch instructions for both iPhone and Watch. Simulator results do not establish sensor feasibility. Signing, entitlements, permissions and physical pairing must be verified.
+Direct development installation may be used initially. TestFlight and public App Store distribution require their respective release gates and Product Owner approval.
+7. Stage 1 — Personal on-court tester
+Goal: provide a small, reliable application that the Product Owner can take onto court to collect usable evidence. It shall collect and organise data before attempting to impress the player with unvalidated scores.
+7.1 Functional requirements
+S1-01 Setup: record handedness, racket arm, Watch wrist/orientation, device and OS, app build, drill type and capture capability. Ask the player to confirm the Watch is on the playing arm at every new session.
+S1-02 Session control: provide clear ready, recording, paused, stopping, saved and interrupted states. Capture begins only after an explicit user action; no passive always-on recording. The Watch shall provide user-visible recording feedback. Ending the session shall also end capture/workout resources correctly. Document whether an actual workout is saved to Apple Health, request only necessary access and test coexistence with other workout apps to avoid duplicate or conflicting sessions.
+S1-03 Durable recording: persist timestamped sensor data in bounded chunks with a session identifier and sequence information. A stopped session shall not be reported as saved until durable local writing succeeds.
+S1-04 Initial drill: begin with a controlled forehand groundstroke drill. Keep stroke intent and conditions consistent enough to compare contact quality. Add other drills only through a versioned protocol.
+S1-05 Labels: support clean contact, mishit, uncertain and separate non-contact/non-stroke labels. Record label author/type, timing, confidence and source evidence. Labels remain editable without altering raw recordings.
+S1-06 Attempt matching: support ordered attempt numbers or time markers that can be matched to video or an observer's record. Any unmatched attempts remain uncertain. A player shall not have to interact with the screen during a swing.
+S1-07 Transfer/export: show queued, transferring, received and verified states. Allow export of a consented session bundle, including raw data, metadata, labels and integrity information. Interrupted transfers can be retried without duplicate sessions.
+S1-08 Review: display duration, data coverage, observed stream characteristics, storage size, label completeness and any interruption. Do not display an automatic clean-hit score.
+S1-09 Optional reference recording: document an optional iPhone video workflow with a simple synchronisation marker. Video is not mandatory for basic sensor recording. Audio capture is outside the first prototype unless separately approved.
+S1-10 Data control: allow deletion of a local session with a clear confirmation, and explain whether an exported copy is outside app deletion control. No automatic upload to a public or shared Drive folder.
+7.2 Deliverables
+Installed iPhone and Watch prototype; reproducible build reference; concise court-test instructions; data dictionary; versioned test protocol; export format; recording/transfer tests; first-session checklist.
+7.3 Acceptance and exit gate G1
+The owner can record a labelled practice set on physical paired devices and retrieve a verified export with matching session identity and sample counts.
+A device disconnection does not stop local recording. An interrupted transfer does not remove the local source. Paused and stopped states are accurately recorded.
+Forced interruption is tested and produces a recoverable interrupted session or an explicit bounded-loss record, rather than a fabricated complete session.
+No clean-contact performance claim is made at this gate. Exit authorizes data collection and analysis, not marketing a quality detector.
+Excluded: community, subscriptions, booking, public rankings, full-match coaching and automatic biomechanics assessment.
+8. Stage 2 — Validate hit-quality detection
+Goal: determine whether the chosen capture method can support a useful, appropriately limited contact-quality distinction.
+8.1 Functional and research requirements
+S2-01 Label rubric: the Product Owner writes the initial clean-contact/mishit rubric, drawing on padel experience and tennis background. Separate contact feel, shot outcome and overall technique. Record label provenance and uncertainty; no coach sign-off is required for personal feasibility.
+S2-02 Reference evidence: preserve the owner's self labels as self labels. Optional synchronised video or a willing partner's observations may help resolve ambiguity. Repeat a subset of labels without seeing earlier labels or model predictions. Disagreements remain uncertain unless resolved with documented evidence; specialist input is conditional, not mandatory.
+S2-03 Detection first: identify candidate stroke/contact events and evaluate missed strokes and non-stroke false detections before evaluating contact quality.
+S2-04 Controlled comparison: compare like stroke, like drill and documented conditions. Collect both clean and naturally occurring poor contacts; do not define quality by whether the ball landed in a target.
+S2-05 Independent evaluation: reserve entire sessions/days for testing. For any claim about new players, reserve entire players from training and tuning. Never split neighbouring windows from the same event across training and test data.
+S2-06 Baselines: inspect and compare recorded signals and simple transparent features before developing a complex model. Escalate modelling effort only when repeatable evidence suggests value. More complexity requires a measured advantage and a maintainability justification.
+S2-07 Abstention: support invalid-signal and uncertain predictions. Report the percentage of eligible attempts receiving a score as well as accuracy on scored attempts.
+S2-08 Evidence report: first produce a short signal-feasibility review with label counts, capture quality and repeatable differences or failures. When a classifier exists, report dataset composition, label consistency/provenance, exclusions, confusion matrices, per-class precision/recall, macro F1, balanced accuracy, uncertainty and scored coverage. Personal agreement with the owner's labels is not presented as independent technique validation.
+S2-09 Decision: record proceed, revise capture/labels, restrict the supported use case, or stop this scoring approach. A negative result is valid project evidence.
+8.2 Proposed initial collection plan
+PROPOSED low-cost exploratory start: use two or three normal practice sessions, one familiar stroke and consistent equipment. Label clear clean contacts, naturally occurring mishits and uncertain attempts after short sets. Do not impose a fixed stroke-count quota or dedicated paid session at this screening stage. Its purpose is to decide whether further collection is worthwhile, not to demonstrate accuracy.
+After the exploratory screen, agree a bounded follow-up collection and reserve complete later sessions before tuning a classifier. Test on another day using data that did not influence the method. Record changes of racket, strap fit, conditions and player setup. Further data is collected only to answer a defined unresolved question or meet the ratified personal evaluation plan.
+Deferred wider-player collection: recruit willing playing partners progressively only after the personal results justify expansion and the Product Owner approves the next package. No fixed 12-player, three-session study is required for the initial personal prototype. Before any general-player claim, define an adequate independent sample, relevant configurations and held-out participants; the evidence standard is not waived.
+The exploratory session count is a planning convenience, not a guarantee or statistical validation target. Stop, narrow the claim or collect more data according to the observed signal, label consistency, uncertainty and the next decision. Do not silently turn exploratory observations into a validated result.
+8.3 Proposed feasibility thresholds
+The following are provisional targets for a later formal personal evaluation, not prerequisites for the first recording sessions, observed results or an industry standard. For the personal pilot, contact-quality metrics measure agreement with the owner's reference labels; they do not establish objective technique quality. Ratify the evaluation plan after the exploratory screen and before using held-out results:
+• Stroke/event detection: precision and recall of at least 0.90 on the defined held-out drill set.
+• Binary contact-quality classification on reference-labelled, valid attempts: balanced accuracy and macro F1 of at least 0.80; each class recall of at least 0.75.
+• Scored coverage: at least 70% of otherwise eligible attempts. Abstentions, invalid captures and uncertain reference labels are reported separately.
+• Labelling: assess the owner's repeat-label consistency on a blinded subset and report disagreements and uncertain labels. If another independent reviewer is later engaged, report inter-reviewer agreement separately; a measure such as Cohen's kappa may be used where appropriate. No coach agreement threshold is a mandatory personal-pilot gate.
+Pre-register the final metrics, sample requirements and analysis rules before opening the held-out evaluation results. Passing personal feasibility permits further development, not broad claims of reliable coaching.
+8.4 Exit gate G2
+The documented method meets the ratified personal criteria for predicting the owner's perceived contact categories on separate held-out sessions, or a revised/narrower method has been approved. Error patterns, coverage and uncertainty are visible. A short exploratory screen alone cannot pass this formal gate. No mandatory coach sign-off applies to the personal use case.
+Public quality claims additionally require appropriate reference evidence, evaluation on unfamiliar players and a release-specific acceptance decision. Owner-only labels cannot support a universal or independently validated technique claim. Obtain qualified external input only when necessary for the specific claim or unresolved evidence question, under an approved bounded review.
+9. Stage 3 — Personal training companion
+Goal: convert validated observations into useful private practice guidance.
+S3-01 Session findings: show eligible stroke counts, supported contact-quality findings, data quality and uncertainty. Clearly separate observed values, derived estimates and coach/self-entered information.
+S3-02 Progress: compare sessions only when stroke, drill, capture mode and analysis version are compatible. Explain discontinuities after equipment, setup or model changes.
+S3-03 Training goals: let the player choose a goal and use familiar, owner-defined practice routines with purpose, instructions and completion criteria. The first personal version may focus on comparable practice and measured progress without a coach-authored drill library. New technical prescriptions require an appropriate evidence/content review before they are offered as coaching.
+S3-04 Next action: prioritise one main takeaway per session. Recommendations must follow the available measurements and approved scope, such as repeating a comparable drill or reviewing uncertain attempts. Do not infer an unobserved technique defect or require a coach merely to explain a supported finding.
+S3-05 Apple Intelligence: generate optional summaries and explanations of validated findings on compatible devices, using the controls in Section 15.
+S3-06 Fallback: the same factual results and essential drill instructions remain available when Apple Intelligence is disabled, unavailable or fails.
+S3-07 History: allow review of previous sessions and the evidence behind a result. Preserve the original analysis version; re-analysis shall not silently overwrite the original.
+S3-08 Correction: let the player flag an incorrect finding or amend a manual label. Feedback is not automatically accepted as training truth or silently used to retrain a model.
+Deliverables: personal dashboard, session detail, progress view, owner-defined goals/familiar practice routines, AI/fallback behavior, user guidance and evidence-linked analysis report. Coach-authored training content is an optional later increment, not an acceptance blocker for the personal companion.
+Exit gate G3: a supported player can complete the practice-review-repeat journey, understand the next action and distinguish uncertain results. AI output matches supplied facts in the test suite. Essential functions work offline after required content/models are available.
+Excluded: unrestricted medical advice, injury diagnosis, unvalidated technique prescriptions and an open-ended chatbot claiming to observe movements not measured.
+10. Stage 4 — Expanded technical capabilities
+Goal: add technical breadth without weakening the evidence standard.
+S4-01 Stroke coverage: add backhands, forehand/backhand volleys and overheads incrementally. Serve, bandeja, vibora, smash, lob and glass-related strokes are candidate backlog items, not automatic launch commitments.
+S4-02 Independent validation: each added stroke/capture configuration has its own labels, exclusions, evaluation and release decision. A validated forehand classifier cannot be reused as proof of overhead quality.
+S4-03 Guided video: provide capture-angle guidance, clip review and selected sharing. Any automated visual assessment requires a separate validation protocol and consent review.
+S4-04 Coaching rubric: a later optional technique-assessment feature shall assess only visible and reliably judged elements using a versioned rubric. If the intended claim requires qualified review, propose a bounded review and obtain approval. Otherwise defer that technique feature; it is not a prerequisite for personal contact tracking or progress.
+S4-05 Coach collaboration: an optional later capability, implemented only as an approved increment. Players explicitly share selected sessions; coaches can attach observations or assign approved drills. Access can be revoked prospectively. Private history is not exposed by default, and no paid coaching engagement is assumed.
+S4-06 Comparative practice: support defined target drills and manual/validated outcome recording to connect contact, consistency and outcome without conflating them.
+Deliverables: per-stroke validation packs, updated practice routines, video workflow and revised compatibility notes. Coach-role/access features and specialist content are included only in explicitly approved increments.
+Exit gate G4: every enabled feature has its own evidence and test coverage. A small validated subset is sufficient to continue to Stage 5; remaining strokes stay hidden or explicitly experimental in a controlled beta.
+Excluded: claiming complete tactical analysis or automatic clinical biomechanics from a single wrist device.
+11. Stage 5 — First social version and public launch
+Goal: launch a useful private companion together with a small, purposeful community experience.
+S5-01 Accounts: introduce secure accounts when cloud/social features require identity. Private local recording remains independent of continuous account connectivity.
+S5-02 Profiles: allow a display name and selected padel information. Raw recordings, health information and precise location are not public profile defaults.
+S5-03 Training circles: support invitation-only groups, membership controls, clear ownership and leave/remove behavior. Permissions are enforced by the service, not just the interface.
+S5-04 Selective sharing: show an audience preview before a progress card, clip or question is posted. Shared cards contain only selected fields; posting does not expose the source dataset.
+S5-05 Discussion: support threaded comments and simple encouragement around practice goals, drills and shared sessions. Open unsolicited direct messages are excluded from this stage.
+S5-06 Moderation: provide filtering, content/user reporting, blocking, a moderator queue, action logging and published support contact. Define report handling, appeals and an operating owner before launch [R4].
+S5-07 Account and data control: provide the required account-deletion route, explain retention and remove or de-identify associated content according to the adopted policy. Test membership, shared content and deletion interactions.
+S5-08 Release readiness: complete on-device regression tests, permission/denial paths, accessibility review, privacy disclosures, support arrangements, monitoring, rollback plan and Product Owner go/no-go.
+S5-09 Useful without a network: a new player can obtain private training value before joining a circle. An empty community shall not be the first-use experience.
+Deliverables: account and community services, privacy/security architecture, moderation tools and procedures, support documentation, App Store/TestFlight materials and release evidence.
+Exit gate G5: personal functions meet their release criteria, cross-user access tests pass, required moderation is operational, critical issues are resolved, independent code review passes and the Product Owner approves publication.
+First public release: the validated personal companion, Apple Intelligence explanation/fallback, a limited stroke set, private circles, selected sharing and discussion.
+Excluded: public global feed, random chat, complete court marketplace and paid bookings unless separately approved.
+12. Stage 6 — Challenges and rankings
+Goal: motivate practice without presenting incomparable measurements as an objective universal ranking.
+S6-01 Participation challenges: reward sensible completion of defined practice goals. Apply eligible-session rules and limits to discourage meaningless repetition.
+S6-02 Personal improvement: compare a player with their own compatible baseline. Define minimum attempts, baseline period, exclusions and treatment of missing/uncertain data.
+S6-03 Technique showcases: an optional later challenge type using appropriately qualified reviewers and a published stroke-specific rubric. Display reviewer status and rubric version. If suitable review is unavailable or not worth the cost, defer this challenge type rather than make it a prerequisite for participation or personal-improvement challenges.
+S6-04 Community favourites: label voting as community preference. It shall not be represented as technical correctness or competitive ability.
+S6-05 Technical comparisons: introduce cross-player leaderboards only after validation across relevant players, devices and conditions. Define cohorts, eligible drills, minimum data and uncertainty.
+S6-06 Integrity: detect duplicate sessions/submissions, document disputed results and provide review procedures. Exclude unsupported capture modes and insufficient-quality data.
+S6-07 Versioning: scoring changes create a defined new season/version or a documented re-scoring process. Historic standings do not silently change.
+S6-08 Separate ratings: match results and competitive playing level use a separate model from contact quality or technique.
+Deliverables: challenge rules, eligibility implementation, scoring validation, moderation/dispute processes and user-facing explanations.
+Exit gate G6: fairness, eligibility, score reproducibility and abuse handling pass review. No payment or premium feature may purchase a ranking advantage.
+13. Stage 7 — Partners, teams, messaging and booking
+Goal: turn improvement and community into suitable opportunities to play.
+S7-01 Partner matching: use user-selected approximate area, availability, playing level, preferred side and intent. Matching distinguishes training, social and competitive sessions.
+S7-02 Teams and events: support recurring groups, invitations, attendance and event coordination. Explain cancellation and notification behavior.
+S7-03 Messaging: introduce direct messaging with consent/contact controls, reporting, blocking and retention/deletion rules. Blocking must have defined effects on discovery and shared events.
+S7-04 Booking links: initially link to an external court or coaching provider. Show that availability, payment and confirmation belong to the provider. A link click is not a confirmed reservation.
+S7-05 Direct integration: only after documented API access, commercial terms and technical validation. Handle stale availability, duplicate requests, cancellation, refunds, failed payment and support ownership.
+S7-06 Optional commerce: coaching purchases or subscriptions require a separate commercial and platform-policy review. Never store payment-card details in the app's own database.
+Deliverables: matching specifications, messaging/moderation extensions, event flows and approved provider integration agreements/tests.
+Exit gate G7: abuse controls and service responsibilities are operational; provider sandbox/end-to-end tests pass; Product Owner approves any payment or production integration.
+Excluded until separately approved: becoming a full court-management system, operating all payment/refund obligations internally or promising access to an unavailable partner API.
+14. Measurement and learning methodology
+14.1 Evidence hierarchy
+Raw sensor signal is a measurement. A detected stroke is an algorithmic inference. A clean/mishit label is a reference judgement with provenance. A predicted quality score is an estimate. A coaching recommendation is an interpretation. The interface and dataset shall preserve these distinctions.
+Research supports exploring padel stroke recognition from inertial sensors, but published classification results are not proof of this app's contact-quality detector or coaching effectiveness [R6].
+14.2 Collection protocol
+Before recording, version the drill, setup instructions, label rubric and metadata form. Capture a synchronisation marker for reference recordings. Preserve start/stop times and known clock offsets.
+Record attempts in a stable, documented order. Note equipment changes, Watch fit/orientation and interruptions. Include rest and realistic non-stroke movement.
+Do not infer a contact label solely from whether a ball lands in or wins a point. Keep contact quality, outcome and visible technique as separate fields.
+The owner shall assign evaluation labels without seeing model predictions; repeat-label checks also hide the earlier label. If optional external reviewers are used, they likewise remain blind to predictions. Retain uncertainty and disagreements; self-consistency is not independent validation.
+14.3 Evaluation and model control
+Create a locked evaluation manifest before feature selection and threshold tuning. Training, validation and test partitions use session/day/player boundaries appropriate to the intended claim.
+Report class balance, exclusions, scored coverage and per-player failures. Include majority-class and simple-feature baselines. Inspect confidence intervals using an approach that respects session/player grouping.
+Choose thresholds on training/validation data only. Changes after examining a test set require a new independent evaluation or an explicitly declared exploratory result.
+Store model artifact identity, training data manifest, feature version, preprocessing, thresholds, label rubric and evaluation report. A released result must be reproducible from these references.
+No cloud or on-device continuous retraining by default. New models pass validation, regression review and release approval. Corrections and community posts are not automatically trusted training data.
+14.4 Limits on claims
+A classifier detecting personal contact categories is not proof of better technique, match wins or reduced injury. Improvement claims need repeated, comparable assessments with an appropriate reference method.
+Confidence displays require calibration evidence; a raw model probability shall not be presented as an objective certainty percentage.
+Unknown or out-of-distribution conditions shall produce abstention or a clearly limited result. A strong average shall not conceal a consistently poor result for a supported subgroup.
+15. Apple Intelligence and coaching rules
+15.1 Intended use
+Apple Intelligence shall explain validated session facts, summarise compatible progress and help with owner-selected practice goals and approved routines. It shall not invent sensor readings, infer unobserved body positions, present the owner's experience as professional coaching certification or act as the contact-quality measurement engine. Coach-authored content is optional and separately reviewed when introduced.
+Use supported Apple frameworks and check current SDK/API availability, device eligibility, language/region and actual model readiness at runtime [R2]. Plan the primary explanation experience on the iPhone. Direct Watch model execution is not required for the first release.
+15.2 Grounded generation
+Provide a constrained session summary, data-quality flags, uncertainty and owner-approved practice content. Distinguish familiar practice routines from expert-reviewed technique prescriptions. Use structured output where supported. Validate returned fields before display.
+Generated numbers shall match supplied facts. References to specific strokes or problems must be supported by the input. Incompatible sessions must not be combined into an apparent progress trend.
+A deterministic layer selects eligible facts and drill options; generation explains these. It shall not turn a plausible phrase into a new technical diagnosis.
+15.3 Fallback and failure
+When unavailable, disabled, downloading, timed out or rejected, show the same factual findings and approved template-based guidance. The player shall be able to record and review without generative AI.
+Generation shall run after practice, not block capture or consume the Watch's primary recording resources. Cancel work when the user leaves the task if appropriate.
+No automatic external AI-provider routing. Any future cloud AI path requires explicit architectural, privacy, cost and Product Owner approval.
+15.4 Quality and safety tests
+Test contradictions, missing/invalid data, uncertain hits, unsupported strokes, model unavailability and changed model versions. User comments or community text must not override the app's analysis rules or trigger unauthorized actions.
+Proposed release condition: all critical factual-claim tests pass; any ungrounded diagnosis or fabricated measurement is a blocking defect until corrected.
+Explanations are training support, not medical advice. Pain, injury and rehabilitation recommendations are outside scope.
+Maintain a prompt/content version and an evaluation suite so platform/model updates can be reviewed without silently changing the coaching promise.
+16. Application architecture and data model
+16.1 Recommended structure
+Use Swift and SwiftUI with explicit state, separated interfaces, domain logic and persistence. Define small modules for capture, session storage, transfer, analysis, coaching content, intelligence explanations, identity/community and external providers.
+Keep sensor acquisition independent from UI rendering and network availability. Use safe concurrency and clear ownership of mutable session state. Do not perform heavy analysis on the sensor-delivery path.
+Initial storage and analysis should remain on the user's devices where practical. Select a cloud backend only after Stage 5 requirements, access control, cost and operations are reviewed.
+Architecture decisions shall record alternatives, trade-offs and consequences. Avoid speculative infrastructure for later booking or ranking features.
+16.2 Core records
+Session: unique ID, owner/pseudonymous participant, start/end, state, app build, protocol version, drill/stroke intent, device/OS/capabilities, playing arm, wrist/orientation, stream configuration, interruptions and transfer status.
+Sensor chunk: session ID, sequence, schema version, timestamp range, channel/unit definitions, sample count, checksum and gap information.
+Attempt: unique ID, session/time window, intended/detected stroke, matching confidence, signal eligibility and any reference-media link.
+Reference label: attempt ID, contact category, source/reviewer, confidence, rubric version, creation/revision times and adjudication history.
+Analysis result: attempt/session ID, analysis/model/feature versions, findings, coverage, uncertainty, excluded conditions and creation time.
+Drill: stable ID, coach/content owner, version, intended goal, instructions, eligibility, completion rules and review date.
+Media: file ID, consent/access scope, timing/synchronisation metadata, retention and integrity reference.
+Social records: account, circle, membership/role, post, comment, report, moderation action and sharing audience.
+Later records: challenge season, eligibility evidence, ranking result, event, availability and external booking reference.
+16.3 Export bundle
+Use a documented, versioned format with machine-readable metadata, raw sample files, label/attempt records, analysis references and an integrity manifest. Video is optional and explicitly included or excluded.
+Pseudonymous participant IDs shall be preferred over real names in research exports. Include units, time conventions and data-quality flags; do not require reverse engineering.
+Exports shall not include signing credentials, access tokens, HealthKit records unrelated to the test, personal chat content or private contact data.
+Schema migrations require tests and a rollback/recovery plan. Never overwrite the only copy of original research recordings during conversion.
+17. Offline operation, transfer and recovery
+The Watch shall record locally when the iPhone is unreachable. Start/stop controls and local state do not depend on a cloud connection.
+Use an explicit session lifecycle: prepared, recording, paused, stopping, locally saved, transfer queued, transferring, received, integrity verified and eligible for retention/deletion policy. Error and interrupted states are separate.
+Use background-capable Watch Connectivity transfer mechanisms as appropriate. Delivery is asynchronous; no guaranteed immediate transfer is implied. Test on paired physical devices [R3].
+Transfers shall use stable identities, sequence/checksum validation and receiver acknowledgements. Retries are idempotent. Duplicate delivery does not create duplicate practice results or challenge credit.
+A source recording shall not be deleted merely because transfer was queued or reported complete by one layer. The receiver must verify the expected artifact and the retention policy must permit removal.
+On interruption, preserve completed chunks, mark the incomplete portion and show the user what was recovered. Storage exhaustion shall end capture with an explicit error and preserve prior completed data where possible.
+Offline social writes require clear pending/failed state. Sharing permissions must be revalidated on the server when a queued write is submitted.
+Labels and analysis edits shall not mutate raw sensor files. Conflicts are resolved through explicit versions/revisions rather than silent last-writer replacement of evidence.
+18. Privacy, security and permissions
+18.1 Data minimisation
+Collect only the motion, session and reference information needed for the applicable stage. Heart rate, calories and unrelated health history are not required for the first contact-quality experiment.
+Request workout/motion permissions at the relevant point with an understandable explanation. Video permission is requested only for the optional video function. Precise location and contacts access are not required for Stages 1–5.
+Health/workout access shall be reviewed against current Apple requirements. App-owned training summaries and any health-derived data must be distinguished before sharing; no health data is uploaded for advertising.
+18.2 Storage and access
+Use platform data protection and Keychain for secrets/tokens, secure transport for cloud communication and least-privilege server authorization. Do not design custom cryptography.
+Private recordings remain private by default. Joining a circle does not grant access to historical recordings, full videos or health data.
+Coaches receive explicit, bounded access. Moderator privileges are separate from private research access. Server-side tests shall prevent access using another user's identifiers.
+Do not commit raw personal recordings, private labels, credentials or sensitive logs to a public GitHub repository. GitHub evidence uses redacted summaries and links to access-controlled artifacts.
+18.3 Consent, retention and deletion
+Separate consent for recording, reference media, research/model improvement, coach access and community sharing. Consent to use the app is not consent to train a model.
+Before any participant other than the owner is enrolled, approve a participant information/consent process and a retention schedule. Before public launch, approve privacy disclosures, account deletion and support processes for the chosen markets.
+PROPOSED retention approach: personal sessions remain under user control; research datasets are retained for a declared study/version period; operational logs use a short documented window. Exact durations and deletion exceptions require a recorded decision before collection beyond the owner.
+Deletion shall cover relevant device/cloud copies and derivatives under the adopted policy. Explain what cannot be recalled from independent exports or copies already made by other people.
+Anonymous/de-identified claims require a reviewed method; a pseudonymous ID alone is not anonymity.
+18.4 Community and operations
+Provide filtering, reporting, blocking and support contact, and maintain a real person/process for timely moderation [R4].
+Use minimal diagnostic data, redact identifiers and restrict access. Analytics and crash reporting must be documented in privacy disclosures before enabling production collection.
+A privacy/security incident requires containment, evidence preservation and an accountable response process. Legal, age and regional obligations require suitable review before launch; this specification is not a legal compliance certification.
+19. User experience and accessibility
+The Watch experience shall be glanceable: clear ready/recording/paused/saved states, large native controls and feedback that does not demand attention during a stroke.
+The iPhone tester shall focus on setup, recording review, labelling and export. The consumer companion shall organise practice, review/progress and community without overwhelming first use.
+Use plain language first, technical evidence on demand. Show observed facts, estimates and manual/coach input distinctly. Avoid punitive scoring or public embarrassment when data is uncertain.
+Support VoiceOver labels and focus order, Dynamic Type on iPhone, sufficient contrast, reduced motion, non-colour status indicators and accessible error messages. Test the key workflows on actual devices.
+Prevent accidental session termination or destructive deletion with proportionate safeguards. Do not add repeated confirmations to routine reversible actions.
+Explain compatibility and required Watch placement before the user invests in a session. Provide practical guidance for a disconnected phone, denied permission, low storage and unavailable AI.
+Notifications shall be useful, opt-in where appropriate and quiet during practice. Public profiles and social notifications shall not be prerequisites for private training.
+Initial language and supported locale formats must be declared. Record research timestamps in a consistent machine-readable format and display local times clearly.
+20. Non-functional requirements
+All numerical targets in this section are PROPOSED acceptance defaults to ratify during prototype planning; they are not measured performance claims.
+NFR-01 Recording duration: support and test a 90-minute capture session on each declared recording configuration; investigate a 120-minute extended session for storage/battery margin.
+NFR-02 Data persistence: checkpoint completed raw chunks at least every two seconds where practical. Forced termination shall recover completed chunks and declare any unpersisted interval. Do not promise impossible zero loss of data still in memory.
+NFR-03 Signal eligibility: detect stream gaps, saturation and incomplete analysis windows. Attempts violating the validated signal requirements are excluded or marked uncertain.
+NFR-04 Responsiveness: basic controls acknowledge input promptly; heavy analysis and generation do not block capture. Proposed iPhone targets are a usable initial view within three seconds and opening a cached session within two seconds on supported reference devices.
+NFR-05 Battery: measure a 90-minute pilot session against a documented baseline. A provisional Watch budget of 25 battery percentage points is a planning target; validate against actual hardware/health/settings before making a compatibility commitment.
+NFR-06 Storage: measure actual bytes per minute per capture mode and show low-storage behavior. Set the final raw-session budget after prototype measurement; no silent downsampling to meet a storage target.
+NFR-07 Transfer integrity: every received bundle is checked against expected identity, sequence/sample information and checksums. Failed verification blocks analysis and source deletion.
+NFR-08 Reliability: no unresolved reproducible crash, silent data corruption or cross-user access defect may pass a public release gate.
+NFR-09 Observability: capture build, model/protocol version, state transitions and redacted failure reasons sufficient to investigate problems without storing raw personal content in routine logs.
+NFR-10 Maintainability: versioned schemas, documented modules, focused dependencies and meaningful risk-based tests. Avoid dependencies without a concrete need.
+NFR-11 Accessibility: core setup, recording control, session review and sharing must pass the declared accessibility checklist.
+NFR-12 Availability: private recording continues offline. Cloud service availability targets, backups and recovery objectives must be approved before Stage 5, rather than invented as a commercial SLA now.
+21. Test strategy and evidence
+21.1 Test groups
+T01 Setup/compatibility: playing-arm confirmation, left/right configurations, capability detection, OS/device exclusions and permission denial.
+T02 Capture lifecycle: start, pause/resume, stop, repeated sessions, workout cleanup, app background and forced interruption.
+T03 Storage/integrity: partial writes, low storage, checksum failure, schema mismatch, recovery and deletion behavior.
+T04 Transfer/recovery: unreachable phone, queued transfer, reconnection, duplicate delivery, interrupted transfer and verified acknowledgement.
+T05 Labels/reference matching: ordered attempts, synchronisation, edits, missing/uncertain labels and reviewer disagreement.
+T06 Analysis validation: event detection, contact classification, held-out sessions/players, abstention, calibration and failure examples.
+T07 Progress/coaching: compatible comparisons, model changes, drill eligibility and evidence-linked recommendations.
+T08 Apple Intelligence: availability, fallback, numerical fidelity, unsupported claims, prompt injection from user text and model-version regression.
+T09 Video/coach access: permissions, selective sharing, revocation and incompatible/insufficient recordings.
+T10 Community authorization: membership, cross-user access, blocked users, leave/remove and audience boundaries.
+T11 Moderation/deletion: reports, filtering, actions, appeals, account deletion and retention behavior.
+T12 Challenges/rankings: eligibility, duplicates, minimum attempts, version changes and disputed results.
+T13 Matching/messaging/events: privacy, contact controls, availability, invitation and cancellation paths.
+T14 Booking/commerce: provider confirmation, stale availability, duplicate requests, failure/refund handling where integrated.
+T15 Performance/accessibility: battery/storage, long sessions, responsiveness, VoiceOver, text size and reduced motion.
+T16 Release/build: scheme/destination, signing, device installation, reproducible builds, regression pack and approved release artifact.
+21.2 Evidence standard
+For each run, record requirement IDs, test ID, expected/actual result, build/commit, device and OS, scheme/destination, date, steps, artifact location and known gaps.
+Distinguish simulator, real iPhone, real Watch, laboratory, personal-court and wider-player evidence. A successful build does not establish correct behavior or sensor validity.
+Use unit tests for deterministic logic and state, integration tests for storage/transfer/access control, UI tests for critical flows and real-device/court testing for sensors, background behavior and battery.
+Store sensitive recordings and exports in access-controlled Drive testing folders. Commit redacted reports, manifests and references to GitHub. Do not place participant data in public issue attachments.
+Before a court test, verify the correct branch/build, both installed apps, Watch placement, permissions, recording protocol and available storage/battery. Give the owner one physical action at a time.
+Any failed critical acceptance test blocks the relevant release. A test gap must be explicit; it is not a pass.
+22. Scope of Works, deliverables and ownership
+22.1 Work package WP0 — Establish the development baseline
+Deliver: this specification; confirmed device/signing inventory; minimal architecture/capture plan; short owner-led exploratory protocol and a later metric-ratification decision point; repository documentation baseline; Drive/Xcode setup check. Detailed collection quotas and classifier evaluation targets are agreed after the exploratory screen, before formal held-out evaluation.
+Acceptance: approved requirements and remaining decisions are traceable; the first implementation branch is focused; no private data is committed; a reproducible first-test plan exists.
+Owner: Codex prepares; Product Owner decides major choices and provides device access. Independent review applies to implementation PRs.
+22.2 WP1 — Build and install the personal tester
+Deliver Stage 1 functionality, physical-device installation, recording/export format, test instructions and capture/recovery evidence.
+Acceptance: G1 and T01–T05 plus applicable T15–T16 pass. Owner can begin personal court collection.
+22.3 WP2 — Collect, analyse and decide feasibility
+Deliver label rubric, dataset manifests/splits, baseline/model experiments, evaluation report, error analysis and proceed/revise decision.
+Acceptance: G2 against ratified personal criteria using separate sessions and explicitly self-labelled references. Negative results remain recorded and trigger an approved revised scope. Coach participation and a large participant study are not required for personal acceptance. Optional external review needs a defined question, contributor, deliverable and approved cost/time cap.
+22.4 WP3 — Deliver the personal companion
+Deliver findings/progress, goals/drills, constrained Apple Intelligence explanations, deterministic fallback and usability testing.
+Acceptance: G3; T06–T08 and relevant reliability/accessibility tests. Owner-approved practice routines are sufficient for the personal version. Expert technique content requires an appropriate named reviewer only when that optional content is introduced.
+22.5 WP4 — Expand validated technical coverage
+Deliver additional stroke validation packages and guided video in approved increments. Controlled coach collaboration is optional and not a standing paid-coaching dependency.
+Acceptance: G4 for each enabled increment; T06/T09 and relevant privacy/accessibility tests. Unfinished strokes remain outside release claims.
+22.6 WP5 — Deliver and launch the first social product
+Deliver identity/circles/discussion, selected sharing, moderation operations, privacy/account controls, support and release materials.
+Acceptance: G5; T10–T11 and complete release regression. The Product Owner approves TestFlight/public publication as applicable.
+22.7 WP6 — Deliver challenges and credible comparisons
+Deliver challenge types, baseline/eligibility rules, judged showcases, validated rankings if justified, and dispute handling.
+Acceptance: G6 and T12; scoring/version rules are published.
+22.8 WP7 — Deliver play coordination and provider connections
+Deliver approved partner/team/messaging/event scope and external booking links; integrate booking/payment only under a separate approved increment.
+Acceptance: G7, T13–T14 and operating/support agreements.
+22.9 Responsibilities and dependencies
+Codex: requirements traceability, design proposals, implementation, tests available through tools, documentation, GitHub stewardship and evidence-based reporting.
+Product Owner: product priorities, access to devices/accounts, personal physical tests, major decisions, acceptance and merge/release authorization.
+Independent Codex reviewer: review-only assessment of each code PR against scope and risks. The implementing author does not count as independent review.
+Product Owner as reference labeler: supplies the initial contact definitions and labels, checks consistency and performs repeat sessions. Playing experience is self-reported and does not establish objective ground truth.
+Optional coach/specialist reviewer: answers a defined unresolved question or reviews a later technique claim/content when genuinely necessary. Prefer a bounded review of existing recordings when adequate. No engagement, endorsement, recurring session or payment is assumed; approve any expense in advance.
+Operations owner: support, moderation, incident response and partner escalation before public/community services launch.
+External dependencies: Apple developer tools/account, eligible devices/APIs, Drive client/configuration, any approved backend and future provider access.
+22.10 Commercial boundary
+Estimate effort and cost per small package after its dependencies are understood, then review the evidence before committing to the next increment. The first feasibility budget consists primarily of development and the owner's normal practice time; paid coaching, formal participant recruitment and complex modelling are not default costs. Coach/specialist review, wider recruitment, cloud services, moderation and partner integrations are separately justified and approved when needed.
+No guaranteed accuracy, fixed release date, partner API availability or revenue forecast is implied. Commercial pricing and subscription design require a later decision.
+A change request must explain scope, user value, evidence, cost/time impact, risks and affected tests/docs before acceptance.
+23. Development workflow and document authority
+23.1 Working tools
+Codex implements. Xcode builds and tests. The local terminal verifies state and evidence. An independent Codex review challenges each code PR. GitHub records approved implementation history. The user approves merges and major/release decisions.
+Use focused branches and PRs. No direct unreviewed main edits. High-risk work follows plan, architecture/risk review, approval, minimal implementation, regression tests and independent review.
+Before implementation, establish the repository's documentation baseline. Keep README and relevant product, architecture/decision, plan, testing, release and handover documents current.
+23.2 Main specification and approved snapshots
+This Google Doc, titled App Specifications, is the owner's main readable/editable specification and Scope of Works. Do not create independent competing copies. This document contains both the detailed specifications and the full staged Scope of Works; the separate Scope_of_Work folder is not evidence of a second missing master.
+At each approved implementation baseline, record the document ID/version and an exact approved snapshot or change set in GitHub with the relevant issue/PR. GitHub governs the reproducible scope of that approved build.
+When the live Doc changes, increment its version/change record. Do not silently treat new draft prose as approved scope for an already-reviewed build. Resolve any discrepancy before affected coding or release.
+Project Instructions define the engineering process. This specification defines product behavior and delivery. A new explicit Product Owner decision takes precedence and must be recorded in both affected references.
+23.3 Google Drive organisation
+Project root: 3_PadelStrokeLab.
+05_Project_Source_and_Docs/01_Project_Instructions: working engineering instructions.
+05_Project_Source_and_Docs/02_App_Specifications: this master document.
+05_Project_Source_and_Docs/03_Scope_of_Work: reserved for approved contractual/work-package extracts that reference this master, rather than a competing specification.
+05_Project_Source_and_Docs/04_Architecture_and_Decisions: approved design decisions.
+05_Project_Source_and_Docs/05_Development_and_Handover: handovers and delivery reports.
+05_Project_Source_and_Docs/06_Xcode_Project: intended project storage after local mirroring is verified.
+05_Project_Source_and_Docs/07_Source_Archives: dated verified source snapshots.
+07_Testing_and_Evidence: field protocols, recordings/labels, analysis/results and release evidence.
+Other top-level folders support launch/support, website, screenshots, branding, promotion and previous versions. Folder existence does not mean their contents are complete.
+23.4 Drive and Xcode constraints
+A Drive-backed project still needs a full local working copy. Verify files are downloaded and available offline before Xcode use. Keep DerivedData, build outputs and temporary analysis artifacts outside the synced project.
+Use one active Mac for the working copy, wait for sync before switching and check repository state before work. Drive synchronization is not a replacement for commits and reviews [R5].
+If the prototype demonstrates project-file conflicts or unreliable sync, propose a local active checkout with verified Drive snapshots and obtain approval for the revised arrangement.
+Do not claim the Drive desktop/Xcode setup is configured until tested. Never put signing secrets or raw private datasets into source-control or broadly shared archive folders.
+24. Risks, decisions and change control
+24.1 Risk register
+RISK-01 Contact signal may not distinguish the intended quality classes. Mitigation: Stage 1/2 first; video/reference checks; narrower claims or approved alternative method.
+RISK-02 The owner's contact labels may be subjective or inconsistent. Mitigation: separate contact feel from outcome/technique, use a written owner rubric, preserve uncertainty, perform blinded repeat-label checks and use separate sessions. Seek targeted outside review only if an unresolved question or later claim requires it.
+RISK-03 A model may learn one person, session or racket. Mitigation: session/player holdouts, equipment metadata and honest personal versus general claims.
+RISK-04 Device rates, placement or orientation may change findings. Mitigation: capability checks, playing-arm confirmation, per-configuration validation and explicit exclusions.
+RISK-05 Battery, heat, storage or interruptions may prevent usable recording. Mitigation: chunked persistence, long-session tests and measured compatibility limits.
+RISK-06 Transfer/recovery defects may lose or duplicate evidence. Mitigation: checksums, stable IDs, receiver acknowledgement and fault tests.
+RISK-07 Generative explanations may fabricate or overstate findings. Mitigation: constrained facts, output checks, fallback and blocking regression cases.
+RISK-08 Social abuse or unauthorized access may harm users. Mitigation: limited circles, server authorization, moderation tools and a responsible operator.
+RISK-09 An empty network may provide little value. Mitigation: strong solo experience and launch through an existing training group.
+RISK-10 Booking/payment complexity may consume the core project. Mitigation: links first, provider terms and a separately approved integration package.
+RISK-11 Drive sync may create project conflicts. Mitigation: downloaded local copy, one active Mac, generated files elsewhere and GitHub history.
+RISK-12 Scope growth may delay the first useful test. Mitigation: first tester remains bounded; future-stage features are not pulled into WP1.
+24.2 Open decision register
+D01 — Exact owner iPhone/Watch/Mac/OS/Xcode and signing access. Owner input required before WP1 build.
+D02 — Minimum OS and eligible hardware list. PROPOSED iOS 26/watchOS 26 baseline; freeze after D01 and API checks.
+D03 — Owner-defined contact rubric and repeat-label method. Required before formal personal evaluation; the owner is the initial reference labeler. A coach is not a prerequisite. Identify an optional specialist only if a defined question or later claim makes one necessary.
+D04 — Ratified personal metrics, holdout plan and follow-up collection size. Decide after the short exploratory screen and before tuning against held-out evaluation data. No fixed large-player study is required for the personal pilot.
+D05 — Data consent, retention and research access. Required before recruiting other participants or sharing research recordings.
+D06 — Initial market, adult age policy and supported language. Proposed adult English pilot; decide before recruitment/public positioning.
+D07 — Backend/authentication/hosting and cloud data location. Required before Stage 5 implementation; no vendor is selected here.
+D08 — Named moderation/support operator and response targets. Required before social beta/public launch.
+D09 — Exact stroke and device subset for first public release. Freeze after validation, before public claims.
+D10 — Business model, price and any paid features. Deferred commercial decision; no pay-to-win rankings.
+D11 — Provider access and responsibilities. Required only before direct booking/payment integration.
+D12 — Public release dates, budget and staffing. Estimate per work package after feasibility and dependencies.
+Open decisions block only the work that depends on them. They do not prevent completing this specification or a safe, bounded planning task.
+24.3 Change control
+Each material change receives an ID, date, requester, reason, affected requirements, evidence, cost/schedule impact, decision and owner.
+A new measurement, stroke, device configuration, data use or public score requires the corresponding validation/privacy review. A wording change must not silently expand an accuracy claim.
+Maintain backward references from issues, commits, PRs and test reports to requirement IDs. Record deferred requests explicitly so they cannot be mistaken for completed work.
+25. Traceability, release gates and next implementation package
+25.1 Stage-to-evidence map
+Stage 1: S1-01–S1-10 → WP1 → T01–T05/T15–T16 → G1 personal recording readiness.
+Stage 2: S2-01–S2-09 → WP2 → T05–T06 → G2 evidence-based feasibility decision.
+Stage 3: S3-01–S3-08 → WP3 → T06–T08/T15 → G3 personal training usefulness.
+Stage 4: S4-01–S4-06 → WP4 → T06/T09/T15 → G4 per-feature expansion approval.
+Stage 5: S5-01–S5-09 → WP5 → T10–T11/T15–T16 → G5 social/public release readiness.
+Stage 6: S6-01–S6-08 → WP6 → T12 → G6 fair challenge/ranking release.
+Stage 7: S7-01–S7-06 → WP7 → T13–T14/T16 → G7 coordination/provider readiness.
+Cross-cutting requirements: privacy/security, recovery, accessibility and NFR-01–NFR-12 apply wherever relevant. They are not deferred merely because a feature is experimental.
+25.2 Definition of done
+A work package is complete only when its accepted requirements pass, required tests and independent code review pass, evidence and documentation are recorded, the Product Owner accepts the result, and any approved merge is verified.
+A release additionally requires supported-device coverage, privacy/support readiness, no unresolved critical risks, an identified rollback path and explicit Product Owner publication approval.
+A PR review verdict shall be SAFE TO MERGE, SAFE WITH NON-BLOCKING NOTES or BLOCKED. Blocking findings must be resolved and retested before merge.
+25.3 First implementation package after document review
+Confirm D01/D02 and review the minimal capture/data plan. Establish the focused GitHub baseline and branch, verify Drive mirroring and local Xcode setup, then build only the Stage 1 tester.
+The first owner-visible outcome is an installed recording app and a short, usable court protocol. It is not a contact-quality score, social network or a complete consumer product.
+The first research decision is whether evidence supports continuing with Watch-based contact-quality assessment. Preserve the option to revise the measurement approach honestly if it does not.
+26. References and revision history
+Sources were consulted on 16 October 2026. They establish platform capabilities or research context, not validation of PadelStrokeLab. API/OS availability and platform policies must be rechecked against the shipping SDK and target devices before implementation/release.
+[R1] Apple — What's new in Core Motion, WWDC23. High-rate batched motion, device support and active-workout context.
+https://developer.apple.com/videos/play/wwdc2023/10179/
+[R2] Apple — Foundation Models framework and SystemLanguageModel. Supported integration and runtime model availability.
+https://developer.apple.com/foundation-models-framework/
+https://developer.apple.com/documentation/foundationmodels/systemlanguagemodel
+[R3] Apple — Watch Connectivity. Asynchronous device communication and transfer APIs.
+https://developer.apple.com/documentation/watchconnectivity
+[R4] Apple — App Review Guidelines. User-generated content, privacy, account and platform requirements.
+https://developer.apple.com/app-store/review/guidelines/
+[R5] Google — Stream and mirror files with Drive for desktop. Local/offline file storage behavior.
+https://support.google.com/drive/answer/13401938?hl=en
+[R6] Cartes Dominguez et al. — A comparative study of machine learning and deep learning algorithms for padel tennis shot classification, Soft Computing (2023). Research context for inertial stroke recognition; not contact-quality validation.
+https://link.springer.com/article/10.1007/s00500-023-07874-x
+Project repository:
+https://github.com/michaelschlunegger-creator/PadelStrokeLab
+Project Drive:
+https://drive.google.com/drive/folders/115ll6m_jVRwQXozTy1W4LBWws4EMUBZU
+Project Instructions:
+https://docs.google.com/document/d/1qNzpmo9EipAq3Wsg8-BJUYdOauTTQCe3qtv6hdFhD6s/edit
+Revision 1.0 — 16 October 2026: initial complete product white paper and Scope of Works based on the owner's approved seven-stage direction. Codex implementation, Watch on playing arm, personal testing first, Apple Intelligence and Drive-based working arrangements recorded. New detailed defaults and unresolved decisions explicitly identified.
+Revision 1.1 — 16 October 2026: owner-approved cost-controlled feasibility approach. The owner, an experienced padel player with a tennis background, becomes the initial tester and self-reference labeler. Mandatory coach sign-off, coach-authored content and fixed large-study assumptions are removed from personal feasibility/companion acceptance. Start with normal practice, simple signal inspection and a small exploratory screen; use held-out later sessions for formal personal evaluation. Broader studies and bounded specialist review proceed only when justified and approved. Public-claim evidence, uncertainty, data integrity and independent code-review requirements remain. No budget, accuracy or delivery time is guaranteed.
+End of document.

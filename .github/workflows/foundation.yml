@@ -1,0 +1,135 @@
+name: Foundation checks
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    runs-on: xcode-27
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Prepare evidence paths
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/foundation-evidence"
+          printf 'EVIDENCE=%s/foundation-evidence\nDERIVED_DATA=%s/foundation-derived-data\n' "$RUNNER_TEMP" "$RUNNER_TEMP" >> "$GITHUB_ENV"
+
+      - name: Check out exact submitted source
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Verify source and approved toolchain
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE"
+          exec > >(tee "$EVIDENCE/preflight.log") 2>&1
+          git rev-parse HEAD
+          git status --short
+          shasum -a 256 -c docs/testing/261017_PremiumUI_Code_State.sha256
+          test -d "$DEVELOPER_DIR"
+          toolchain_version="$(xcodebuild -version)"
+          printf '%s\n' "$toolchain_version"
+          test "${toolchain_version%%$'\n'*}" = 'Xcode 27.0'
+          xcodebuild -showsdks
+          for sdk in iphoneos iphonesimulator watchos watchsimulator; do
+            version="$(xcrun --sdk "$sdk" --show-sdk-version)"
+            test "$version" = '27.0'
+          done
+          xcrun swift --version
+          xcrun simctl list -j > "$EVIDENCE/simulators-before.json"
+
+      - name: Create an available OS 27 simulator pair
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' 2>&1 | tee "$EVIDENCE/simulator-setup.log"
+          import json, os, subprocess
+          from pathlib import Path
+
+          evidence = Path(os.environ['EVIDENCE'])
+          inventory = json.loads((evidence / 'simulators-before.json').read_text())
+
+          def runtime(platform):
+              matches = [r for r in inventory['runtimes']
+                         if r.get('platform') == platform
+                         and r.get('version') == '27.0' and r.get('isAvailable')]
+              if len(matches) != 1:
+                  raise SystemExit(f'Expected one available {platform} 27.0 runtime; found {len(matches)}')
+              return matches[0]
+
+          def create(platform, family, label):
+              selected_runtime = runtime(platform)
+              compatible = [d for d in selected_runtime.get('supportedDeviceTypes', [])
+                            if d.get('productFamily') == family]
+              installed = {d['identifier'] for d in inventory['devicetypes']}
+              compatible = [d for d in compatible if d['identifier'] in installed]
+              if not compatible:
+                  raise SystemExit(f'No installed device type supports {platform} 27.0 / {family}')
+              device_type = compatible[0]
+              name = f"PSL-{label}-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
+              identifier = subprocess.check_output(
+                  ['xcrun', 'simctl', 'create', name, device_type['identifier'], selected_runtime['identifier']],
+                  text=True).strip()
+              print(json.dumps({'device': label, 'name': name, 'id': identifier,
+                                'type': device_type['identifier'], 'runtime': selected_runtime['identifier'],
+                                'runtime_build': selected_runtime.get('buildversion')}), flush=True)
+              return identifier
+
+          phone = create('iOS', 'iPhone', 'phone')
+          watch = create('watchOS', 'Apple Watch', 'watch')
+          pair = subprocess.check_output(['xcrun', 'simctl', 'pair', watch, phone], text=True).strip()
+          print(f'Pair: {pair}', flush=True)
+          subprocess.run(['xcrun', 'simctl', 'boot', phone], check=True)
+          subprocess.run(['xcrun', 'simctl', 'bootstatus', phone, '-b'], check=True)
+          subprocess.run(['xcrun', 'simctl', 'boot', watch], check=True)
+          subprocess.run(['xcrun', 'simctl', 'bootstatus', watch, '-b'], check=True)
+          with open(os.environ['GITHUB_ENV'], 'a') as environment:
+              environment.write(f'PHONE_ID={phone}\nWATCH_ID={watch}\n')
+          (evidence / 'simulators-ready.json').write_text(
+              subprocess.check_output(['xcrun', 'simctl', 'list', '-j'], text=True))
+          PY
+
+      - name: Verify shared metadata
+        run: |
+          set -euo pipefail
+          xcrun swift test --package-path Packages/PadelCore --scratch-path "$RUNNER_TEMP/foundation-core" 2>&1 | tee "$EVIDENCE/core-tests.log"
+
+      - name: Build iPhone Release
+        run: |
+          set -euo pipefail
+          xcodebuild -project PadelStrokeLab.xcodeproj -scheme PadelStrokeLab -configuration Release -destination "platform=iOS Simulator,id=$PHONE_ID" -derivedDataPath "$DERIVED_DATA" CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$EVIDENCE/iphone-release.log"
+
+      - name: Build Watch Release
+        run: |
+          set -euo pipefail
+          xcodebuild -project PadelStrokeLab.xcodeproj -scheme 'PadelStrokeLab Watch App' -configuration Release -destination "platform=watchOS Simulator,id=$WATCH_ID" -derivedDataPath "$DERIVED_DATA" CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$EVIDENCE/watch-release.log"
+
+      - name: Run full existing iPhone simulator suite
+        run: |
+          set -euo pipefail
+          xcodebuild -project PadelStrokeLab.xcodeproj -scheme PadelStrokeLab -configuration Debug -destination "platform=iOS Simulator,id=$PHONE_ID" -derivedDataPath "$DERIVED_DATA" -resultBundlePath "$EVIDENCE/iphone-tests.xcresult" -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO test 2>&1 | tee "$EVIDENCE/iphone-tests.log"
+
+      - name: Run full existing Watch simulator suite
+        run: |
+          set -euo pipefail
+          xcodebuild -project PadelStrokeLab.xcodeproj -scheme 'PadelStrokeLab Watch App' -configuration Debug -destination "platform=watchOS Simulator,id=$WATCH_ID" -derivedDataPath "$DERIVED_DATA" -resultBundlePath "$EVIDENCE/watch-tests.xcresult" -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO test 2>&1 | tee "$EVIDENCE/watch-tests.log"
+
+      - name: Retain successful and failed evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: foundation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE }}
+          if-no-files-found: warn
+          retention-days: 14
