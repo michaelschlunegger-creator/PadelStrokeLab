@@ -1,6 +1,6 @@
 # Premium preparation UI — local evidence
 
-17 October 2026, Asia/Dubai. Branch `chore/project-governance`; starting/published preparation HEAD `cfea609203a68f3195cc5f864060bc356403a605`; unchanged base/main `f21bfab4dd6da9f96d7104bdfa3f06c5e4c92ea8`. Source identity for this increment is [the 25-file manifest](261017_PremiumUI_Code_State.sha256), SHA-256 `9baaf3aa7cb5b73680d0e071d546f271c395dc348549b6caa92a1c5274dc08b2`. Documentation and screenshots are outside that runtime/test fingerprint. Old foundation evidence remains historical.
+17 October 2026, Asia/Dubai. Branch `chore/project-governance`; starting/published preparation HEAD `cfea609203a68f3195cc5f864060bc356403a605`; unchanged base/main `f21bfab4dd6da9f96d7104bdfa3f06c5e4c92ea8`. Source identity for this increment is [the archived pre-contrast manifest](261017_PremiumUI_PreContrast_Code_State.sha256), SHA-256 `9baaf3aa7cb5b73680d0e071d546f271c395dc348549b6caa92a1c5274dc08b2`. Documentation and screenshots are outside that runtime/test fingerprint. Old foundation evidence remains historical.
 
 ## Scope and results
 
@@ -45,3 +45,7 @@ Largest-text portrait captures were inspected; all five labels were reachable. R
 Xcode27 uses Device Hub (`com.apple.dt.Devices`) for live simulated devices; absent standalone Simulator.app is not a preview blocker. Official references: https://developer.apple.com/documentation/xcode/device-hub and https://developer.apple.com/documentation/xcode/running-your-app-on-simulated-or-physical-devices . The apps were launched in Device Hub during review. Final Release apps were installed/launched only on the two named simulators. Phone system text size was restored to large. The Mac locked before final portrait/window arrangement and Reduce Transparency restoration; unlock is required to finish these native UI actions. Do not claim final live-preview handoff or dark/reduced-transparency cleanup completed.
 
 Physical installation remains on explicit owner hold pending simulator UI review. Hosted CI on the preceding HEAD failed to boot Watch with CoreSimulator401 runtime-profile mismatch (run39026964171); this does not establish a code defect or clean CI. Refreshed exact-HEAD review, clean hosted CI, relevant physical evidence and owner merge approval remain separate gates.
+
+## Subsequent contrast revision
+
+Independent review of 9a77a32 found white/yellow native Watch picker dismissal contrast insufficient. That screenshot and its review remain historical failed evidence. The subsequent one-line Watch navigation-tint correction is verified separately in [contrast evidence](261017_Watch_Navigation_Contrast_Evidence_v1.0.md). Prior Watch builds/captures do not prove the correction; unchanged phone/core test sources retain their documented evidence.

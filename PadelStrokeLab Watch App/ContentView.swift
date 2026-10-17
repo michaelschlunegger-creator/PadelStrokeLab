@@ -76,7 +76,7 @@ struct ContentView: View {
             .containerBackground(PracticeTheme.navy, for: .navigation)
             .onChange(of: storedArm) { _, _ in armConfirmed = false }
         }
-        .tint(PracticeTheme.yellow)
+        .tint(PracticeTheme.royal)
     }
 }
 

@@ -74,3 +74,7 @@ The [UI evidence](docs/testing/261017_PremiumUI_Local_Evidence_v1.0.md) and [25-
 G5 remains blocked by hosted Watch runtime-profile failure on prior HEAD; fresh current CI must be inspected. G6 requires new independent exact-HEAD review. G7 physical installation is explicitly on owner hold, and earlier signed artifacts do not identify this new source. G8 remains draft/unmerged. Dark rendering and complete landscape visual acceptance remain open; Mac lock prevents finishing final live preview arrangement and restoring Reduce Transparency.
 
 **One next action:** owner unlocks the Mac to finish simulator UI review. This is a preparation UI preview, not a recording or release-ready app.
+
+### Subsequent independent-review correction
+
+Review of 9a77a32 was BLOCKED: native Watch close X white/yellow contrast. The only subsequent production change uses royal-blue Watch navigation tint, preserving explicit yellow confirmation controls. [Contrast evidence](docs/testing/261017_Watch_Navigation_Contrast_Evidence_v1.0.md) records both rebuilt Release products and all five Watch test executions passing; unchanged phone/core evidence is retained by per-file source identity. Updated source manifest SHA256 a66022dce9dfa8175595461f1e05563469a2dd4d474d0ed512c7c541d7199c99. Refreshed committed-HEAD review/current hosted CI verdict belongs to draftPR1; do not infer clean gates from earlier tests. Native preview cleanup remains blocked on Mac unlock.

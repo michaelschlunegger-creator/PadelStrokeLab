@@ -29,3 +29,5 @@ Added a bounded physical-test runbook and GitHub foundation verification workflo
 - Exposed Watch selection/status accessibility metadata; added navigation, largest-text orientation and confirmation-reset/persistence UI regressions.
 - Both final Release builds and full14-execution simulator scheme pass; failed attempts and remaining visual/runtime/physical limits are retained in the current evidence.
 - Physical installs remain on owner hold. No merge or release.
+
+- Independent review caught low-contrast native Watch dismissal. Changed navigation tint to royal blue, retained yellow setup accents, rebuilt both Release products, and reran all Watch tests (five executions passed). Prior capture/review retained.

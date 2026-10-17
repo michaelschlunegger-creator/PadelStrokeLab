@@ -29,3 +29,5 @@ Existing empty UI examples are replaced by meaningful guide/back-navigation and 
 ## Current premium UI evidence — 17 October 2026
 
 [Detailed evidence](testing/261017_PremiumUI_Local_Evidence_v1.0.md) supersedes older UI/build claims for this increment. Source fingerprint: [25-file manifest](testing/261017_PremiumUI_Code_State.sha256). Core29, both final Release builds and full phone/Watch scheme14 executions passed. Meaningful phone navigation and Watch confirmation regressions supplement generated smoke tests. Failed attempts/capture defects remain recorded. Dark rendering, complete landscape visual audit, Watch large text and physical usability remain unverified. Physical installation is on owner hold until simulator UI review; the Mac locked during final preview arrangement.
+
+The subsequent [Watch contrast correction](testing/261017_Watch_Navigation_Contrast_Evidence_v1.0.md) supersedes affected builds/Watch results: both Release products rebuilt successfully, all five Watch test executions passed, new picker capture inspected. Per-file hashes preserve the unchanged phone/core test evidence; no full14-execution run is claimed for the changed Watch source.
