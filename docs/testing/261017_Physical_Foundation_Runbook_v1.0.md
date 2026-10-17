@@ -102,3 +102,9 @@ Foundation physical smoke evidence is complete only when both physical installs 
 This cannot establish Core Motion fidelity, recording continuity, WatchConnectivity delivery, data durability/export, Health/Motion permissions, battery effects, background capture, hit detection or contact-quality prediction: none is implemented here. Do not request swings, a court visit, Health/Motion access or practice labels for this run.
 
 **Next action at preparation:** finish exact-HEAD CI and its independent review. No human device action is needed while those gates remain open. Once they pass, the first owner action is P01: verify the intended Watch in the iPhone's Watch app, with one instruction and one observation before proceeding.
+
+## CI setup failure retained — 17 October 2026
+
+[Initial workflow validation failure](https://github.com/michaelschlunegger-creator/PadelStrokeLab/actions/runs/39026801156), HEAD `c6b5d1ce8e1e430079ac0edb567494cb65ac4f7d`, completed before any job or test ran. The general YAML/shell/Python checks passed but did not validate GitHub expression scopes. Additional `actionlint` validation identified `runner.temp` as unavailable in job-level `env`. Evidence paths are now initialized from `RUNNER_TEMP` in a first shell step and carried through `GITHUB_ENV`. No assertion or product behavior was changed; the failed run remains visible and is not an automatic retry.
+
+The `xcode-27` runner label comes from the official runner-images [public-preview announcement](https://github.com/actions/runner-images/issues/14404) and [image inventory](https://github.com/actions/runner-images/blob/main/images/macos/xcode-27-arm64-Readme.md). actionlint 1.7.12 does not yet recognize that label; the label-catalog diagnostic is distinguished from actual workflow expression errors. A successful hosted run is still required.
