@@ -27,9 +27,9 @@ final class PadelStrokeLab_Watch_AppUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         let picker = app.descendants(matching: .any)["watchArmPicker"]
-        XCTAssertTrue(picker.waitForExistence(timeout: 10))
         capture(app, name: "05-Watch-setup")
         reveal(picker, in: app)
+        XCTAssertTrue(picker.waitForExistence(timeout: 10))
         let initialArm = try XCTUnwrap(picker.value as? String)
         XCTAssertTrue(["Left", "Right"].contains(initialArm), "Picker must expose the selected arm")
         let firstArm = initialArm.contains("Left") ? "Right" : "Left"
@@ -60,6 +60,7 @@ final class PadelStrokeLab_Watch_AppUITests: XCTestCase {
         confirmation.tap()
         app.terminate()
         app.launch()
+        reveal(picker, in: app)
         XCTAssertTrue(picker.waitForExistence(timeout: 10))
         XCTAssertTrue(picker.value as? String == secondArm || picker.label.contains(secondArm),
                       "The selected playing arm should survive a fresh launch")
@@ -87,11 +88,105 @@ final class PadelStrokeLab_Watch_AppUITests: XCTestCase {
     }
 
     @MainActor
+    func testIntendedShotPickerResetsConfirmationAndPersistsAcrossLaunch() throws {
+        let app = XCUIApplication()
+        app.launch()
+        selectShot("Backhand volley", in: app)
+        let picker = app.descendants(matching: .any)["watchShotPicker"]
+        XCTAssertEqual(picker.value as? String, "Backhand volley")
+        let confirmation = app.descendants(matching: .any)["watchArmConfirmation"]
+        reveal(confirmation, in: app); confirmation.tap()
+        let status = app.staticTexts["watchSetupStatus"]
+        reveal(status, in: app, requiresHittability: false)
+        XCTAssertTrue(status.label.contains("Arm confirmed"))
+        selectShot("Serve", in: app)
+        reveal(status, in: app, requiresHittability: false)
+        XCTAssertTrue(status.label.contains("Check your Watch placement"))
+        reveal(confirmation, in: app, searchTowardStart: true); confirmation.tap()
+        app.terminate(); app.launch()
+        reveal(picker, in: app)
+        XCTAssertTrue(picker.waitForExistence(timeout: 10))
+        XCTAssertEqual(picker.value as? String, "Serve")
+        reveal(status, in: app, requiresHittability: false)
+        XCTAssertTrue(status.label.contains("Check your Watch placement"))
+        selectShot("Other / unclassified", in: app)
+        reveal(picker, in: app, searchTowardStart: true)
+        XCTAssertEqual(picker.value as? String, "Other / unclassified")
+        let explanation = app.staticTexts["watchOtherDrillExplanation"]
+        reveal(explanation, in: app, requiresHittability: false)
+        XCTAssertTrue(explanation.label.contains("unspecified"))
+        XCTAssertTrue(explanation.label.contains("contact label"))
+        let start = app.buttons["watchStartRecording"]
+        reveal(start, in: app)
+        XCTAssertFalse(start.isEnabled)
+        capture(app, name: "10-Watch-manual-shot-choice")
+    }
+
+    @MainActor
+    func testUnknownSavedShotIsVisibleAndCanBeExplicitlyReplaced() throws {
+        let app = XCUIApplication()
+        // Ordinary UserDefaults argument domain; no production testing mode.
+        app.launchArguments = ["-recording.intendedDrill", "futureDrill"]
+        app.launch()
+        let header = app.staticTexts["watchIntendedShotType"]
+        reveal(header, in: app, requiresHittability: false)
+        XCTAssertEqual(header.label, "Saved shot type unavailable—choose again")
+        capture(app, name: "11-Watch-invalid-choice-header")
+        let issue = app.staticTexts["watchShotSelectionIssue"]
+        reveal(issue, in: app, requiresHittability: false)
+        XCTAssertEqual(issue.label, "Saved shot type unavailable—choose again")
+        selectShot("Backhand groundstroke", in: app)
+        let picker = app.descendants(matching: .any)["watchShotPicker"]
+        XCTAssertEqual(picker.value as? String, "Backhand groundstroke")
+        XCTAssertFalse(issue.exists)
+        let start = app.buttons["watchStartRecording"]
+        reveal(start, in: app); XCTAssertFalse(start.isEnabled)
+        app.terminate(); app.launchArguments = []; app.launch()
+        reveal(picker, in: app)
+        XCTAssertTrue(picker.waitForExistence(timeout: 10))
+        XCTAssertEqual(picker.value as? String, "Backhand groundstroke")
+        let status = app.staticTexts["watchSetupStatus"]
+        reveal(status, in: app, requiresHittability: false)
+        XCTAssertTrue(status.label.contains("Check your Watch placement"))
+    }
+
+    @MainActor
+    func testHandednessChangeRequiresFreshPlacement() throws {
+        let app = XCUIApplication(); app.launch()
+        let hand = app.descendants(matching: .any)["watchHandednessPicker"]
+        reveal(hand, in: app)
+        let original = try XCTUnwrap(hand.value as? String)
+        XCTAssertTrue(["Left", "Right"].contains(original))
+        let confirmation = app.descendants(matching: .any)["watchArmConfirmation"]
+        reveal(confirmation, in: app); confirmation.tap()
+        let status = app.staticTexts["watchSetupStatus"]
+        reveal(status, in: app, requiresHittability: false)
+        XCTAssertTrue(status.label.contains("Arm confirmed"))
+        reveal(hand, in: app, searchTowardStart: true); hand.tap()
+        let replacement = app.buttons[original == "Left" ? "Right" : "Left"]
+        XCTAssertTrue(replacement.waitForExistence(timeout: 5)); replacement.tap()
+        reveal(status, in: app, requiresHittability: false)
+        XCTAssertTrue(status.label.contains("Check your Watch placement"))
+    }
+
+    @MainActor
+    private func selectShot(_ title: String, in app: XCUIApplication) {
+        let picker = app.descendants(matching: .any)["watchShotPicker"]
+        reveal(picker, in: app, searchTowardStart: true)
+        XCTAssertTrue(picker.waitForExistence(timeout: 10))
+        picker.tap()
+        let choice = app.buttons[title]
+        reveal(choice, in: app, searchTowardStart: true, pickerScreen: true)
+        XCTAssertTrue(choice.exists); choice.tap()
+    }
+
+    @MainActor
     private func reveal(
         _ element: XCUIElement,
         in app: XCUIApplication,
         requiresHittability: Bool = true,
-        searchTowardStart: Bool = false
+        searchTowardStart: Bool = false,
+        pickerScreen: Bool = false
     ) {
         var normalizeToStart = searchTowardStart
         for attempt in 0..<24 {
@@ -118,17 +213,45 @@ final class PadelStrokeLab_Watch_AppUITests: XCTestCase {
             if normalizeToStart {
                 // Native swipes can pass virtualized targets. Seek a stable boundary first,
                 // then use the controlled forward scan instead of chasing an absent row.
-                let beginning = app.staticTexts["FIRST DRILL"]
+                let beginning = pickerScreen ? app.buttons["Choose shot type"] : app.staticTexts["TRAINING SET"]
                 let beginningFrame = beginning.exists ? beginning.frame : .zero
-                let atBeginning = !beginningFrame.isEmpty && viewport.contains(beginningFrame)
-                XCTContext.runActivity(named: "Normalize to FIRST DRILL: frame=\(beginningFrame), visible=\(atBeginning)") { _ in }
+                let beginningVisible = beginningFrame.intersection(viewport)
+                // Native picker buttons extend horizontally beyond the inset viewport. Apply the same
+                // midpoint and 90%-height visibility requirements used for the target, not full-frame containment.
+                let atBeginning = !beginningFrame.isEmpty && !beginningFrame.isNull && !beginningFrame.isInfinite &&
+                    !beginningVisible.isEmpty && !beginningVisible.isNull &&
+                    viewport.contains(CGPoint(x: beginningFrame.midX, y: beginningFrame.midY)) &&
+                    beginningVisible.height >= min(beginningFrame.height, viewport.height) * 0.9
+                XCTContext.runActivity(named: "Normalize to list beginning: frame=\(beginningFrame), visible=\(atBeginning)") { _ in }
                 if atBeginning {
                     normalizeToStart = false
                 } else {
                     XCTContext.runActivity(named: "Seek list beginning with a native slow downward swipe") { _ in
-                        app.collectionViews.element.swipeDown(velocity: .slow)
+                        // The native picker overlays the main collection; the app gesture targets its foreground.
+                        app.swipeDown(velocity: .slow)
                     }
                     continue
+                }
+            }
+            if !pickerScreen && !exists {
+                let header = app.staticTexts["watchIntendedShotType"]
+                if header.exists && header.isHittable && !header.label.isEmpty {
+                    let headerFrame = header.frame
+                    let headerVisible = headerFrame.intersection(viewport)
+                    let readableHeader = !headerFrame.isEmpty && !headerFrame.isNull && !headerFrame.isInfinite &&
+                        !headerVisible.isEmpty && !headerVisible.isNull &&
+                        viewport.contains(CGPoint(x: headerFrame.midX, y: headerFrame.midY)) &&
+                        headerVisible.height >= min(headerFrame.height, viewport.height) * 0.9
+                    if readableHeader {
+                        // Run08/11 show short drags snapping back on taller main-screen headers.
+                        // Run11 proves this held drag clears the card without run09's native-swipe overshoot.
+                        XCTContext.runActivity(named: "Advance past readable main training header") { _ in
+                            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85))
+                            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
+                            start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.1)
+                        }
+                        continue
+                    }
                 }
             }
             // Stay below the navigation overlay and avoid sweeping past several carousel rows.

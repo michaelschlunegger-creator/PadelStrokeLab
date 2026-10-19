@@ -147,7 +147,18 @@ struct RecordingDetailView: View {
                 Text("\(metadata.deviceModel) · \(metadata.operatingSystem)")
                 Text("Build \(metadata.appBuild) · protocol \(metadata.protocolVersion)")
                 Text("Playing arm: \(metadata.playingArm.rawValue). Watch wrist: \(metadata.watchWrist.rawValue). Orientation: \(metadata.watchOrientation).")
-                Text("Handedness: \(metadata.handedness.rawValue) · \(metadata.drill)")
+                Text("Handedness: \(metadata.handedness.rawValue)")
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Intended shot type").font(.headline)
+                    Text(RecordingDrill.recordedTitle(for: metadata.drill))
+                        .accessibilityIdentifier("recordedIntendedShotType")
+                    Text("Stored value: \(metadata.drill)").font(.caption.monospaced())
+                        .textSelection(.enabled).accessibilityIdentifier("recordedDrillRawValue")
+                    Text("Protocol: \(metadata.protocolVersion)").font(.caption.monospaced())
+                        .textSelection(.enabled).accessibilityIdentifier("recordedProtocolVersion")
+                    Text("Manual intent is separate from contact labels and automatic shot recognition.").font(.footnote)
+                }
+                .fixedSize(horizontal: false, vertical: true)
                 Text(metadata.capabilityReport)
                 ForEach(metadata.streams, id: \.stream.rawValue) { stream in
                     Text("\(stream.stream == .accelerometer ? "Accelerometer" : "Device motion"): declared supported \(stream.supported ? "yes" : "no"); reported sensor limit \(stream.knownSensorLimit.map { number($0) + " Hz" } ?? "unknown"); requested rate \(stream.requestedRateHz.map { number($0) + " Hz" } ?? "not configurable / unspecified").")

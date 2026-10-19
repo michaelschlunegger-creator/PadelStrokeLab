@@ -1,5 +1,13 @@
 # Testing
 
+## Complete-training increment — current 19 October2026
+
+Latest source is [55-file screen-capture manifest](testing/261019_Complete_Training_Screen_Capture_Code_State.sha256), SHA256 `ea180bdee7036dd996fda592301f773b31e28e2e5779adda279f890a6f19d295`. Core108,23 Watch/8 phone app-host,8 Watch UI and all rebuilt/signed products PASS. Phone9 UI passed assertions under previous manifest; app.screenshot cropping was independently diagnosed using paired full-screen run30, which proves actual landscape rendering is complete. Final phone9 UI with paired full-screen evidence passed as31 (552.289 seconds); parent inspected uncropped portrait/landscape captures. Mac/device setup confirmations arrived; both physical development tunnels/DDI were reachable. Prior pending-owner wording below is historical. No physical install/capture occurred; exact-HEAD CI and new committed-source review remain required.
+
+The ten-shot manual training expansion is implemented and under verification. [Local evidence](testing/261019_Complete_Training_Local_Evidence_v1.0.md) preserves passing and failed runs. Earlier expansion core107 and build4 builds/signatures passed; Watch23 app-host tests passed but final UI verification remains open, and phone8 app-host tests passed with one of9 UI executions interrupted by documented Mac clamshell sleep. No full-suite success follows from these partial results.
+
+Baseline CI39255888191 failed three assertions in a real-clock lease fixture. The [pre-edit correction contract](testing/261019_Deterministic_Production_Lease_Test_Contract_v1.0.md) adds a controlled-clock seam retaining actual production persistence/lease wiring, plus deterministic success and missing-stream failure coverage. New engine source requires new affected builds and app regression evidence. Preserve prior failures/manifests. Exact-HEAD CI, independent Astra review and all physical sensor/transfer/export observations remain open. Do not run further UI tests before owner Mac-open/unlocked confirmation; a scoped sleep assertion cannot prevent lid-close sleep.
+
 ## Review-fix checkpoint — 19 October 2026
 
 The frozen correction source is identified by the [53-file review-fix manifest](testing/261019_Physical_Logger_Review_Fix_Code_State.sha256), SHA256 `b9c70fa757663b4a667341c84e63b0bb8b9bc4c5535d6d739a5eff8a41b79be6`. [Current evidence](testing/261019_Logger_Review_Fix_Evidence_v1.0.md) records core105, both Release builds, Watch19 app-host+5 UI executions and signed build3 passing. Phone7 app-host+9 UI regression also passed without failures. The prior hosted run exceeded45 minutes and was cancelled; fresh exact-HEAD CI/review remain open. No physical install/capture or merge/release occurred.

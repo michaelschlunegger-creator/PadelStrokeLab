@@ -56,7 +56,23 @@ final class PadelStrokeLabUITests: XCTestCase {
         practice.tap()
         let practiceGuide = app.scrollViews["practiceGuideScreen"]
         XCTAssertTrue(practiceGuide.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Forehand groundstroke"].exists)
+        XCTAssertTrue(app.staticTexts["Your training set"].exists)
+        let intent = app.staticTexts["trainingSetGuidance"]
+        reveal(intent, in: practiceGuide)
+        XCTAssertTrue(intent.label.contains("one intended shot type per short set"))
+        for title in ["Forehand groundstroke", "Backhand groundstroke", "Forehand volley", "Backhand volley",
+                      "Serve", "Lob", "Bandeja", "Víbora", "Smash", "Other / unclassified"] {
+            let choice = app.staticTexts[title]
+            reveal(choice, in: practiceGuide)
+            XCTAssertTrue(choice.exists, "Missing intended type: \(title)")
+        }
+        let firstTest = app.staticTexts["firstAttemptGuidance"]
+        reveal(firstTest, in: practiceGuide)
+        XCTAssertTrue(firstTest.label.contains("one attempt per set"))
+        XCTAssertTrue(firstTest.label.contains("No automatic contact score"))
+        let uncertainty = app.staticTexts["trainingUncertaintyGuidance"]
+        reveal(uncertainty, in: practiceGuide)
+        XCTAssertTrue(uncertainty.label.contains("not an independent measurement"))
         capture(app, name: "02-Practice-guide")
         app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(home.waitForExistence(timeout: 5))
@@ -115,10 +131,33 @@ final class PadelStrokeLabUITests: XCTestCase {
 
     @MainActor
     private func capture(_ app: XCUIApplication, name: String) {
-        let attachment = XCTAttachment(screenshot: app.screenshot())
+        let appScreenshot = app.screenshot()
+        let fullScreenScreenshot = XCUIScreen.main.screenshot()
+        let attachment = XCTAttachment(screenshot: appScreenshot)
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+
+        let fullScreenAttachment = XCTAttachment(screenshot: fullScreenScreenshot)
+        fullScreenAttachment.name = "\(name)-full-screen"
+        fullScreenAttachment.lifetime = .keepAlways
+        add(fullScreenAttachment)
+
+        let appImage = appScreenshot.image
+        let fullScreenImage = fullScreenScreenshot.image
+        let windowFrames = app.windows.allElementsBoundByIndex.enumerated().map {
+            "window[\($0.offset)] frame=\($0.element.frame)"
+        }.joined(separator: "\n")
+        let geometry = XCTAttachment(string: """
+        deviceOrientation=\(XCUIDevice.shared.orientation) rawValue=\(XCUIDevice.shared.orientation.rawValue)
+        appFrame=\(app.frame)
+        \(windowFrames)
+        appScreenshot size=\(appImage.size) scale=\(appImage.scale) imageOrientation=\(appImage.imageOrientation) rawValue=\(appImage.imageOrientation.rawValue)
+        fullScreenScreenshot size=\(fullScreenImage.size) scale=\(fullScreenImage.scale) imageOrientation=\(fullScreenImage.imageOrientation) rawValue=\(fullScreenImage.imageOrientation.rawValue)
+        """)
+        geometry.name = "\(name)-geometry"
+        geometry.lifetime = .keepAlways
+        add(geometry)
     }
 
     @MainActor

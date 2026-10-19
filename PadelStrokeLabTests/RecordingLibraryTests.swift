@@ -9,13 +9,14 @@ struct RecordingLibraryTests {
         try RecordingPaths(base: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
     }
 
-    private func makeRecording(_ paths: RecordingPaths, finalized: Bool = true) throws -> UUID {
+    private func makeRecording(_ paths: RecordingPaths, finalized: Bool = true,
+                               drill: String = "forehand", protocolVersion: String = "1") throws -> UUID {
         let id = UUID()
         let clock = try RecordingClock(domainID: UUID(), monotonicAnchorSeconds: 100, wallAnchorUnixSeconds: 1_792_300_000)
         let metadata = try RecordingMetadata(recordingID: id, clock: clock, appBuild: "test-only",
-            protocolVersion: "1", deviceModel: "Synthetic fixture", operatingSystem: "Test OS",
+            protocolVersion: protocolVersion, deviceModel: "Synthetic fixture", operatingSystem: "Test OS",
             handedness: .right, playingArm: .right, watchWrist: .right, watchOrientation: "test",
-            playingArmConfirmed: true, drill: "forehand", capabilityReport: "Synthetic test fixture, no hardware",
+            playingArmConfirmed: true, drill: drill, capabilityReport: "Synthetic test fixture, no hardware",
             streams: [try RecordingStreamConfiguration(stream: .accelerometer, supported: true, requestedRateHz: nil, knownSensorLimit: nil)])
         let store = try RecordingStore.create(root: paths.rawRoot, metadata: metadata)
         for (sequence, times) in [[100.1, 100.2, 100.4], [110.1, 110.3, 110.5]].enumerated() {
@@ -139,6 +140,51 @@ struct RecordingLibraryTests {
         #expect(!FileManager.default.fileExists(atPath: roots.notesRoot.appendingPathComponent(id.uuidString).path))
         #expect(FileManager.default.fileExists(atPath: exported.path))
         #expect(try RecordingStore.inspect(root: destination.rawRoot, recordingID: id).status == .finalized)
+    }
+
+    @Test(arguments: [
+        ["backhandVolley", "owner-manual-training-logger-1", "Backhand volley"],
+        ["forehandGroundstroke", "owner-forehand-logger-1", "Forehand groundstroke"],
+        ["futureDrill", "future-protocol", "Unrecognized recorded value: futureDrill"]
+    ])
+    func intendedTypeSurvivesImportReviewLabelRevisionExportAndReimport(_ values: [String]) async throws {
+        let source = try paths(), phone = try paths(), destination = try paths()
+        defer { cleanup(source); cleanup(phone); cleanup(destination) }
+        let id = try makeRecording(source, drill: values[0], protocolVersion: values[1])
+        let original = try rawSnapshot(source, id: id)
+        let storedTimeline = try SessionAnnotationsStore(root: source.notesRoot).loadTimeline(recordingID: id)
+        let timeline = try #require(storedTimeline)
+        let incoming = source.outboxRoot.appendingPathComponent("synthetic-incoming.pslrecording")
+        _ = try RecordingArchive.write(recordingID: id, rawRoot: source.rawRoot, timeline: timeline, destination: incoming)
+        _ = try RecordingArchive.importBundle(from: incoming, rawRoot: phone.rawRoot, notesRoot: phone.notesRoot)
+        #expect(try rawSnapshot(phone, id: id) == original)
+        let repository = RecordingLibraryRepository(paths: phone)
+        let review = try await repository.review(id)
+        let metadata = try #require(review.report.metadata)
+        #expect(metadata.drill == values[0] && metadata.protocolVersion == values[1])
+        #expect(RecordingDrill.recordedTitle(for: metadata.drill) == values[2])
+        #expect(review.receiptVerified && review.segments.count == 2)
+        #expect(review.streams.map(\.count) == [6, 0])
+        #expect(review.timeline == timeline)
+        var draft = RecordingLabelDraft()
+        draft.category = .cleanContact; draft.relativeStart = "0.1"; draft.relativeEnd = "0.4"
+        let labeled = try await repository.saveLabel(recordingID: id, draft: draft)
+        draft.attemptID = labeled.latestLabels[0].attemptID; draft.category = .uncertain; draft.confidence = .low
+        let revised = try await repository.saveLabel(recordingID: id, draft: draft)
+        #expect(revised.labels.count == 2 && revised.latestLabels.count == 1)
+        #expect(revised.labels[0].category == .cleanContact && revised.latestLabels[0].category == .uncertain)
+        #expect(revised.latestLabels[0].revision == 2 && revised.latestLabels[0].startTimestamp == 100.1)
+        #expect(revised.report.metadata == metadata && revised.timeline == timeline)
+        #expect(try rawSnapshot(phone, id: id) == original)
+        let exported = try await repository.export(id)
+        let receipt = try RecordingArchive.importBundle(from: exported, rawRoot: destination.rawRoot, notesRoot: destination.notesRoot)
+        #expect(receipt.recordingID == id)
+        let recovered = try await RecordingLibraryRepository(paths: destination).review(id)
+        #expect(recovered.report.metadata == metadata && recovered.labels == revised.labels)
+        #expect(recovered.latestLabels == revised.latestLabels && recovered.timeline == timeline)
+        #expect(recovered.streams.map(\.count) == [6, 0] && recovered.segments.count == 2)
+        #expect(try rawSnapshot(destination, id: id) == original)
+        #expect(try rawSnapshot(source, id: id) == original)
     }
 
     @Test func defaultAppContainerCanWriteInspectAndAnnotate() throws {

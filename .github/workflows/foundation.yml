@@ -37,7 +37,7 @@ jobs:
           exec > >(tee "$EVIDENCE/preflight.log") 2>&1
           git rev-parse HEAD
           git status --short
-          shasum -a 256 -c docs/testing/261019_Physical_Logger_Review_Fix_Code_State.sha256
+          shasum -a 256 -c docs/testing/261019_Complete_Training_Screen_Capture_Code_State.sha256
           test -d "$DEVELOPER_DIR"
           toolchain_version="$(xcodebuild -version)"
           printf '%s\n' "$toolchain_version"
@@ -101,6 +101,7 @@ jobs:
           PY
 
       - name: Verify shared metadata
+        timeout-minutes: 15
         run: |
           set -euo pipefail
           xcrun swift test --package-path Packages/PadelCore --scratch-path "$RUNNER_TEMP/foundation-core" 2>&1 | tee "$EVIDENCE/core-tests.log"

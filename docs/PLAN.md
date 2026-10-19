@@ -1,5 +1,11 @@
 # Delivery plan
 
+## Complete-training increment — current 19 October2026
+
+The owner approved the [v1.1 broader-training plan](architecture/261019_Broader_Training_Readiness_Plan_v1.1.md) and all recording workflows with manually selected padel shot types. Astra High implemented the expansion after Astra Extra High architecture review. Earlier draft/pending/forehand-only checkpoints below are historical. No automatic classification, quality scoring or physical success is claimed.
+
+Current next steps: publish the fully locally verified source manifestea180bde under the existing approved draft-PR cycle, obtain exact-HEAD CI and independent Astra review, then install and observe the real-device dry run. Core/app-host/Watch UI/build checks have passed. The bounded deterministic lease-test correction is complete; screenshot cropping was isolated to the collector with no production layout change. Owner setup confirmations arrived and both devices' development tunnels/DDI were reachable. No merge/release approval exists. See [Gate Card](../GATE_CARD.md).
+
 ## Review-fix checkpoint — 19 October 2026
 
 The frozen correction source is identified by the [53-file review-fix manifest](testing/261019_Physical_Logger_Review_Fix_Code_State.sha256), SHA256 `b9c70fa757663b4a667341c84e63b0bb8b9bc4c5535d6d739a5eff8a41b79be6`. [Current evidence](testing/261019_Logger_Review_Fix_Evidence_v1.0.md) records core105, both Release builds, Watch19 app-host+5 UI executions and signed build3 passing. Phone7 app-host+9 UI regression also passed without failures. The prior hosted run exceeded45 minutes and was cancelled; fresh exact-HEAD CI/review remain open. No physical install/capture or merge/release occurred.

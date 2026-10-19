@@ -8,6 +8,7 @@ struct WatchRetainedRecording: Identifiable, Sendable {
     let id: UUID
     let status: String
     let samples: Int
+    let intendedDrill: String?
     let timeline: CaptureTimeline?
     let canTransfer: Bool
 }
@@ -30,6 +31,22 @@ struct WatchPreparationSettings {
 
 @MainActor @Observable
 final class WatchRecorderModel {
+    static let drillPreferenceKey = "recording.intendedDrill"
+    private let preferences: UserDefaults
+    private(set) var selectedDrillRawValue: String?
+    private(set) var capturedMetadata: RecordingMetadata?
+    var selectedDrill: RecordingDrill? { selectedDrillRawValue.flatMap(RecordingDrill.init(rawValue:)) }
+    var canSelectDrill: Bool { state == .ready }
+    var drillSelectionMessage: String {
+        if let selectedDrill { return selectedDrill.title }
+        return selectedDrillRawValue == nil ?
+            "Choose shot type" : "Saved shot type unavailable—choose again"
+    }
+    var displayedDrillTitle: String {
+        if let capturedMetadata { return RecordingDrill.recordedTitle(for: capturedMetadata.drill) }
+        return drillSelectionMessage
+    }
+
     private(set) var state: MotionCaptureState = .ready
     private(set) var snapshot: MotionCaptureSnapshot?
     private(set) var message: String?
@@ -59,7 +76,12 @@ final class WatchRecorderModel {
 
     // Injection permits lifecycle tests without authorizing or starting hardware. UI uses defaults.
     init(preparationSettingsProvider: (@MainActor () -> WatchPreparationSettings)? = nil,
-         initialState: MotionCaptureState = .ready) {
+         initialState: MotionCaptureState = .ready,
+         preferences: UserDefaults = .standard, initialMetadata: RecordingMetadata? = nil) {
+        self.preferences = preferences
+        selectedDrillRawValue = preferences.string(forKey: Self.drillPreferenceKey)
+        capturedMetadata = initialState == .ready ? nil : initialMetadata
+        activeRecordingID = initialState == .ready ? nil : initialMetadata?.recordingID
         let source = WatchMotionSource()
         self.source = source
         self.preparationSettingsProvider = preparationSettingsProvider ?? { .current(source: source) }
@@ -79,7 +101,20 @@ final class WatchRecorderModel {
 
     var canPrepare: Bool { state == .ready || state.isTerminal }
     func canStart(arm: PlayingArm) -> Bool {
-        state == .ready && armConfirmed && arm == configuredWrist && capabilityIssue == nil && paths != nil
+        state == .ready && selectedDrill != nil && armConfirmed && arm == configuredWrist && capabilityIssue == nil && paths != nil
+    }
+
+    func selectDrill(_ drill: RecordingDrill) {
+        guard canSelectDrill, selectedDrill != drill else { return }
+        selectedDrillRawValue = drill.rawValue
+        preferences.set(drill.rawValue, forKey: Self.drillPreferenceKey)
+        armConfirmed = false
+    }
+
+    /// Both playing-arm and handedness changes require a new placement confirmation.
+    func preparationInputChanged() {
+        guard state == .ready else { return }
+        armConfirmed = false
     }
 
     /// Returning from Settings can recover preparation, but cannot change an active set's inputs.
@@ -100,17 +135,9 @@ final class WatchRecorderModel {
         refreshPreparation()
         guard canStart(arm: arm), let paths, let changes else { return }
         do {
-            let device = WKInterfaceDevice.current()
-            let metadata = try RecordingMetadata(recordingID: UUID(),
-                clock: RecordingClock(domainID: UUID(), monotonicAnchorSeconds: ProcessInfo.processInfo.systemUptime,
-                                      wallAnchorUnixSeconds: Date().timeIntervalSince1970),
-                appBuild: "\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"))",
-                protocolVersion: "owner-forehand-logger-1", deviceModel: hardwareModel(device: device),
-                operatingSystem: "\(device.systemName) \(device.systemVersion)", handedness: handedness,
-                playingArm: arm, watchWrist: configuredWrist, watchOrientation: crownDescription,
-                playingArmConfirmed: armConfirmed, drill: PracticeDrill.forehandGroundstroke.rawValue,
-                capabilityReport: source.capabilityReport,
-                streams: source.configurations)
+            let metadata = try makeMetadata(arm: arm, handedness: handedness)
+            // Freeze intent before starting any asynchronous workout, permission or capture work.
+            capturedMetadata = metadata
             activeRecordingID = metadata.recordingID
             engine = MotionCaptureEngine(metadata: metadata, rawRoot: paths.rawRoot, notesRoot: paths.notesRoot,
                                          onChange: { changes.yield($0) })
@@ -118,6 +145,25 @@ final class WatchRecorderModel {
             state = .starting; message = "Allow workout and motion access to begin. Waiting for the workout."
             armConfirmed = false; workout.start()
         } catch { state = .failed; message = "Setup failed: \(error.localizedDescription)"; source.stop(); workout.end() }
+    }
+
+    /// The synchronous header path used by Start. Construction alone never authorizes or starts hardware.
+    /// Start separately rechecks current settings, capability and durable storage before calling this.
+    func makeMetadata(arm: PlayingArm, handedness: PlayingArm) throws -> RecordingMetadata {
+        guard state == .ready, let selectedDrill, armConfirmed, arm == configuredWrist else {
+            throw RecordingError.invalid("Choose a shot type and confirm the Watch on your playing arm.")
+        }
+        let device = WKInterfaceDevice.current()
+        return try RecordingMetadata(recordingID: UUID(),
+            clock: RecordingClock(domainID: UUID(), monotonicAnchorSeconds: ProcessInfo.processInfo.systemUptime,
+                          wallAnchorUnixSeconds: Date().timeIntervalSince1970),
+            appBuild: "\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"))",
+            protocolVersion: RecordingDrill.protocolVersion, deviceModel: hardwareModel(device: device),
+            operatingSystem: "\(device.systemName) \(device.systemVersion)", handedness: handedness,
+            playingArm: arm, watchWrist: configuredWrist, watchOrientation: crownDescription,
+            playingArmConfirmed: armConfirmed, drill: selectedDrill.rawValue,
+            capabilityReport: source.capabilityReport,
+            streams: source.configurations)
     }
 
     func pause() {
@@ -145,7 +191,7 @@ final class WatchRecorderModel {
     func newSet() {
         guard state.isTerminal else { return }
         source.stop(); workout.end(); engine = nil; snapshot = nil; activeRecordingID = nil
-        state = .ready; armConfirmed = false; message = nil; pauseGate.reset()
+        state = .ready; armConfirmed = false; capturedMetadata = nil; message = nil; pauseGate.reset()
         refreshPreparation()
     }
 
@@ -274,10 +320,10 @@ final class WatchRecorderModel {
                 let timeline = try? SessionAnnotationsStore(root: paths.notesRoot).loadTimeline(recordingID: id)
                 let status = report.finalization?.reason == .interrupted ? "Interrupted" : report.status.rawValue.capitalized
                 return WatchRetainedRecording(id: id, status: status,
-                    samples: report.chunks.reduce(0) { $0 + $1.sampleCount }, timeline: timeline,
+                    samples: report.chunks.reduce(0) { $0 + $1.sampleCount }, intendedDrill: report.metadata?.drill, timeline: timeline,
                     canTransfer: timeline != nil && (report.status == .finalized || report.status == .interrupted))
             } catch {
-                return WatchRetainedRecording(id: id, status: "Inspection failed", samples: 0, timeline: nil, canTransfer: false)
+                return WatchRetainedRecording(id: id, status: "Inspection failed", samples: 0, intendedDrill: nil, timeline: nil, canTransfer: false)
             }
         }.sorted { $0.id.uuidString < $1.id.uuidString }
     }

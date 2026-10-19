@@ -15,16 +15,41 @@ struct ContentView: View {
         NavigationStack {
             List {
                 VStack(alignment: .leading, spacing: 7) {
-                    Label("FIRST DRILL", systemImage: "figure.racquetball")
+                    Label("TRAINING SET", systemImage: "figure.racquetball")
                         .font(.caption2.weight(.bold)).foregroundStyle(PracticeTheme.yellow)
-                    Text(PracticeDrill.forehandGroundstroke.title).font(.headline).foregroundStyle(.white)
+                    Text("Intended shot type").font(.caption2).foregroundStyle(.white)
+                    Text(recorder.displayedDrillTitle).font(.headline).foregroundStyle(.white)
+                        .accessibilityIdentifier("watchIntendedShotType")
                     Text("120 active seconds maximum").font(.caption2).foregroundStyle(.white)
                 }
                 .fixedSize(horizontal: false, vertical: true).padding(.vertical, 6)
                 .listRowBackground(PracticeTheme.royal.clipShape(.rect(cornerRadius: 20)))
 
-                if recorder.canPrepare {
+                if recorder.canSelectDrill {
                     Section("Before you play") {
+                        Picker("Intended shot type", selection: Binding(
+                            get: { recorder.selectedDrill?.rawValue ?? "" },
+                            set: { if let drill = RecordingDrill(rawValue: $0) { recorder.selectDrill(drill) } })) {
+                            Text("Choose shot type").tag("").disabled(true)
+                            ForEach(RecordingDrill.allCases) { drill in
+                                Text(drill.title).fixedSize(horizontal: false, vertical: true)
+                                    .tag(drill.rawValue)
+                                    .accessibilityIdentifier("watchShotOption-\(drill.rawValue)")
+                            }
+                        }
+                        .pickerStyle(.navigationLink)
+                        .accessibilityIdentifier("watchShotPicker")
+                        .accessibilityValue(recorder.drillSelectionMessage)
+                        .accessibilityHint("Choose one intended shot type for this short set.")
+                        if recorder.selectedDrill == nil {
+                            Text(recorder.drillSelectionMessage).font(.footnote)
+                                .accessibilityIdentifier("watchShotSelectionIssue")
+                        }
+                        Text("Record one intended shot type per short set.").font(.footnote)
+                        if recorder.selectedDrill == .otherUnclassified {
+                            Text("Intended type is unspecified. This is not a contact label or an automatic classification.")
+                                .font(.footnote).accessibilityIdentifier("watchOtherDrillExplanation")
+                        }
                         Picker("Playing arm", selection: $storedArm) {
                             ForEach(PlayingArm.allCases) { Text($0.title).tag($0.rawValue) }
                         }
@@ -35,6 +60,8 @@ struct ContentView: View {
                         Picker("Handedness", selection: $storedHand) {
                             ForEach(PlayingArm.allCases) { Text($0.title).tag($0.rawValue) }
                         }.pickerStyle(.navigationLink)
+                        .accessibilityIdentifier("watchHandednessPicker")
+                        .accessibilityValue((PlayingArm(rawValue: storedHand) ?? .right).title)
                         Text("Watch setting: \(recorder.configuredWrist.title) wrist · \(recorder.crownDescription)")
                             .font(.footnote)
                         Toggle("Watch on this arm", isOn: $recorder.armConfirmed)
@@ -97,6 +124,10 @@ struct ContentView: View {
                     ForEach(recorder.retained) { recording in
                         VStack(alignment: .leading, spacing: 5) {
                             Text(recording.status).font(.headline)
+                            if let drill = recording.intendedDrill {
+                                Text("Intended shot type: \(RecordingDrill.recordedTitle(for: drill))").font(.footnote)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                             Text(recording.id.uuidString.prefix(8)).font(.caption2).monospaced()
                             Text("\(recording.samples) retained samples").font(.footnote)
                             if let transfer = recorder.transfers[recording.id] { Text(transfer).font(.footnote) }
@@ -115,7 +146,8 @@ struct ContentView: View {
             .listStyle(.carousel).scrollContentBackground(.hidden)
             .background(PracticeTheme.navy.ignoresSafeArea())
             .navigationTitle("Practice").containerBackground(PracticeTheme.navy, for: .navigation)
-            .onChange(of: storedArm) { _, _ in recorder.armConfirmed = false }
+            .onChange(of: storedArm) { _, _ in recorder.preparationInputChanged() }
+            .onChange(of: storedHand) { _, _ in recorder.preparationInputChanged() }
             .confirmationDialog("Delete this Watch copy?", isPresented: Binding(
                 get: { deletionCandidate != nil }, set: { if !$0 { deletionCandidate = nil } }), titleVisibility: .visible) {
                 if let recording = deletionCandidate {

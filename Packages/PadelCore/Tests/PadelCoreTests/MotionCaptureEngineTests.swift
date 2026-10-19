@@ -338,19 +338,95 @@ struct MotionCaptureEngineTests {
 
     @Test func productionWriterLeaseProtectsActiveAndPausedRecordingUntilSealed() async throws {
         let fixture = try RecordingDirectoryFixture(), paths = try RecordingPaths(base: fixture.root)
+        defer { withExtendedLifetime(fixture) {} }
+        let clock = CaptureClock()
         let engine = MotionCaptureEngine(metadata: try recordingMetadata(), rawRoot: paths.rawRoot,
-                                         notesRoot: paths.notesRoot, onChange: { _ in })
+            notesRoot: paths.notesRoot, clock: { clock.now() }, onChange: { _ in })
         let generation = try #require(await begin(engine))
         #expect(throws: (any Error).self) { try RecordingCaptureLease(recordingID: recordingTestID, rawRoot: paths.rawRoot) }
-        let timestamp = ProcessInfo.processInfo.systemUptime
-        engine.receive(batch(generation, [timestamp])); _ = await engine.snapshot()
-        engine.pause(at: ProcessInfo.processInfo.systemUptime)
-        #expect(await engine.snapshot().state == .paused)
+        clock.set(11)
+        let acceleration = batch(generation, .accelerometer, [10.5])
+        let motion = batch(generation, .deviceMotion, [10.75])
+        #expect(engine.receive(acceleration))
+        #expect(engine.receive(motion))
+        let recordingSnapshot = await engine.snapshot()
+        #expect(recordingSnapshot.state == .recording)
+        #expect(recordingSnapshot.accelerometerCount == 1 && recordingSnapshot.deviceMotionCount == 1)
         #expect(throws: (any Error).self) { try RecordingCaptureLease(recordingID: recordingTestID, rawRoot: paths.rawRoot) }
-        engine.stop(at: ProcessInfo.processInfo.systemUptime)
-        #expect(await engine.snapshot().state == .saved)
+        engine.pause(at: 11)
+        let pausedSnapshot = await engine.snapshot()
+        #expect(pausedSnapshot.state == .paused)
+        #expect(throws: (any Error).self) { try RecordingCaptureLease(recordingID: recordingTestID, rawRoot: paths.rawRoot) }
+        clock.set(12)
+        engine.stop(at: 12)
+        let savedSnapshot = await engine.snapshot()
+        #expect(savedSnapshot.state == .saved)
         _ = try RecordingCaptureLease(recordingID: recordingTestID, rawRoot: paths.rawRoot)
-        #expect(try RecordingStore.inspect(root: paths.rawRoot, recordingID: recordingTestID).chunks[0].sampleCount == 1)
+        let report = try RecordingStore.inspect(root: paths.rawRoot, recordingID: recordingTestID)
+        #expect(report.status == .finalized && report.issues.isEmpty)
+        #expect(report.finalization?.reason == .userStopped && report.finalization?.stopRequestTimestamp == 12)
+        #expect(report.chunks.count == 2 && report.chunks.allSatisfy { $0.sampleCount == 1 })
+        for expected in [acceleration, motion] {
+            let descriptor = try #require(report.chunks.first { $0.stream == expected.stream })
+            let file = paths.rawRoot.appendingPathComponent(recordingTestID.uuidString).appendingPathComponent(descriptor.fileName)
+            let decoded = try RecordingChunkCodec.decode(Data(contentsOf: file))
+            #expect(decoded.recordingID == recordingTestID && decoded.clockDomainID == recordingTestClockID)
+            #expect(decoded.stream == expected.stream && decoded.samples == expected.samples)
+        }
+        let persistedTimeline = try SessionAnnotationsStore(root: paths.notesRoot).loadTimeline(recordingID: recordingTestID)
+        #expect(persistedTimeline == savedSnapshot.timeline)
+    }
+
+    @Test func productionMissingStreamInterruptsAtDeadlineAndReleasesLeaseWithoutBecomingSaved() async throws {
+        let fixture = try RecordingDirectoryFixture(), paths = try RecordingPaths(base: fixture.root)
+        defer { withExtendedLifetime(fixture) {} }
+        let clock = CaptureClock()
+        let engine = MotionCaptureEngine(metadata: try recordingMetadata(), rawRoot: paths.rawRoot,
+            notesRoot: paths.notesRoot, clock: { clock.now() }, onChange: { _ in })
+        let generation = try #require(await begin(engine))
+        clock.set(14.875)
+        let acceleration = batch(generation, .accelerometer, [14.875])
+        #expect(engine.receive(acceleration))
+        let receivedSnapshot = await engine.snapshot()
+        #expect(receivedSnapshot.state == .starting && receivedSnapshot.accelerometerCount == 1)
+        #expect(receivedSnapshot.deviceMotionCount == 0)
+        clock.set(14.999)
+        await engine.checkWatchdog()
+        let beforeDeadlineSnapshot = await engine.snapshot()
+        #expect(beforeDeadlineSnapshot.state == .starting && !beforeDeadlineSnapshot.state.isTerminal)
+        #expect(throws: (any Error).self) { try RecordingCaptureLease(recordingID: recordingTestID, rawRoot: paths.rawRoot) }
+        clock.set(15)
+        // checkWatchdog returns after enqueuing the terminal operation. This subsequent FIFO snapshot
+        // observes that operation; a snapshot taken before the watchdog is not recursive queue draining.
+        await engine.checkWatchdog()
+        let interruptedSnapshot = await engine.snapshot()
+        #expect(interruptedSnapshot.state == .interrupted)
+        #expect(interruptedSnapshot.detail == "Device motion has no fresh data for 5 seconds.")
+        #expect(interruptedSnapshot.accelerometerCount == 1 && interruptedSnapshot.deviceMotionCount == 0)
+        #expect(interruptedSnapshot.timeline.events.last?.kind == .interruption)
+        #expect(interruptedSnapshot.timeline.events.last?.timestamp == 15)
+        _ = try RecordingCaptureLease(recordingID: recordingTestID, rawRoot: paths.rawRoot)
+        let report = try RecordingStore.inspect(root: paths.rawRoot, recordingID: recordingTestID)
+        #expect(report.issues.isEmpty && report.chunks.count == 1)
+        #expect(report.finalization?.reason == .interrupted && report.finalization?.stopRequestTimestamp == 15)
+        let descriptor = try #require(report.chunks.first)
+        #expect(descriptor.stream == .accelerometer && descriptor.sampleCount == 1)
+        let file = paths.rawRoot.appendingPathComponent(recordingTestID.uuidString).appendingPathComponent(descriptor.fileName)
+        let originalChunkBytes = try Data(contentsOf: file)
+        let decoded = try RecordingChunkCodec.decode(originalChunkBytes)
+        #expect(decoded.recordingID == recordingTestID && decoded.clockDomainID == recordingTestClockID)
+        #expect(decoded.samples == acceleration.samples)
+        let persistedTimeline = try SessionAnnotationsStore(root: paths.notesRoot).loadTimeline(recordingID: recordingTestID)
+        #expect(persistedTimeline == interruptedSnapshot.timeline)
+        clock.set(16)
+        engine.stop(at: 16)
+        let afterStopSnapshot = await engine.snapshot()
+        #expect(afterStopSnapshot.state == .interrupted && afterStopSnapshot.detail == interruptedSnapshot.detail)
+        #expect(afterStopSnapshot.timeline == interruptedSnapshot.timeline)
+        let afterStopReport = try RecordingStore.inspect(root: paths.rawRoot, recordingID: recordingTestID)
+        #expect(afterStopReport.finalization == report.finalization && afterStopReport.chunks == report.chunks)
+        #expect(try Data(contentsOf: file) == originalChunkBytes)
+        _ = try RecordingCaptureLease(recordingID: recordingTestID, rawRoot: paths.rawRoot)
     }
 
     @Test func activeTimeCapSealsAtDeadline() async throws {

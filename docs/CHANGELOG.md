@@ -1,5 +1,12 @@
 # Changelog
 
+## 19 October2026 — complete-training expansion, verification in progress
+
+- Add explicit manual intended drill selection for forehand/backhand groundstrokes and volleys, serve, lob, bandeja, vibora, smash and Other/unclassified, with truthful new protocol metadata and historical compatibility.
+- Retain the complete recording/recovery/transfer/review/owner-label/export/delete flow and shared premium theme. Reset placement confirmation when setup changes; reject invalid saved shot choices until explicit replacement.
+- Extend roundtrip, model, library and UI regressions. Preserve failed UI/CI results and diagnose test-navigation, Mac-sleep and uncontrolled-clock fixture failures without weakening production safety rules.
+- Verification is ongoing; no physical installation or validated clean-hit detection is claimed. See the current Gate Card and complete-training evidence.
+
 ## 19 October 2026 — independent-review corrections, build3
 
 - Refresh Watch preparation after Settings changes, clear placement confirmation when wrist/crown changes, and preserve active capture inputs/storage-error precedence. Added8 model regressions.

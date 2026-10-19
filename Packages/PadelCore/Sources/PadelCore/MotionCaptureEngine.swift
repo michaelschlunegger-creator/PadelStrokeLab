@@ -69,7 +69,15 @@ public final class MotionCaptureEngine: @unchecked Sendable {
 
     public convenience init(metadata: RecordingMetadata, rawRoot: URL, notesRoot: URL,
                             onChange: @escaping @Sendable (MotionCaptureSnapshot) -> Void) {
-        self.init(metadata: metadata, clock: { ProcessInfo.processInfo.systemUptime },
+        self.init(metadata: metadata, rawRoot: rawRoot, notesRoot: notesRoot,
+                  clock: { ProcessInfo.processInfo.systemUptime }, onChange: onChange)
+    }
+
+    /// Deterministic clock seam retaining the production writer, capture lease, persistence and timer.
+    convenience init(metadata: RecordingMetadata, rawRoot: URL, notesRoot: URL,
+                     clock: @escaping @Sendable () -> Double,
+                     onChange: @escaping @Sendable (MotionCaptureSnapshot) -> Void) {
+        self.init(metadata: metadata, clock: clock,
                   makeWriter: {
                       let lease = try RecordingCaptureLease(recordingID: metadata.recordingID, rawRoot: rawRoot)
                       return RealMotionCaptureWriter(try RecordingStore.create(root: rawRoot, metadata: metadata), lease: lease)
