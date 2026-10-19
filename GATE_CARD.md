@@ -1,5 +1,11 @@
 # Active Gate Card
 
+## Publication checkpoint — 19 October2026
+
+Owner replied “approve” to the exact commit/push/draft-PR proposal. Logger implementation commit `2c05afc0419b5221726705240cd1f18f45e3a982` is verified pushed to `origin/feature/watch-recording-storage`; the local branch tracks it and was clean/synchronized after push. Main/foundation identities are unchanged. [Publication record](docs/testing/261019_Logger_GitHub_Publication_v1.0.md) supersedes uncommitted/unpublished and approval-pending statements below. Its documentation-only follow-up preserves all52 runtime/test/config/workflow hashes; the PR/checks identify the final submitted HEAD.
+
+G4 local evidence remains valid. G5 current hosted CI, G6 new independent committed-HEAD review and G7 physical observations remain open. Both physical devices are reachable and signing/profile coverage verified, but nothing has been installed or recorded. No merge/release approval. **One next action:** create/attach the approved stacked draft PR into `chore/project-governance`, then verify exact-HEAD CI before independent Astra review and device testing.
+
 ## Latest checkpoint — 19 October 2026, complete local logger
 
 This checkpoint supersedes prior storage-only and approval-pending statuses below. Owner-authorized complete tester implemented after Astra Extra High planning, with bounded Astra High packages and separate read-only precommit review. Current branch `feature/watch-recording-storage`, HEAD/base `ee15c0ef86c99064bb1295c7550fba1daea66a3c`, no upstream. Live remote foundation unchanged; main `f21bfab4dd6da9f96d7104bdfa3f06c5e4c92ea8`, PR1 open/draft/unmerged and separate from the local logger. Rechecked 19 October.

@@ -1,5 +1,9 @@
 # Foundation handover
 
+## GitHub publication checkpoint — 19 October2026
+
+Owner approved the prepared commit/push/draft-PR step. Logger implementation baseline `2c05afc0419b5221726705240cd1f18f45e3a982` is verified on `origin/feature/watch-recording-storage`, with tracking configured and clean/synchronized local state after push. [Publication record](testing/261019_Logger_GitHub_Publication_v1.0.md) supersedes the historical local/unpublished and approval-pending statements below. This documentation-only follow-up retains identical52 source/config/test/workflow hashes and local evidence; draft PR/checks identify final submitted HEAD. Foundation PR1 and main remain unchanged/unmerged. G5/G6/G7 are open; no physical install/capture or merge/release. Next: approved stacked draft PR, exact-HEAD CI and new Astra committed-HEAD review.
+
 ## Current logger checkpoint — 19 October 2026
 
 This section supersedes the historical foundation/storage-only statuses below. The complete owner-authorized physical-shot logger is implemented locally on `feature/watch-recording-storage`, no upstream, base/HEAD `ee15c0ef86c99064bb1295c7550fba1daea66a3c`. Foundation draft PR1 remains open/unmerged at that HEAD; live main remains `f21bfab4dd6da9f96d7104bdfa3f06c5e4c92ea8`. Logger changes are uncommitted/unpublished. No physical installation or release occurred.

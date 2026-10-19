@@ -1,5 +1,10 @@
 # Changelog
 
+## 19 October2026 — approved logger publication
+
+- Owner approved committing/pushing the prepared logger and opening its stacked draft PR. Implementation commit `2c05afc0419b5221726705240cd1f18f45e3a982` is verified on the new remote feature branch.
+- Added publication verification and current status links in a documentation-only follow-up;52 runtime/test/config/workflow hashes remain unchanged. Current CI, committed-HEAD review and physical gates remain open; no merge or release.
+
 ## 19 October 2026 — local complete physical-shot logger
 
 - Astra planned the full tester before bounded implementation: real Watch Core Motion capture during an explicit workout; guarded recording/pause/resume/stop; bounded queues/chunks, retained source timestamps and interruption recovery.

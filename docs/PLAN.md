@@ -1,5 +1,7 @@
 # Delivery plan
 
+Publication update19 October2026: owner approved the exact prepared proposal; implementation commit `2c05afc0419b5221726705240cd1f18f45e3a982` is verified pushed on `feature/watch-recording-storage`. [Publication record](testing/261019_Logger_GitHub_Publication_v1.0.md) supersedes approval-pending/unpublished statuses below. Next: attach the stacked draft PR and obtain clean current CI/new independent committed-HEAD review before physical testing. No merge/release.
+
 ## Current delivery — 19 October 2026
 
 This section supersedes the historical storage-only/approval-pending statuses below. The owner authorized the complete physical-shot tester and Astra planning first. The [approved implementation plan](architecture/261018_Physical_Shot_Logger_Plan_v1.0.md) preceded bounded capture, Watch lifecycle/controls, annotations/archive/connectivity and phone-review packages. Those runtime paths are now implemented locally on `feature/watch-recording-storage`, based on `ee15c0e`, with no upstream or published logger commit.

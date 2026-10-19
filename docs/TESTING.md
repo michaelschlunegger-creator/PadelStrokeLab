@@ -1,5 +1,7 @@
 # Testing
 
+Publication update19 October2026: [implementation baseline `2c05afc`](testing/261019_Logger_GitHub_Publication_v1.0.md) is verified pushed. Documentation-only publication follow-up leaves the52 source/config/test/workflow files and their local evidence unchanged. Exact submitted HEAD and hosted results belong to the draft PR/checks; no current CI/physical pass is claimed by publication alone.
+
 ## Current full logger — 19 October 2026
 
 The [full logger evidence](testing/261019_Physical_Logger_Local_Evidence_v1.0.md) supersedes older storage-only status. The [52-file source manifest](testing/261019_Physical_Logger_Top_Scan_Code_State.sha256) identifies uncommitted logger build2 on `feature/watch-recording-storage` at base/HEAD `ee15c0e`. Final core102, phone7 app-host+9 UI, Watch11 app-host+5 UI, and both OS27 Release simulator builds passed. Generic physical Debug build and deep/strict code-signature verification passed after normal provisioning obtained the Watch HealthKit capability. Signing failure and Watch UI failures11–13 remain preserved, with evidence-based test-only corrections and passing focused14/full15. Production/build files are unchanged by those fixture corrections.
