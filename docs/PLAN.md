@@ -1,5 +1,12 @@
 # Delivery plan
 
+## Review-fix checkpoint — 19 October 2026
+
+The frozen correction source is identified by the [53-file review-fix manifest](testing/261019_Physical_Logger_Review_Fix_Code_State.sha256), SHA256 `b9c70fa757663b4a667341c84e63b0bb8b9bc4c5535d6d739a5eff8a41b79be6`. [Current evidence](testing/261019_Logger_Review_Fix_Evidence_v1.0.md) records core105, both Release builds, Watch19 app-host+5 UI executions and signed build3 passing. Phone7 app-host+9 UI regression also passed without failures. The prior hosted run exceeded45 minutes and was cancelled; fresh exact-HEAD CI/review remain open. No physical install/capture or merge/release occurred.
+
+The owner requests complete first-training readiness before installation and clarified broader workflows than forehand only. [Broader training plan](architecture/261019_Broader_Training_Readiness_Plan_v1.0.md) is a draft pending scope confirmation/approval; it is not implemented by this correction. Current metadata still identifies a forehand drill. Keep the complete setup/capture/pause/resume/save/recovery/transfer/review/labels/export/deletion acceptance map explicit.
+
+
 Publication update19 October2026: owner approved the exact prepared proposal; implementation commit `2c05afc0419b5221726705240cd1f18f45e3a982` is verified pushed on `feature/watch-recording-storage`. [Publication record](testing/261019_Logger_GitHub_Publication_v1.0.md) supersedes approval-pending/unpublished statuses below. Next: attach the stacked draft PR and obtain clean current CI/new independent committed-HEAD review before physical testing. No merge/release.
 
 ## Current delivery — 19 October 2026

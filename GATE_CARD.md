@@ -1,5 +1,11 @@
 # Active Gate Card
 
+## Current review-fix and training-readiness checkpoint — 19 October 2026
+
+The owner requests installation only when the complete first-training workflow is ready, and clarified the scope extends beyond forehand. No physical installation or recording has occurred. This correction checkpoint starts from committed/pushed `8379aaa7ddebcd8528e41916a65c052718e21eb7` on `feature/watch-recording-storage`; frozen review fixes/build3 have completed local verification and are prepared for publication under the owner-approved cycle. The PR head/checks and correction publication receipt identify the subsequent exact commit. Draft PR2 is open into the unchanged foundation branch. Current 53-file manifest SHA256 is `b9c70fa757663b4a667341c84e63b0bb8b9bc4c5535d6d739a5eff8a41b79be6`.
+
+Astra High completed both independent-review blockers. Core105, phone7 app-host+9 UI, Watch19 app-host+5 UI, both Release simulator builds and signed physical build3 pass; new exact-HEAD CI/review and physical evidence remain open. Prior GitHub run39245546273 was cancelled after exceeding its45-minute deadline; it is failed evidence, not a pass. [Review-fix evidence](docs/testing/261019_Logger_Review_Fix_Evidence_v1.0.md) records commands, source identity and limitations. The current drill metadata is forehand-only; a broader shot-type scope is being clarified before dependent implementation. No merge/release approval. **One next action:** publish the verified corrections for fresh exact-HEAD CI/review and resolve the first-training shot-type scope before installation.
+
 ## Publication checkpoint — 19 October2026
 
 Owner replied “approve” to the exact commit/push/draft-PR proposal. Logger implementation commit `2c05afc0419b5221726705240cd1f18f45e3a982` is verified pushed to `origin/feature/watch-recording-storage`; the local branch tracks it and was clean/synchronized after push. Main/foundation identities are unchanged. [Publication record](docs/testing/261019_Logger_GitHub_Publication_v1.0.md) supersedes uncommitted/unpublished and approval-pending statements below. Its documentation-only follow-up preserves all52 runtime/test/config/workflow hashes; the PR/checks identify the final submitted HEAD.

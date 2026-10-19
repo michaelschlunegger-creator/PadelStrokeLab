@@ -349,6 +349,40 @@ struct RecordingStoreTests {
     }
 
     #if os(macOS)
+    @Test func ownedSubprocessPreservesExitStatusAndBothOutputStreams() throws {
+        let result = try OwnedTestSubprocess.run(executable: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "printf 'normal-output\\n'; printf 'error-output\\n' >&2; exit 37"])
+        #expect(!result.timedOut)
+        #expect(result.terminationReason == .exit && result.terminationStatus == 37)
+        #expect(result.output.contains("normal-output") && result.output.contains("error-output"))
+    }
+
+    @Test func ownedSubprocessDrainsMoreThanAPipeBufferWithBoundedDiagnostics() throws {
+        let result = try OwnedTestSubprocess.run(executable: URL(fileURLWithPath: "/usr/bin/awk"),
+            arguments: ["BEGIN { print \"output-begin\"; for (i=0; i<32768; i++) printf \"0123456789abcdef\"; print \"\\noutput-end\"; exit 23 }"])
+        #expect(!result.timedOut)
+        #expect(result.terminationReason == .exit && result.terminationStatus == 23)
+        #expect(result.output.contains("output-begin") && result.output.contains("output-end"))
+        #expect(result.output.contains("output bytes omitted"))
+        #expect(result.output.utf8.count <= OwnedTestSubprocess.maximumLogBytes + 128)
+    }
+
+    @Test func ownedStalledSubprocessHasBoundedForcedCleanup() throws {
+        let clock = ContinuousClock(), start = clock.now
+        // exec preserves the ignored TERM disposition and leaves exactly one owned child PID.
+        let result = try OwnedTestSubprocess.run(executable: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "trap '' TERM; printf 'stall-ready\\n'; exec /bin/sleep 30"],
+            timeout: 1, terminationGrace: 1)
+        #expect(result.timedOut)
+        #expect(result.terminationReason == .uncaughtSignal && result.terminationStatus == SIGKILL)
+        #expect(result.output.contains("stall-ready"))
+        #expect(start.duration(to: clock.now) < .seconds(6))
+        var status: Int32 = 0
+        let waited = Darwin.waitpid(result.processID, &status, WNOHANG)
+        let waitError = errno
+        #expect(waited == -1 && waitError == ECHILD, "The helper must already have reaped its child")
+    }
+
     @Test func abruptChildHelper() throws {
         guard let path = ProcessInfo.processInfo.environment["PSL_ABRUPT_ROOT"],
               let cut = ProcessInfo.processInfo.environment["PSL_ABRUPT_CUT"] else { return }
@@ -368,9 +402,12 @@ struct RecordingStoreTests {
 
     @Test(arguments: ["temporary", "published", "finalTemporary", "finalPublished"])
     func abruptProcessExitPreservesTruthfulRecovery(_ cut: String) throws {
+        if ProcessInfo.processInfo.environment["PSL_ABRUPT_CHILD"] != nil {
+            // Fail before any spawn if the runner ignores the requested child-only selection.
+            FileHandle.standardError.write(Data("Crash-test child invoked its parent; refusing recursive spawn.\n".utf8))
+            _exit(75)
+        }
         let fixture = try RecordingDirectoryFixture()
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: CommandLine.arguments[0])
         // Preserve SwiftPM's actual runner/bundle arguments; Xcode 27 uses swiftpm-testing-helper.
         // Replace only the selection so the child cannot recursively run the parent fault test.
         var arguments = Array(CommandLine.arguments.dropFirst())
@@ -378,19 +415,15 @@ struct RecordingStoreTests {
             arguments.removeSubrange(index..<min(index + 2, arguments.count))
         }
         arguments += ["--filter", "RecordingStoreTests/abruptChildHelper"]
-        process.arguments = arguments
         var environment = ProcessInfo.processInfo.environment
+        environment["PSL_ABRUPT_CHILD"] = "1"
         environment["PSL_ABRUPT_ROOT"] = fixture.root.path
         environment["PSL_ABRUPT_CUT"] = cut
-        process.environment = environment
-        let output = Pipe()
-        process.standardOutput = output
-        process.standardError = output
-        try process.run()
-        process.waitUntilExit()
-        let childLog = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        let child = try OwnedTestSubprocess.run(executable: URL(fileURLWithPath: CommandLine.arguments[0]),
+                                                arguments: arguments, environment: environment)
+        try #require(!child.timedOut, "Crash helper exceeded its deadline: \(child.output)")
         let expected: Int32 = ["temporary": 71, "published": 72, "finalTemporary": 73, "finalPublished": 74][cut]!
-        #expect(process.terminationStatus == expected, "Unexpected child exit: \(childLog)")
+        #expect(child.terminationStatus == expected, "Unexpected child exit: \(child.output)")
         let before = try fixture.snapshot()
         let report = try fixture.inspect()
         #expect(report.status == (cut == "finalPublished" ? .finalized : .interrupted))

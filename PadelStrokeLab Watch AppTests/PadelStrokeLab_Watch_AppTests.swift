@@ -28,10 +28,140 @@ struct PadelStrokeLab_Watch_AppTests {
         let model = WatchRecorderModel()
         model.armConfirmed = true
         #expect(model.capabilityIssue?.contains("physical Apple Watch") == true)
+        model.refreshPreparation()
+        #expect(model.capabilityIssue?.contains("physical Apple Watch") == true)
         #expect(!model.canStart(arm: model.configuredWrist))
         model.start(arm: model.configuredWrist, handedness: .right)
         #expect(model.state == .ready && model.snapshot == nil)
         #endif
+    }
+
+    @Test func preparationRecoversFromMotionDenialWithoutRecreatingModel() {
+        let settings = PreparationSettingsFixture()
+        settings.value.unavailableReason = "Motion access is denied. Enable Motion & Fitness access in Settings."
+        let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() })
+        model.armConfirmed = true
+        #expect(!model.canStart(arm: .right))
+
+        settings.value.unavailableReason = nil
+        settings.value.frequencyDescription = "Newly available reported frequencies"
+        model.refreshPreparation()
+
+        #expect(settings.readCount == 2)
+        #expect(model.capabilityIssue == nil)
+        #expect(model.frequencyDescription == settings.value.frequencyDescription)
+        #expect(model.armConfirmed && model.canStart(arm: .right))
+        #expect(model.state == .ready && model.snapshot == nil && model.message == nil)
+    }
+
+    @Test func preparationRecoversFromWristMismatchWithFreshConfirmation() {
+        let settings = PreparationSettingsFixture()
+        let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() })
+        model.armConfirmed = true
+        #expect(!model.canStart(arm: .left))
+
+        settings.value.wrist = .left
+        model.refreshPreparation()
+
+        #expect(model.configuredWrist == .left)
+        #expect(!model.armConfirmed && !model.canStart(arm: .left))
+        model.armConfirmed = true
+        #expect(model.canStart(arm: .left))
+        #expect(model.state == .ready && model.snapshot == nil && model.message == nil)
+    }
+
+    @Test func crownChangeInvalidatesPlacementConfirmation() {
+        let settings = PreparationSettingsFixture()
+        let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() })
+        model.armConfirmed = true
+        settings.value.crownDescription = "Crown left"
+        model.refreshPreparation()
+        #expect(model.configuredWrist == .right && model.crownDescription == "Crown left")
+        #expect(!model.armConfirmed && !model.canStart(arm: .right))
+        #expect(model.state == .ready && model.snapshot == nil)
+    }
+
+    @Test func unchangedConfigurationPreservesReadyAndTerminalState() {
+        for state: MotionCaptureState in [.ready, .saved, .interrupted, .failed] {
+            let settings = PreparationSettingsFixture()
+            let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, initialState: state)
+            model.armConfirmed = true
+            settings.value.frequencyDescription = "Refreshed reported frequencies"
+            model.refreshPreparation()
+            #expect(settings.readCount == 2)
+            #expect(model.armConfirmed)
+            #expect(model.state == state && model.snapshot == nil && model.message == nil)
+            #expect(model.frequencyDescription == settings.value.frequencyDescription)
+            #expect(model.canStart(arm: .right) == (state == .ready))
+        }
+    }
+
+    @Test func preparationRefreshDoesNotReadOrChangeSettingsInAnyActivePhase() {
+        for state: MotionCaptureState in [.starting, .recording, .pausing, .paused, .resuming, .stopping] {
+            let settings = PreparationSettingsFixture()
+            let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, initialState: state)
+            model.armConfirmed = true
+            settings.value = WatchPreparationSettings(wrist: .left, crownDescription: "Crown left",
+                unavailableReason: "Motion access is denied.", frequencyDescription: "Changed frequencies")
+            model.refreshPreparation()
+            model.start(arm: .right, handedness: .right)
+            #expect(settings.readCount == 1)
+            #expect(model.state == state && model.snapshot == nil && model.message == nil)
+            #expect(model.configuredWrist == .right && model.crownDescription == "Crown right")
+            #expect(model.frequencyDescription == "Initial reported frequencies")
+            #expect(model.capabilityIssue == nil && model.armConfirmed)
+            #expect(!model.canStart(arm: .right))
+        }
+    }
+
+    @Test func preparationRefreshPreservesBlockingCapabilityReasons() {
+        for reason in ["Motion access is denied. Enable Motion & Fitness access in Settings.",
+                       "Motion access is restricted on this Watch.",
+                       "This Watch does not support both required batched motion streams."] {
+            let settings = PreparationSettingsFixture()
+            let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() })
+            model.armConfirmed = true
+            settings.value.unavailableReason = reason
+            model.refreshPreparation()
+            #expect(model.capabilityIssue == reason)
+            #expect(!model.canStart(arm: .right))
+            model.start(arm: .right, handedness: .right)
+            #expect(model.state == .ready && model.snapshot == nil && model.message == nil)
+        }
+    }
+
+    @Test func startRechecksConfigurationBeforeAnyWorkoutOrCapture() {
+        for change in ["wrist", "crown", "permission"] {
+            let settings = PreparationSettingsFixture()
+            let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() })
+            model.armConfirmed = true
+            #expect(model.canStart(arm: .right))
+            switch change {
+            case "wrist": settings.value.wrist = .left
+            case "crown": settings.value.crownDescription = "Crown left"
+            default: settings.value.unavailableReason = "Motion access is denied."
+            }
+            model.start(arm: .right, handedness: .right)
+            #expect(settings.readCount == 2)
+            #expect(!model.canStart(arm: .right))
+            #expect(model.state == .ready && model.snapshot == nil && model.message == nil)
+            if change != "permission" { #expect(!model.armConfirmed) }
+        }
+    }
+
+    @Test func newSetRefreshesPreparationAndRequiresConfirmation() {
+        let settings = PreparationSettingsFixture()
+        settings.value.unavailableReason = "Motion access is denied."
+        let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, initialState: .interrupted)
+        settings.value = WatchPreparationSettings(wrist: .left, crownDescription: "Crown left",
+            unavailableReason: nil, frequencyDescription: "Refreshed reported frequencies")
+        model.armConfirmed = true
+        model.newSet()
+        #expect(settings.readCount == 2)
+        #expect(model.state == .ready && model.snapshot == nil && model.message == nil)
+        #expect(model.configuredWrist == .left && model.crownDescription == "Crown left")
+        #expect(model.capabilityIssue == nil && model.frequencyDescription == settings.value.frequencyDescription)
+        #expect(!model.armConfirmed && !model.canStart(arm: .left))
     }
 
     @Test func rapidResumeWaitsForBothPauseAcknowledgements() {
@@ -118,6 +248,17 @@ struct PadelStrokeLab_Watch_AppTests {
         #expect(FileManager.default.fileExists(atPath: paths.rawRoot.path))
         #expect(FileManager.default.fileExists(atPath: paths.notesRoot.path))
         _ = try SessionAnnotationsStore(root: paths.notesRoot)
+    }
+}
+
+@MainActor
+private final class PreparationSettingsFixture {
+    var value = WatchPreparationSettings(wrist: .right, crownDescription: "Crown right",
+        unavailableReason: nil, frequencyDescription: "Initial reported frequencies")
+    private(set) var readCount = 0
+    func read() -> WatchPreparationSettings {
+        readCount += 1
+        return value
     }
 }
 

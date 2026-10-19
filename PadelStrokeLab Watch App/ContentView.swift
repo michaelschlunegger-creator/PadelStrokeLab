@@ -3,6 +3,7 @@ import PadelCore
 import PadelDesign
 
 struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage("practice.playingArm") private var storedArm = PlayingArm.right.rawValue
     @AppStorage("practice.handedness") private var storedHand = PlayingArm.right.rawValue
     @AppStorage("recording.recoveryNotice") private var recoveryNotice = ""
@@ -128,6 +129,9 @@ struct ContentView: View {
             }
         }
         .tint(PracticeTheme.royal)
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { recorder.refreshPreparation() }
+        }
     }
 
     @ViewBuilder private var controls: some View {

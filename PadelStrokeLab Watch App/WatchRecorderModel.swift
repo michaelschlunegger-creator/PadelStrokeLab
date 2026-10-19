@@ -12,6 +12,22 @@ struct WatchRetainedRecording: Identifiable, Sendable {
     let canTransfer: Bool
 }
 
+/// Read-only preparation inputs. The production provider always reads the actual Watch.
+struct WatchPreparationSettings {
+    var wrist: PlayingArm
+    var crownDescription: String
+    var unavailableReason: String?
+    var frequencyDescription: String
+
+    @MainActor static func current(source: WatchMotionSource) -> Self {
+        let device = WKInterfaceDevice.current()
+        return Self(wrist: device.wristLocation == .left ? .left : .right,
+                    crownDescription: device.crownOrientation == .left ? "Crown left" : "Crown right",
+                    unavailableReason: source.unavailableReason,
+                    frequencyDescription: source.frequencyDescription)
+    }
+}
+
 @MainActor @Observable
 final class WatchRecorderModel {
     private(set) var state: MotionCaptureState = .ready
@@ -28,8 +44,9 @@ final class WatchRecorderModel {
     private(set) var crownDescription = ""
     var armConfirmed = false
     private let services = WatchRecordingServices.shared
-    private let source = WatchMotionSource()
+    private let source: WatchMotionSource
     private let workout = WatchWorkoutDriver()
+    private let preparationSettingsProvider: @MainActor () -> WatchPreparationSettings
     private var engine: MotionCaptureEngine?
     private var activeRecordingID: UUID?
     private var paths: RecordingPaths?
@@ -40,20 +57,21 @@ final class WatchRecorderModel {
     private var deletedRecordings: Set<UUID> = []
     private var pauseGate = WatchPauseGate()
 
-    init() {
-        let device = WKInterfaceDevice.current()
-        configuredWrist = device.wristLocation == .left ? .left : .right
-        crownDescription = device.crownOrientation == .left ? "Crown left" : "Crown right"
-        capabilityIssue = source.unavailableReason
-        frequencyDescription = source.frequencyDescription
+    // Injection permits lifecycle tests without authorizing or starting hardware. UI uses defaults.
+    init(preparationSettingsProvider: (@MainActor () -> WatchPreparationSettings)? = nil,
+         initialState: MotionCaptureState = .ready) {
+        let source = WatchMotionSource()
+        self.source = source
+        self.preparationSettingsProvider = preparationSettingsProvider ?? { .current(source: source) }
+        paths = services.paths
+        connectivity = services.connectivity
+        refreshPreparation()
+        state = initialState
         workout.onEvent = { [weak self] event in self?.workoutChanged(event) }
         let stream = AsyncStream<MotionCaptureSnapshot>(bufferingPolicy: .bufferingNewest(1)) { changes = $0 }
         observationTask = Task { [weak self] in
             for await snapshot in stream { self?.update(snapshot) }
         }
-        paths = services.paths
-        connectivity = services.connectivity
-        if let error = services.storageError { capabilityIssue = error }
         refreshRetained()
     }
 
@@ -64,10 +82,22 @@ final class WatchRecorderModel {
         state == .ready && armConfirmed && arm == configuredWrist && capabilityIssue == nil && paths != nil
     }
 
+    /// Returning from Settings can recover preparation, but cannot change an active set's inputs.
+    func refreshPreparation() {
+        guard canPrepare else { return }
+        let settings = preparationSettingsProvider()
+        if configuredWrist != settings.wrist || crownDescription != settings.crownDescription {
+            armConfirmed = false
+        }
+        configuredWrist = settings.wrist
+        crownDescription = settings.crownDescription
+        frequencyDescription = settings.frequencyDescription
+        capabilityIssue = services.storageError ?? settings.unavailableReason
+    }
+
     func start(arm: PlayingArm, handedness: PlayingArm) {
-        capabilityIssue = source.unavailableReason
-        configuredWrist = WKInterfaceDevice.current().wristLocation == .left ? .left : .right
-        crownDescription = WKInterfaceDevice.current().crownOrientation == .left ? "Crown left" : "Crown right"
+        guard state == .ready else { return }
+        refreshPreparation()
         guard canStart(arm: arm), let paths, let changes else { return }
         do {
             let device = WKInterfaceDevice.current()
@@ -116,7 +146,7 @@ final class WatchRecorderModel {
         guard state.isTerminal else { return }
         source.stop(); workout.end(); engine = nil; snapshot = nil; activeRecordingID = nil
         state = .ready; armConfirmed = false; message = nil; pauseGate.reset()
-        capabilityIssue = source.unavailableReason
+        refreshPreparation()
     }
 
     private func hardwareModel(device: WKInterfaceDevice) -> String {

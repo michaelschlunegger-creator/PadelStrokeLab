@@ -1,5 +1,12 @@
 # Changelog
 
+## 19 October 2026 — independent-review corrections, build3
+
+- Refresh Watch preparation after Settings changes, clear placement confirmation when wrist/crown changes, and preserve active capture inputs/storage-error precedence. Added8 model regressions.
+- Bound crash-test subprocess completion/cleanup with owned-file diagnostics and recursion prevention; preserve abrupt-recovery assertions. Added3 subprocess tests.
+- Identify the corrected apps/test bundles as build3 and update CI source inventory to a new53-file manifest. Earlier manifest/log evidence is preserved. Current verification and unperformed physical checks are in the review-fix evidence record.
+- Record the owner’s installation condition and broader training-workflow request as a draft plan; no expanded drill support or automatic stroke/quality detection is claimed.
+
 ## 19 October2026 — approved logger publication
 
 - Owner approved committing/pushing the prepared logger and opening its stacked draft PR. Implementation commit `2c05afc0419b5221726705240cd1f18f45e3a982` is verified on the new remote feature branch.
