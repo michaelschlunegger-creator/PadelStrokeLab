@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSMotionUsageDescription</key>
+    <string>Record wrist acceleration and motion during a practice set you start, so you can review and label your shots.</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>Workout permission keeps your practice motion recording active when you lower your wrist. The app does not save a workout summary; watchOS may update activity metrics.</string>
+    <key>NSHealthShareUsageDescription</key>
+    <string>PadelStrokeLab does not request access to your Health history. A workout session enables user-started practice motion recording.</string>
+    <key>WKBackgroundModes</key>
+    <array>
+        <string>workout-processing</string>
+    </array>
+</dict>
+</plist>

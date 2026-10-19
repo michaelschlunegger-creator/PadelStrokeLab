@@ -11,6 +11,7 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: PracticeTheme.Space.large) {
                     brand
                     hero
+                    sessionsLink
                     preparationNote
                     contactGuide
                     watchReminder
@@ -46,7 +47,7 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 12) {
-                    PracticeEyebrow("Your first drill")
+                    PracticeEyebrow("Your training")
                         .foregroundStyle(PracticeTheme.yellow)
                     Image(systemName: "figure.racquetball")
                         .font(.system(size: 38, weight: .regular))
@@ -59,11 +60,11 @@ struct ContentView: View {
                     .padding(.trailing, 8)
             }
             VStack(alignment: .leading, spacing: 10) {
-                Text("Start with\nyour forehand.")
+                Text("Choose your shot.\nBuild your practice.")
                     .font(.largeTitle.weight(.bold))
                     .tracking(-1)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("One familiar stroke. A clear place to begin.")
+                Text("One intended shot type. One short set at a time.")
                     .font(.body)
                     .foregroundStyle(.white.opacity(0.85))
                     .fixedSize(horizontal: false, vertical: true)
@@ -72,7 +73,7 @@ struct ContentView: View {
                 PracticeGuideView()
             } label: {
                 HStack {
-                    Text("Explore the drill")
+                    Text("Plan your training set")
                     Spacer(minLength: 12)
                     Image(systemName: "arrow.up.right")
                 }
@@ -82,7 +83,7 @@ struct ContentView: View {
             .buttonStyle(PracticeActionStyle())
             .controlSize(.large)
             .accessibilityIdentifier("practiceGuideLink")
-            .accessibilityHint("Opens the forehand practice guide.")
+            .accessibilityHint("Opens the training and recording guide.")
         }
         .foregroundStyle(.white)
         .padding(PracticeTheme.Space.large)
@@ -136,9 +137,28 @@ struct ContentView: View {
         .padding(.horizontal, 4)
     }
 
+    private var sessionsLink: some View {
+        NavigationLink {
+            RecordingLibraryView()
+        } label: {
+            HStack(spacing: 16) {
+                Image(systemName: "waveform.path").font(.title2)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Sessions").font(.title3.bold())
+                    Text("Review recordings. Label your attempts.").font(.subheadline)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "arrow.up.right")
+            }
+            .practiceCard()
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("recordingLibraryLink")
+    }
+
     private var preparationNote: some View {
         Label {
-            Text("Preparation only. Recording is not available yet.")
+            Text("Record on your Watch. Review and label your attempts in Sessions.")
                 .fixedSize(horizontal: false, vertical: true)
         } icon: {
             Image(systemName: "info.circle")
@@ -156,28 +176,40 @@ private struct PracticeGuideView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: PracticeTheme.Space.large) {
-                GuideHeading(eyebrow: "The first drill", title: PracticeDrill.forehandGroundstroke.title,
-                             subtitle: "Begin with a stroke you know.", symbol: "figure.racquetball")
+                GuideHeading(eyebrow: "Practice with intent", title: "Your training set",
+                             subtitle: "Choose a shot you want to practise.", symbol: "figure.racquetball")
                 VStack(alignment: .leading, spacing: 25) {
                     guideStep("01", title: "Set up your Watch",
-                              detail: "Wear it on the arm you use to hold your racket. Select that arm and confirm the placement in the Watch app.")
+                              detail: "Wear it on your racket arm. Select your intended shot type, playing arm and handedness. Check the wrist and crown settings, then confirm placement before each new set.")
                     Divider()
-                    guideStep("02", title: "Keep the drill familiar",
-                              detail: "Start with controlled forehand groundstrokes during normal practice. Other strokes can wait.")
+                    guideStep("02", title: "Keep each set consistent",
+                              detail: "Record one intended shot type per short set. Use controlled attempts during normal practice, up to 120 active seconds. Select a different type when preparing the next set.",
+                              identifier: "trainingSetGuidance")
                     Divider()
                     guideStep("03", title: "Notice the contact",
                               detail: "Use your experience and contact feel. Where the ball lands is a separate observation.")
+                }
+                .practiceCard()
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Supported intended shot types").font(.title3.bold())
+                    ForEach(RecordingDrill.allCases) { drill in
+                        Text(drill.title).fixedSize(horizontal: false, vertical: true)
+                    }
+                    Text("Other / unclassified leaves intended type unspecified. It is separate from contact labels such as Uncertain or Air swing. All motion is recorded; your choice does not detect or classify shots.")
+                        .font(.footnote).foregroundStyle(PracticeTheme.secondaryInk(scheme))
                 }
                 .practiceCard()
                 VStack(alignment: .leading, spacing: 10) {
                     Label("No need to guess", systemImage: "questionmark.circle")
                         .font(.headline)
                     Text("Uncertain is a valid reference. A self assessment is a personal judgement, not an independent measurement.")
+                        .accessibilityIdentifier("trainingUncertaintyGuidance")
                         .font(.body)
                         .foregroundStyle(PracticeTheme.secondaryInk(scheme))
                 }
                 .practiceCard()
-                Text("This build helps you prepare. It does not record motion, save hits or score your play.")
+                Text("For your first test, record one attempt per set on your Watch so you can match it reliably. Start explicitly, pause and resume when needed, then stop and wait for the Watch to confirm saved data. Keep Watch originals until the iPhone receipt is verified. Review the intended type and coverage in Sessions, add or revise your label and a time interval when known, then export for read-back. Interrupted sets need review; retry transfer when needed. Delete local copies only through their confirmation. Ordered labels without a time match remain unmatched. No automatic contact score is produced.")
+                    .accessibilityIdentifier("firstAttemptGuidance")
                     .font(.footnote)
                     .foregroundStyle(PracticeTheme.secondaryInk(scheme))
                     .padding(.horizontal, 4)
@@ -192,7 +224,7 @@ private struct PracticeGuideView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func guideStep(_ number: String, title: String, detail: String) -> some View {
+    private func guideStep(_ number: String, title: String, detail: String, identifier: String = "") -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(number)
                 .font(.caption.monospacedDigit().weight(.bold))
@@ -201,6 +233,7 @@ private struct PracticeGuideView: View {
                 .font(.title3.weight(.bold))
                 .accessibilityAddTraits(.isHeader)
             Text(detail)
+                .accessibilityIdentifier(identifier)
                 .font(.body)
                 .foregroundStyle(PracticeTheme.secondaryInk(scheme))
         }
@@ -247,7 +280,7 @@ private struct ContactGuideView: View {
                 .padding(PracticeTheme.Space.large)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(PracticeTheme.yellow, in: .rect(cornerRadius: 26))
-                Text("Reference guide only. Labels are not being entered or saved in this build.")
+                Text("After a set, open Sessions to save your own attempt labels. Use Uncertain whenever the evidence is unclear.")
                     .font(.footnote)
                     .foregroundStyle(PracticeTheme.secondaryInk(scheme))
                     .padding(.horizontal, 4)
@@ -317,4 +350,5 @@ private struct GuideHeading: View {
 
 #Preview {
     ContentView()
+        .environment(RecordingLibraryModel(activateConnectivity: false))
 }

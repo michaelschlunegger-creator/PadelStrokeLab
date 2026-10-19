@@ -1,5 +1,33 @@
 # Changelog
 
+## 19 October2026 — complete-training expansion, verification in progress
+
+- Add explicit manual intended drill selection for forehand/backhand groundstrokes and volleys, serve, lob, bandeja, vibora, smash and Other/unclassified, with truthful new protocol metadata and historical compatibility.
+- Retain the complete recording/recovery/transfer/review/owner-label/export/delete flow and shared premium theme. Reset placement confirmation when setup changes; reject invalid saved shot choices until explicit replacement.
+- Extend roundtrip, model, library and UI regressions. Preserve failed UI/CI results and diagnose test-navigation, Mac-sleep and uncontrolled-clock fixture failures without weakening production safety rules.
+- Verification is ongoing; no physical installation or validated clean-hit detection is claimed. See the current Gate Card and complete-training evidence.
+
+## 19 October 2026 — independent-review corrections, build3
+
+- Refresh Watch preparation after Settings changes, clear placement confirmation when wrist/crown changes, and preserve active capture inputs/storage-error precedence. Added8 model regressions.
+- Bound crash-test subprocess completion/cleanup with owned-file diagnostics and recursion prevention; preserve abrupt-recovery assertions. Added3 subprocess tests.
+- Identify the corrected apps/test bundles as build3 and update CI source inventory to a new53-file manifest. Earlier manifest/log evidence is preserved. Current verification and unperformed physical checks are in the review-fix evidence record.
+- Record the owner’s installation condition and broader training-workflow request as a draft plan; no expanded drill support or automatic stroke/quality detection is claimed.
+
+## 19 October2026 — approved logger publication
+
+- Owner approved committing/pushing the prepared logger and opening its stacked draft PR. Implementation commit `2c05afc0419b5221726705240cd1f18f45e3a982` is verified on the new remote feature branch.
+- Added publication verification and current status links in a documentation-only follow-up;52 runtime/test/config/workflow hashes remain unchanged. Current CI, committed-HEAD review and physical gates remain open; no merge or release.
+
+## 19 October 2026 — local complete physical-shot logger
+
+- Astra planned the full tester before bounded implementation: real Watch Core Motion capture during an explicit workout; guarded recording/pause/resume/stop; bounded queues/chunks, retained source timestamps and interruption recovery.
+- Integrated durable raw data, streamed verified archives, application receipts, phone coverage review and owner labels with history, export and confirmed per-device deletion. Added HealthKit/workout background configuration and retained the shared premium theme.
+- Corrected independent precommit review findings around stop/drain, stale callbacks, pause acknowledgement, active recording leases, transfer/deletion races and background completion. Physical correctness remains unverified.
+- Core102, full phone7 app-host+9 UI and Watch11 app-host+5 UI, and both final Release simulator builds passed. Physical build2/signature checks passed after normal HealthKit provisioning. Preserved Watch UI failures11–13 led to evidence-based test-only typed-query/scrolling corrections; focused14 and full15 pass without changing production or removing behavioural assertions.
+- Added exact-source evidence and a first-shot runbook. Code remains uncommitted/unpublished on `feature/watch-recording-storage`; no install, merge, release or automatic quality score is claimed.
+
+
 ## 16 October 2026 — Uncommitted foundation
 
 - Adopted current App Specifications `PSL-SPEC-001 v1.1` with a source revision snapshot; retained the iOS/watchOS 27 mandate and immutable v2.0 PDF/history.
@@ -31,3 +59,11 @@ Added a bounded physical-test runbook and GitHub foundation verification workflo
 - Physical installs remain on owner hold. No merge or release.
 
 - Independent review caught low-contrast native Watch dismissal. Changed navigation tint to royal blue, retained yellow setup accents, rebuilt both Release products, and reran all Watch tests (five executions passed). Prior capture/review retained.
+
+## 17 October 2026 — local recording storage foundation
+
+- Owner approved package A and a dependent local branch from the unmerged foundation; Astra High implemented its three core files.
+- Added a separate versioned raw-recording schema and bounded deterministic binary codec with original per-stream timestamps, supplied device/setup metadata and SHA-256 integrity checks.
+- Added synchronous single-caller storage with exclusive immutable chunks, checked synchronization, atomic/read-back manifests, retained-coverage finalization and non-destructive bounded recovery.
+- Added real filesystem/fault/recovery/process-interruption tests; retained initial test harness failures and their root-cause corrections in the evidence.
+- No app UI, live sensor, workout, permissions, connectivity, scoring or AI changes. Code is local/uncommitted; no publication, physical install, merge or release.

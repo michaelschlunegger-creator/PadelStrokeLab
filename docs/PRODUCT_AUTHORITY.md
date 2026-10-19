@@ -39,3 +39,10 @@ The owner explicitly directed that code be saved in GitHub. [ADR 002](adr/002-so
 ## Owner amendment — unified visual design, 17 October 2026
 
 The owner requests blue, yellow and white, modern professional presentation and native Apple Liquid Glass where appropriate across every implemented page/subpage. The [design contract](design/261017_Blue_Yellow_White_UI_Contract_v1.0.md) bounds this preparation-only increment. Shared presentation tokens apply to phone and Watch; long reading surfaces remain opaque. The owner explicitly requests simulator UI review before any physical installation. This changes visual direction, not recording scope or release approval.
+
+
+## Owner amendment — complete first-training workflows and shot types, 19 October 2026
+
+After reviewing the proposed [broader first-training plan](architecture/261019_Broader_Training_Readiness_Plan_v1.1.md), the owner explicitly answered: “Yes, full training workflow and shot types”, and reinforced “Use astra for such essential stuff.” This approves expanding the first training logger beyond the original forehand-only drill, using selectable intended padel shot types and the complete setup/record/pause/resume/save/recover/transfer/review/label/export/delete workflow. It is not approval of automatic shot recognition, clean-hit scoring, long-duration match analysis, paid expertise, social features, merge or release.
+
+Use Astra Extra High for the bounded architecture/risk review, Astra High implementation, and a separate independent committed-HEAD review. Preserve the original specification snapshot and old recordings. New collections must carry truthful manual drill/protocol metadata and remain distinguishable from the original forehand protocol. One intended shot type per short controlled set is the initial collection method; other movements remain explicitly unclassified. Actual installation remains conditional on pre-install readiness for real training recordings, followed by observed physical dry-run/transfer/export before court contacts. Short-set capture limits, playing-arm placement, owner self labels and all physical/measurement caveats remain binding.
