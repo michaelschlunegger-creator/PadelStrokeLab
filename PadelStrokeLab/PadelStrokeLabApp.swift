@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct PadelStrokeLabApp: App {
+    @State private var recordings = RecordingLibraryModel()
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(recordings)
         }
     }
 }

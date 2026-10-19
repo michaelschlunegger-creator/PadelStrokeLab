@@ -2,7 +2,7 @@ name: Foundation checks
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, chore/project-governance]
   workflow_dispatch:
 
 permissions:
@@ -37,7 +37,7 @@ jobs:
           exec > >(tee "$EVIDENCE/preflight.log") 2>&1
           git rev-parse HEAD
           git status --short
-          shasum -a 256 -c docs/testing/261017_PremiumUI_Code_State.sha256
+          shasum -a 256 -c docs/testing/261019_Physical_Logger_Publication_Code_State.sha256
           test -d "$DEVELOPER_DIR"
           toolchain_version="$(xcodebuild -version)"
           printf '%s\n' "$toolchain_version"

@@ -1,5 +1,17 @@
 # Active Gate Card
 
+## Latest checkpoint — 19 October 2026, complete local logger
+
+This checkpoint supersedes prior storage-only and approval-pending statuses below. Owner-authorized complete tester implemented after Astra Extra High planning, with bounded Astra High packages and separate read-only precommit review. Current branch `feature/watch-recording-storage`, HEAD/base `ee15c0ef86c99064bb1295c7550fba1daea66a3c`, no upstream. Live remote foundation unchanged; main `f21bfab4dd6da9f96d7104bdfa3f06c5e4c92ea8`, PR1 open/draft/unmerged and separate from the local logger. Rechecked 19 October.
+
+Implemented Watch real capture/workout/controls/recovery, bounded durable data and original timestamps, verified transfer/archive, phone coverage/owner-label/export/deletion and Watch local deletion/background completion. Current [52-file manifest](docs/testing/261019_Physical_Logger_Top_Scan_Code_State.sha256) SHA256 `a70de47a76f8d9fc54eb08d22d634b0d5717effa0bc6ac00dd8a692570b0d988` identifies the final verified source. Original build/core/phone sources are unchanged; only the Watch UI fixture changed after preserved failures11–13. No auto quality score or physical success claim.
+
+G0–G3 locally reconciled/scoped/implemented. G4 PASS WITH PHYSICAL LIMITS: core102; phone7 app-host+9 UI; Watch11 app-host+5 UI; both final Release simulator builds; generic signed physical Debug build2 and deep/strict signature verification after normal Xcode provisioning resolved missing HealthKit. Watch focused14 and full15 pass after test-only corrections, independently inspected without changing assertions. [Evidence](docs/testing/261019_Physical_Logger_Local_Evidence_v1.0.md) retains all failures and exact identities. G5 current hosted CI (including required workflow inventory update), G6 committed-HEAD independent review, G7 physical evidence and G8 approved publication/merge remain open. All logger code is uncommitted/unpublished.
+
+Physical sensor, permission, background, delivery, battery and shot-data behaviour remain UNKNOWN. The owner has now connected/unlocked the iPhone. Fresh device details verify connected development tunnels, available DDI services and Developer Mode on iPhone15Pro/iOS27.2 and WatchUltra2/watchOS27.0.1; signed build2 profiles cover both. No physical installation or capture. The [first-set runbook](docs/testing/261019_Physical_Shot_Logger_Runbook_v1.0.md) starts with an air-swing dry run and verified phone export before court contacts.
+
+The required G5/G6-before-G7 sequence remains binding; the preceding install-next wording did not waive it. Astra prepared a bounded two-line CI inventory/stacked-base-filter update. [Publication preflight](docs/testing/261019_Logger_Publication_Preflight_v1.0.md) records the exact diff, YAML validation and proposed draft PR. Current [publication52-file manifest](docs/testing/261019_Physical_Logger_Publication_Code_State.sha256) SHA256 `52b5e092cb30eb8a7aac1a3a56d15c6a3119f55c6df80775d6f1047cf7383859`; only workflow differs from the passing app/test identity above, and runtime/build evidence remains applicable. No remote mutation. **One next action:** owner approves committing/pushing `feature/watch-recording-storage` and opening its draft PR into `chore/project-governance` so exact-HEAD CI and review can run before installation. No merge/release approval is requested.
+
 Updated 16 October 2026, Asia/Dubai. Prior bootstrap gate is preserved [unchanged as history](docs/history/260824_Governance_Gate_Card_v1.0.md).
 
 ## Package and authority
@@ -78,3 +90,41 @@ G5 remains blocked by hosted Watch runtime-profile failure on prior HEAD; fresh 
 ### Subsequent independent-review correction
 
 Review of 9a77a32 was BLOCKED: native Watch close X white/yellow contrast. The only subsequent production change uses royal-blue Watch navigation tint, preserving explicit yellow confirmation controls. [Contrast evidence](docs/testing/261017_Watch_Navigation_Contrast_Evidence_v1.0.md) records both rebuilt Release products and all five Watch test executions passing; unchanged phone/core evidence is retained by per-file source identity. Updated source manifest SHA256 a66022dce9dfa8175595461f1e05563469a2dd4d474d0ed512c7c541d7199c99. Refreshed committed-HEAD review/current hosted CI verdict belongs to draftPR1; do not infer clean gates from earlier tests. Native preview cleanup remains blocked on Mac unlock.
+
+## Current task — Watch motion recording plan, 17 October 2026
+
+This section supersedes the old Mac-lock/next-action statuses. The owner completed a manual simulator preparation-UI walkthrough and now requests motion recording. These observations do not establish physical or sensor acceptance. No recording code exists yet.
+
+G0 reverified: clean starting `chore/project-governance` HEAD/upstream/live remote `ee15c0ef86c99064bb1295c7550fba1daea66a3c`; remote main `f21bfab4dd6da9f96d7104bdfa3f06c5e4c92ea8`, six commits behind. No local main branch. Draft PR1 remains open/unmerged. Exact-head hosted CI run 39031993296 is **CANCELLED**. Xcode 27.0 (27A266a) and both OS27 SDKs reverified.
+
+[Proposed recording plan](docs/architecture/261017_Watch_Motion_Recording_Plan_v1.0.md), [test contract](docs/testing/261017_Watch_Recording_Test_Contract_v1.0.md) and [Astra Extra High architecture review](docs/reviews/261017_Watch_Recording_Architecture_Review_v1.0.md) are prepared. First production package is storage/models/codec only, with two Level3 domains; no sensors/workout/permissions/concurrency/UI yet. Later recording packages remain separately bounded. Existing practice schemas and historical evidence stay unchanged. These planning changes are local/uncommitted; no new tests/builds, remote changes, physical install or merge occurred.
+
+G1/G2 **PENDING OWNER APPROVAL** under the high-risk plan-before-code rule, including a dependent-branch exception because foundation is unmerged. **One next action:** owner approves or changes the concrete proposed plan; then create the approved scoped local branch, define final engineering limits/tests and implement package A.
+
+### Owner approval and implementation start
+
+Owner replied “ok, add the code” to the concrete plan and dependent-branch approval request. G1/G2 are approved for package A, with final engineering limits/test definitions recorded before production edits. The approved local branch `feature/watch-recording-storage` was created from `ee15c0ef86c99064bb1295c7550fba1daea66a3c`; no upstream or remote branch exists. This is the recorded exception to clean-main branching, not a foundation merge. Existing planning edits were preserved. G0/toolchain and live remote/PR were rechecked; main/foundation remote identities and cancelled CI are unchanged.
+
+Astra High implements the three approved new core production files and their tests. Parent coordinates verification/documentation. No live acquisition, Watch controls, permission/entitlement/project changes, transport or physical installation is included. No commit/push/PR/merge action is authorized by this task. **Next action:** implement and verify the approved storage package, preserving failures and exact source evidence.
+
+### Current package A result — local implementation verified
+
+Three new production files (792 lines) and three test files implement the approved synchronous recording-model/codec/store package. Existing source/configuration/permissions remain unchanged. [Evidence](docs/testing/261017_Recording_Storage_Local_Evidence_v1.0.md) records **64 passing core tests** and both OS27 Release simulator builds, the initial 34-test/39-issue harness failure and justified corrections, plus the added valid-checksum malformed-header regression. [31-file source identity](docs/testing/261017_Recording_Storage_Code_State.sha256), SHA256 `cd3f1430c77ffa59aa5aefa0b22b76a6b202b2c5acd8cdaaa680c8aef565bc01`, verified after final tests. No app UI/physical test or live recording claim.
+
+G0–G3 verified/approved within this scope; G4 passed locally with physical limitations. G5 current CI, G6 independent committed-HEAD review and G7 relevant physical evidence remain open. G8 uncommitted/unpublished, no merge or install authorized. **One next action:** owner authorizes a scoped commit/push/draft PR; the later publication increment must cover CI's new source inventory before review. Keep foundation dependency and all prior blockers explicit.
+
+## Current owner direction — complete physical-shot logger, 18 October 2026
+
+Owner explicitly clarified “implement EVERYTHING so we can physically test shots” using Astra, and then required Codex/Astra planning first. This supersedes the earlier storage-only coding boundary and repeated stops between technical stages. Preserve the local storage package; no live-logger production code was changed before the Astra Extra High read-only architecture review and [full plan/test contract](docs/architecture/261018_Physical_Shot_Logger_Plan_v1.0.md).
+
+G0 reverified: current branch/HEAD/base/remote identities as above, expected uncommitted storage/docs only, no upstream; Xcode27.0(27A266a) and both27 SDKs available. G1/G2 for the complete tester are bounded by the planned internal packages; each package must remain within file/line/risk limits before source edits. Owner authorization covers proceeding through all packages, not a further planning-only delivery.
+
+Next: Astra High implementation of capture, Watch lifecycle/controls, verified retrieval, labels/export and integrated testing. Preserve the premium theme, expose physical unknowns and never invent contact-quality results. Actual signed-device testing will require owner actions, one at a time. Publication/merge/release still follow their distinct authorization gates.
+
+### Implementation checkpoint — 19 October 2026, Asia/Dubai
+
+The local complete-logger implementation now includes the bounded capture engine, real Core Motion/HealthKit adapters, Watch recording controls/recovery, streamed archive and verified-receipt transport, iPhone review/owner-label/export/deletion screens and matching configuration. Parent Release simulator builds `parent/02-iphone-release.log` and `parent/02-watch-release.log` passed before subsequent reviewed corrections. iPhone app-host tests `parent/03-phone-unit.log` passed seven tests, including actual Application Support storage. Targeted engine `watch/core-engine-07.log` passed19 tests; shared archive/receipt/transaction `shared/07-transactions-leases.log` passed15 tests. These are scoped observations, not a final integrated pass for the current source.
+
+Independent read-only Astra review identified and implementation corrected accepted-batch stop ordering, old-generation failures, pause acknowledgments/reset, active-capture export, import/delete/receipt races and internal receive-copy cleanup. Watch local deletion and background-refresh completion are finishing; final source verification remains open. `parent/03-watch-unit.log` and `parent/04-watch-unit.log` preserve failed test builds (mutating assertion macro, then source/module changes during concurrent implementation); do not claim Watch app tests passed yet.
+
+A connection interruption stopped the three worker turns; on 19 October their state was checked and they were resumed. All code remains on disk, uncommitted on the same local branch/HEAD with no upstream. No new GitHub publication, merge, physical install, real sensor evidence or quality-detector claim exists. Do not reuse the storage-only64-test or earlier app-build evidence as a final logger verdict. **Next action:** freeze the reviewed source, run final core/app/UI suites and builds, then signed-device preflight and one owner device action at a time.

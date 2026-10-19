@@ -1,5 +1,15 @@
 # Foundation handover
 
+## Current logger checkpoint — 19 October 2026
+
+This section supersedes the historical foundation/storage-only statuses below. The complete owner-authorized physical-shot logger is implemented locally on `feature/watch-recording-storage`, no upstream, base/HEAD `ee15c0ef86c99064bb1295c7550fba1daea66a3c`. Foundation draft PR1 remains open/unmerged at that HEAD; live main remains `f21bfab4dd6da9f96d7104bdfa3f06c5e4c92ea8`. Logger changes are uncommitted/unpublished. No physical installation or release occurred.
+
+Astra Extra High reviewed architecture before Astra High bounded implementation. Watch capture/controls/recovery, durable raw data, verified transfer, phone coverage/labels/export and explicit local deletion are integrated. Read-only precommit review and corrections are complete; a formal committed-HEAD verdict remains pending. The [final52-file manifest](testing/261019_Physical_Logger_Top_Scan_Code_State.sha256) SHA256 is `a70de47a76f8d9fc54eb08d22d634b0d5717effa0bc6ac00dd8a692570b0d988`. Only the Watch UI test fixture differs from the original final build/core/phone source identity; all production files remain unchanged.
+
+Verified: core102 tests, phone7 app-host+9 UI tests, Watch11 app-host+5 UI tests, both final Release simulator builds, physical Debug build2 with correct Watch HealthKit provisioning and deep/strict signature verification. [Current evidence](testing/261019_Physical_Logger_Local_Evidence_v1.0.md) records passing runs09/15 and preserved Watch11–13 fixture failures. Actual physical sensors, background continuity, delivery, battery and court behaviour remain UNKNOWN. Remembered hardware still has no available development connection in the final inventory.
+
+Subsequent owner connection is now verified on both physical devices: iPhone15Pro/iOS27.2 and WatchUltra2/watchOS27.0.1, Developer Mode/DDI/tunnels available, both hardware IDs covered by signed build2 profiles. No install/capture. The G5/G6-before-G7 rule still applies; the earlier install-next wording did not waive it. Astra prepared the two-line CI manifest/base-filter correction and parent validated its YAML/diff and52 hashes. [Publication manifest](testing/261019_Physical_Logger_Publication_Code_State.sha256) SHA256 `52b5e092cb30eb8a7aac1a3a56d15c6a3119f55c6df80775d6f1047cf7383859`; only workflow differs from the passing app/test baseline. [Publication proposal](testing/261019_Logger_Publication_Preflight_v1.0.md) is ready for explicit commit/push/draft-PR approval. CI and committed-HEAD review precede installation; G5/G6/G7 and merge approval remain open. No remote mutations; do not claim the logger is already in GitHub.
+
 Updated 16 October 2026. This is a local preparation foundation, not the completed WP1 recording tester.
 
 ## Verified state
@@ -49,3 +59,23 @@ Apps are installed/launched only on the dedicated simulators; Xcode27 shows them
 ### Contrast correction after independent review
 
 Astra High review of 9a77a32 found white/yellow Watch picker close contrast inadequate. One-line royal-blue navigation tint correction preserves yellow setup accents. [Current contrast evidence](testing/261017_Watch_Navigation_Contrast_Evidence_v1.0.md) identifies the new source, two rebuilt Release products and five passing affected Watch test executions. Phone/core sources are unchanged and retain their previous test evidence. Current Watch screenshots use `_Blue_Navigation`; old picker is retained as failed evidence. Refreshed exact-HEAD review and CI results are tracked in draftPR1. Mac unlock/visual and physical holds remain.
+
+## Current task state — recording planning, 17 October 2026
+
+Superseding old Mac-lock statuses: owner completed a manual simulator walkthrough of preparation screens and Watch arm confirmation/reset, then requested recording implementation. No physical sensor testing or installation is established by that walkthrough. G0 reverified HEAD/upstream/live remote `ee15c0e`, remote main `f21bfab`, six commits ahead/zero behind, clean before local planning edits. No local main exists. PR1 remains open/draft/unmerged; exact-head hosted run 39031993296 is cancelled. Xcode27/OS27 SDKs reverified.
+
+[Recording plan](architecture/261017_Watch_Motion_Recording_Plan_v1.0.md), [test contract](testing/261017_Watch_Recording_Test_Contract_v1.0.md) and [Astra Extra High architecture review](reviews/261017_Watch_Recording_Architecture_Review_v1.0.md) are local/uncommitted. No new production code, tests/build execution, branch, commit/push/PR, physical install or merge occurred in this task. First package adds only synchronous recording models/codec/store with timestamp/evidence and persistence/recovery risks. Existing practice models remain metadata only. Later live-capture packages need their own bounded contracts; do not hide all domains in one package.
+
+Owner approval is pending for the high-risk plan and dependent branch from the unmerged foundation. Next: obtain that concrete decision, create the scoped branch and implement tests before package A production changes. All old source evidence remains historical; no new recording capability or merge-ready claim is made.
+
+## Current implementation handover — storage package A, 17 October 2026
+
+This section supersedes the preceding pending-approval/planning-only state. Owner replied “ok, add the code” to the plan/branch request. Current branch `feature/watch-recording-storage`, no upstream, base/HEAD still `ee15c0ef86c99064bb1295c7550fba1daea66a3c`; all new work is local/uncommitted. Foundation draft PR1 and remote main remain separate/unmerged.
+
+Astra High implemented only three new production files in PadelCore (`RecordingModels.swift`, `RecordingChunkCodec.swift`, `RecordingStore.swift`, 792 lines), three test files and the test contract constants. Parent maintains supporting docs and source identity. Core runtime paths provide strict raw timestamp/identity/channel metadata, deterministic SHA-256 binary chunks, exclusive synchronized storage, read-back manifests, verified retained-coverage finalization and bounded non-destructive recovery. Existing practice schemas/app UI/project/permissions/signing/CI remain unchanged. The API is synchronous, single-caller and not integrated into either app.
+
+[Local evidence](testing/261017_Recording_Storage_Local_Evidence_v1.0.md): **64 core tests pass**, including existing 29, and both OS27 Release simulator builds pass. Initial fixture/child-runner failures and diagnostic commands remain preserved; safety checks were not relaxed. Final manifest SHA256 `cd3f1430c77ffa59aa5aefa0b22b76a6b202b2c5acd8cdaaa680c8aef565bc01` identifies all 31 source/configuration/asset files. No source drift occurred during builds; no new UI or physical acceptance is claimed.
+
+Limits: storage root must be an existing canonical no-symlink directory; no hostile concurrent-writer/power-loss guarantee; caps are engineering bounds, not supported session duration. Watch sandbox/data-protection behavior remains unverified. Storage finalized status describes retained bytes, not uninterrupted capture. No live motion/workout/controller/transfer/export/scoring exists. A later live package must define chunking/checkpoint policy, observed rates, stop-tail uncertainty and resource/clock recovery.
+
+Next owner action: authorize scoped commit/push/draft PR. CI source-inventory update requires a bounded publication increment; CI, independent committed-HEAD review and physical gates remain pending before any merge-ready claim. No new commit/push/PR/merge, physical installation or release was performed. Do not automatically continue to sensors without their bounded contract.

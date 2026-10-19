@@ -11,6 +11,7 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: PracticeTheme.Space.large) {
                     brand
                     hero
+                    sessionsLink
                     preparationNote
                     contactGuide
                     watchReminder
@@ -136,9 +137,28 @@ struct ContentView: View {
         .padding(.horizontal, 4)
     }
 
+    private var sessionsLink: some View {
+        NavigationLink {
+            RecordingLibraryView()
+        } label: {
+            HStack(spacing: 16) {
+                Image(systemName: "waveform.path").font(.title2)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Sessions").font(.title3.bold())
+                    Text("Review recordings. Label your attempts.").font(.subheadline)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "arrow.up.right")
+            }
+            .practiceCard()
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("recordingLibraryLink")
+    }
+
     private var preparationNote: some View {
         Label {
-            Text("Preparation only. Recording is not available yet.")
+            Text("Record on your Watch. Review and label your attempts in Sessions.")
                 .fixedSize(horizontal: false, vertical: true)
         } icon: {
             Image(systemName: "info.circle")
@@ -177,7 +197,7 @@ private struct PracticeGuideView: View {
                         .foregroundStyle(PracticeTheme.secondaryInk(scheme))
                 }
                 .practiceCard()
-                Text("This build helps you prepare. It does not record motion, save hits or score your play.")
+                Text("For your first test, record one intended shot per set on your Watch. After stopping, label that attempt in Sessions and add a time interval when known. Ordered labels without a time match remain unmatched. No automatic contact score is produced.")
                     .font(.footnote)
                     .foregroundStyle(PracticeTheme.secondaryInk(scheme))
                     .padding(.horizontal, 4)
@@ -247,7 +267,7 @@ private struct ContactGuideView: View {
                 .padding(PracticeTheme.Space.large)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(PracticeTheme.yellow, in: .rect(cornerRadius: 26))
-                Text("Reference guide only. Labels are not being entered or saved in this build.")
+                Text("After a set, open Sessions to save your own attempt labels. Use Uncertain whenever the evidence is unclear.")
                     .font(.footnote)
                     .foregroundStyle(PracticeTheme.secondaryInk(scheme))
                     .padding(.horizontal, 4)
@@ -317,4 +337,5 @@ private struct GuideHeading: View {
 
 #Preview {
     ContentView()
+        .environment(RecordingLibraryModel(activateConnectivity: false))
 }

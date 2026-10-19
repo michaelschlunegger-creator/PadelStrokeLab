@@ -1,5 +1,11 @@
 # Testing
 
+## Current full logger — 19 October 2026
+
+The [full logger evidence](testing/261019_Physical_Logger_Local_Evidence_v1.0.md) supersedes older storage-only status. The [52-file source manifest](testing/261019_Physical_Logger_Top_Scan_Code_State.sha256) identifies uncommitted logger build2 on `feature/watch-recording-storage` at base/HEAD `ee15c0e`. Final core102, phone7 app-host+9 UI, Watch11 app-host+5 UI, and both OS27 Release simulator builds passed. Generic physical Debug build and deep/strict code-signature verification passed after normal provisioning obtained the Watch HealthKit capability. Signing failure and Watch UI failures11–13 remain preserved, with evidence-based test-only corrections and passing focused14/full15. Production/build files are unchanged by those fixture corrections.
+
+Final full suites ran sequentially; consult the evidence record for exact artifacts, not the historical totals below. Phone and Watch captured setup/empty-library messages were inspected, but populated recording-detail/label/export visual acceptance remains open. No physical install, motion, background, radio transfer, battery or clean-hit detection result is established. The [first-set runbook](testing/261019_Physical_Shot_Logger_Runbook_v1.0.md) defines hardware observations. Workflow inventory update/CI, formal committed-HEAD review and physical gates remain open; no merge-ready claim.
+
 Updated 16 October 2026. The bounded preparation foundation uses Xcode 27.0 (27A266a), Swift 6.4 and iOS/watchOS 27 SDKs. All commands explicitly select /Applications/Xcode.app/Contents/Developer; generated output stays outside the source/Drive folders.
 
 The shared model suite covers constructors and decoding, unsupported meanings/schemas, identity/revision/attempt conflicts, notes, malformed metadata, deterministic round trips and archive size bounds. These tests do not prove sensor timing, durable storage, Watch transfer or motion classification.
@@ -31,3 +37,9 @@ Existing empty UI examples are replaced by meaningful guide/back-navigation and 
 [Detailed evidence](testing/261017_PremiumUI_Local_Evidence_v1.0.md) supersedes older UI/build claims for this increment. Source fingerprint: [25-file manifest](testing/261017_PremiumUI_Code_State.sha256). Core29, both final Release builds and full phone/Watch scheme14 executions passed. Meaningful phone navigation and Watch confirmation regressions supplement generated smoke tests. Failed attempts/capture defects remain recorded. Dark rendering, complete landscape visual audit, Watch large text and physical usability remain unverified. Physical installation is on owner hold until simulator UI review; the Mac locked during final preview arrangement.
 
 The subsequent [Watch contrast correction](testing/261017_Watch_Navigation_Contrast_Evidence_v1.0.md) supersedes affected builds/Watch results: both Release products rebuilt successfully, all five Watch test executions passed, new picker capture inspected. Per-file hashes preserve the unchanged phone/core test evidence; no full14-execution run is claimed for the changed Watch source.
+
+## Recording storage package A — 17 October 2026
+
+The owner-approved [storage test contract](testing/261017_Watch_Recording_Test_Contract_v1.0.md) preceded production edits. New tests exercise the actual codec/filesystem store/recovery paths, injected I/O failures and abrupt child-process exits. [Local evidence](testing/261017_Recording_Storage_Local_Evidence_v1.0.md) records full regression results, both OS27 Release simulator builds, preserved initial failures, exact source identity and remaining gates. No app UI test rerun or physical-device result is claimed for this storage-only package.
+
+Host filesystem success cannot establish Watch sandbox/data-protection behavior, power-loss durability, sensor fidelity, background continuity, rate, battery or court readiness. The storage API has no resume/reopen-for-capture operation and no app integration. Source/configuration hashes identify evidence before any commit. Formal independent committed-HEAD review and new CI remain pending; PR1's cancelled CI is not a pass for this branch.

@@ -77,7 +77,25 @@ final class PadelStrokeLabUITests: XCTestCase {
         XCTAssertTrue(home.waitForExistence(timeout: 5))
         let notice = app.descendants(matching: .any)["preparationNotice"]
         reveal(notice, in: home)
-        XCTAssertTrue(notice.label.contains("Recording is not available"))
+        XCTAssertTrue(notice.label.contains("Record on your Watch"))
+    }
+
+    @MainActor
+    func testSessionsEmptyStateAndBackNavigation() throws {
+        let app = XCUIApplication()
+        app.launch()
+        let home = app.scrollViews["homeScreen"]
+        XCTAssertTrue(home.waitForExistence(timeout: 10))
+        let sessions = app.buttons["recordingLibraryLink"]
+        reveal(sessions, in: home)
+        sessions.tap()
+        let library = app.scrollViews["recordingsScreen"]
+        XCTAssertTrue(library.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Record your first set on your Watch"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["refreshRecordings"].exists)
+        capture(app, name: "05-Sessions-empty")
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(home.waitForExistence(timeout: 5))
     }
 
     @MainActor

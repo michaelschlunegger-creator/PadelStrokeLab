@@ -43,46 +43,100 @@ final class PadelStrokeLab_Watch_AppUITests: XCTestCase {
         let confirmation = app.descendants(matching: .any)["watchArmConfirmation"]
         reveal(confirmation, in: app)
         confirmation.tap()
-        let status = app.descendants(matching: .any)["watchSetupStatus"]
-        reveal(status, in: app)
+        let status = app.staticTexts["watchSetupStatus"]
+        reveal(status, in: app, requiresHittability: false)
         XCTAssertTrue(status.label.contains("Arm confirmed"))
         capture(app, name: "07-Watch-confirmed")
 
-        reveal(picker, in: app)
+        reveal(picker, in: app, searchTowardStart: true)
         picker.tap()
         let second = app.buttons[secondArm]
         XCTAssertTrue(second.waitForExistence(timeout: 5))
         second.tap()
-        reveal(status, in: app)
+        reveal(status, in: app, requiresHittability: false)
         XCTAssertTrue(status.label.contains("Check your Watch placement"))
 
-        reveal(confirmation, in: app)
+        reveal(confirmation, in: app, searchTowardStart: true)
         confirmation.tap()
         app.terminate()
         app.launch()
         XCTAssertTrue(picker.waitForExistence(timeout: 10))
         XCTAssertTrue(picker.value as? String == secondArm || picker.label.contains(secondArm),
                       "The selected playing arm should survive a fresh launch")
-        reveal(status, in: app)
+        reveal(status, in: app, requiresHittability: false)
         XCTAssertTrue(status.label.contains("Check your Watch placement"),
                       "Placement confirmation must clear on a fresh process launch")
         capture(app, name: "08-Watch-fresh-launch")
     }
 
     @MainActor
-    private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
-        for direction in [true, false] {
-            for _ in 0..<12 {
-                let viewport = app.frame.insetBy(dx: 6, dy: 45)
-                if element.exists && element.isHittable && viewport.contains(CGPoint(x: element.frame.midX, y: element.frame.midY)) {
-                    return
-                }
-                let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: direction ? 0.72 : 0.40))
-                let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: direction ? 0.40 : 0.72))
-                start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.1)
+    func testSimulatorCannotStartAndShowsPhysicalRequirement() throws {
+        let app = XCUIApplication()
+        app.launch()
+        let start = app.buttons["watchStartRecording"]
+        reveal(start, in: app)
+        XCTAssertTrue(start.exists)
+        XCTAssertFalse(start.isEnabled)
+        let issue = app.staticTexts["watchCapabilityIssue"]
+        reveal(issue, in: app, requiresHittability: false, searchTowardStart: true)
+        XCTAssertTrue(issue.label.contains("physical Apple Watch"))
+        let state = app.staticTexts["watchCaptureState"]
+        reveal(state, in: app, requiresHittability: false, searchTowardStart: true)
+        XCTAssertEqual(state.label, "Ready")
+        capture(app, name: "09-Watch-simulator-capability")
+    }
+
+    @MainActor
+    private func reveal(
+        _ element: XCUIElement,
+        in app: XCUIApplication,
+        requiresHittability: Bool = true,
+        searchTowardStart: Bool = false
+    ) {
+        var normalizeToStart = searchTowardStart
+        for attempt in 0..<24 {
+            let appFrame = app.frame
+            // Exclude the clock/navigation title, but retain readable content near the bottom.
+            let viewport = CGRect(x: appFrame.minX + 6, y: appFrame.minY + appFrame.height * 0.26,
+                                  width: appFrame.width - 12, height: appFrame.height * 0.74 - 6)
+            let exists = element.exists
+            let frame = exists ? element.frame : .zero
+            let visible = frame.intersection(viewport)
+            let hittable = exists && element.isHittable
+            let hasBounds = !frame.isEmpty && !frame.isNull && !frame.isInfinite
+            let isVisible = hasBounds && !visible.isEmpty && !visible.isNull &&
+                viewport.contains(CGPoint(x: frame.midX, y: frame.midY)) &&
+                visible.height >= min(frame.height, viewport.height) * 0.9
+            let target = exists ? element.identifier : "offscreen target"
+            XCTContext.runActivity(named: "Reveal \(target), attempt \(attempt + 1): exists=\(exists), frame=\(frame), visible=\(visible), hittable=\(hittable)") { _ in }
+            if exists && isVisible && (!requiresHittability || hittable) {
+                return
             }
+            if hasBounds && frame.midY < viewport.minY {
+                normalizeToStart = true
+            }
+            if normalizeToStart {
+                // Native swipes can pass virtualized targets. Seek a stable boundary first,
+                // then use the controlled forward scan instead of chasing an absent row.
+                let beginning = app.staticTexts["FIRST DRILL"]
+                let beginningFrame = beginning.exists ? beginning.frame : .zero
+                let atBeginning = !beginningFrame.isEmpty && viewport.contains(beginningFrame)
+                XCTContext.runActivity(named: "Normalize to FIRST DRILL: frame=\(beginningFrame), visible=\(atBeginning)") { _ in }
+                if atBeginning {
+                    normalizeToStart = false
+                } else {
+                    XCTContext.runActivity(named: "Seek list beginning with a native slow downward swipe") { _ in
+                        app.collectionViews.element.swipeDown(velocity: .slow)
+                    }
+                    continue
+                }
+            }
+            // Stay below the navigation overlay and avoid sweeping past several carousel rows.
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.72))
+            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.52))
+            start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.1)
         }
-        XCTFail("Expected a reachable Watch control: \(element)")
+        XCTFail("Expected visible Watch content\(requiresHittability ? " with a reachable control" : ""): \(element)")
     }
 
     @MainActor

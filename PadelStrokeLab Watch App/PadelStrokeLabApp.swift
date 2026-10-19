@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import WatchKit
 
 @main
 struct PadelStrokeLab_Watch_AppApp: App {
+    @WKApplicationDelegateAdaptor(WatchApplicationDelegate.self) private var appDelegate
     var body: some Scene {
         WindowGroup {
             ContentView()
