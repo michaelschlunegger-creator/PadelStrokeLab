@@ -1,3 +1,13 @@
+# Current checkpoint — portable Core checks passed
+
+23 October 2026. Branch `feature/guided-padel-setup`, amendment base `e5d1ce38c3ee8ca7895dcee7989b76ae8a2573a1`. Full serialized Core388methods/696executions pass with zero failures/skips after an eight-line, two-test-file portability correction. CI39840482415 remains FAILED evidence: all164 issues were fixed developer-home fixture permission errors. App/Core production and phone/Watch test inputs are unchanged, retaining full Watch130/206, phonehost74/125, affectedUI4/4, both Release and signed-product evidence.
+
+Only the aggregate CI job budget changes60->90minutes because measured required suites plus simulator preparation/builds exceed60; the15-minute Core step and all per-test deadlines/assertions remain. Independent source/budget review clears the amendment. Current115-input manifest SHA256 `58fc81d73add11d9373ade24a9dba344e57330f9d8afc834c8999c83cadcca93`. New exact-head CI and final committed review remain pending publication; no installation or physical sensor pass is claimed. PR#3 carries live subsequent observations.
+
+One next action: publish this bounded amendment, complete its exact-head CI/review, then verify separate iPhone/Watch installation and proceed to the controlled dry run. Earlier checkpoints are historical.
+
+---
+
 # Current checkpoint — privacy corrections verified locally
 
 22 October 2026. Branch `feature/guided-padel-setup`; original published candidate `7d5dc2a54f2157631254272131fbace60f6533f1`. All three reviewed software findings are corrected and independently cleared at source level. Final 115-input manifest SHA256 `1850b6e4802b6fb8218cd9812ee3037bd159071e042e832ce946ad9523a25f67`. Full Watch130 and phone app-host74 methods pass; four affected phone UI methods, including largest-text native accessibility, pass. Both Release builds, signed embedded phone/Watch build, signatures and actual-device profile coverage pass. Failures and narrow corrections remain recorded in the verification report.

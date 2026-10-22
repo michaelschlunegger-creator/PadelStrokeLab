@@ -1,3 +1,9 @@
+# Current — Core CI portability verified locally
+
+23 October2026. Full serialized Core388/696 passes; app/Watch source is unchanged and retains all previous passing evidence. See [portability verification](testing/261023_Core_CI_Portability_v1.0.md) for the first failed CI root cause, narrow correction, source identity and justified aggregate job budget. New exact-head CI/review and installation remain pending; no physical performance claim. Earlier checkpoints are historical.
+
+---
+
 # Current checkpoint — corrected candidate automation
 
 Full Watch130, phone app-host74 and four affected UI methods pass with zero failures/skips. Both Release builds and current signed-device products pass. See [privacy correction verification](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md) for exact identity, retained failures, commands/artifact identities and outstanding CI/review/physical gates. PR#3 carries subsequent observations for that tested commit. Earlier checkpoints below are historical.

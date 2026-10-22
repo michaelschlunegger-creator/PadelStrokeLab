@@ -1,6 +1,6 @@
 # Development installation and release gates
 
-The three software findings on the original published `7d5dc2a` candidate are addressed by the [bounded privacy corrections](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md). The current 115-input portable manifest SHA256 is `1850b6e4802b6fb8218cd9812ee3037bd159071e042e832ce946ad9523a25f67`. Live exact-commit CI, independent review and separate installation observations belong in [PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and its linked evidence; a locally passing suite does not establish those later gates. This keeps observations attached to the tested source without changing it merely to record subsequent device outcomes.
+The three software findings on the original published `7d5dc2a` candidate are addressed by the [bounded privacy corrections](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md). The current 115-input portable manifest SHA256 is `58fc81d73add11d9373ade24a9dba344e57330f9d8afc834c8999c83cadcca93`. Live exact-commit CI, independent review and separate installation observations belong in [PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and its linked evidence; a locally passing suite does not establish those later gates. This keeps observations attached to the tested source without changing it merely to record subsequent device outcomes.
 
 This is a development candidate for owner forehand/backhand recording, not a TestFlight or App Store release. The bundle identifiers and companion relationship remain unchanged; display name is Padel Master.
 
@@ -18,3 +18,5 @@ Verify the published source, exact-head CI and independent committed-source revi
 Start with a controlled dry run and a verified phone export before collecting forehand/backhand contacts. Confirm fresh playing-arm placement and owner consent. Preserve originals and interrupted evidence; do not delete data to conceal a failed test. Retain the previous source/build for diagnosis; do not automatically migrate, erase or overwrite recordings as a recovery shortcut.
 
 Merge requires separate owner approval and all applicable gates. App Store/TestFlight distribution, generalized recognition/quality claims and guest collection remain separate decisions. Never submit or release merely because this development candidate installs.
+
+[Core fixture portability and CI budgeting](testing/261023_Core_CI_Portability_v1.0.md) records the subsequent test-only/environment correction and preserved first CI failure. App production and signed products retain identical inputs.

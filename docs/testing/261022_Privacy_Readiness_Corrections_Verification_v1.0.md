@@ -1,3 +1,5 @@
+Subsequent test-only portability and CI-budget amendment: [23 October verification](261023_Core_CI_Portability_v1.0.md). App production, app tests and signed products remain identical; Source1 below is the original app-correction snapshot.
+
 # Privacy readiness corrections — verification
 
 22 October 2026. Branch `feature/guided-padel-setup`; correction base `7d5dc2a54f2157631254272131fbace60f6533f1`. This supplements the [original local results](261022_Owner_First_Final_Local_Verification_v1.0.md), the [committed review](../reviews/261022_Owner_First_Committed_Review_7d5dc2a_v1.0.md), and the [bounded contract](261022_Privacy_Readiness_Corrections_Contract_v1.0.md). The original candidate is blocked; those passing tests do not clear the three subsequently identified defects.

@@ -88,7 +88,9 @@ private struct TransportFixture {
     let root: URL
     let paths: RecordingPaths
     init() throws {
-        root = URL(fileURLWithPath: "/Users/mschlunegger/Library/Developer/Xcode/DerivedData/PadelStrokeLab-OwnerFirst/O3c/Fixtures/" + UUID().uuidString)
+        guard let resolved = realpath(FileManager.default.temporaryDirectory.path, nil) else { throw CocoaError(.fileReadUnknown) }
+        defer { free(resolved) }
+        root = URL(fileURLWithPath: String(cString: resolved), isDirectory: true).appendingPathComponent("O3c-Core-" + UUID().uuidString)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         paths = try RecordingPaths(base: root)
     }

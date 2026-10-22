@@ -8,7 +8,9 @@ private struct ChannelFixture {
     let phone: URL
     let watch: URL
     init() throws {
-        root = URL(fileURLWithPath: "/Users/mschlunegger/Library/Developer/Xcode/DerivedData/PadelStrokeLab-OwnerFirst/O3b/Fixtures/" + UUID().uuidString)
+        guard let resolved = realpath(FileManager.default.temporaryDirectory.path, nil) else { throw CocoaError(.fileReadUnknown) }
+        defer { free(resolved) }
+        root = URL(fileURLWithPath: String(cString: resolved), isDirectory: true).appendingPathComponent("O3b-Core-" + UUID().uuidString)
         phone = root.appendingPathComponent("phone"); watch = root.appendingPathComponent("watch")
         try FileManager.default.createDirectory(at: phone, withIntermediateDirectories: true)
         try FileManager.default.createDirectory(at: watch, withIntermediateDirectories: true)

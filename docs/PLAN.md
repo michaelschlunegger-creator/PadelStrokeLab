@@ -1,3 +1,9 @@
+# Current — Core CI portability verified locally
+
+23 October2026. Full serialized Core388/696 passes; app/Watch source is unchanged and retains all previous passing evidence. See [portability verification](testing/261023_Core_CI_Portability_v1.0.md) for the first failed CI root cause, narrow correction, source identity and justified aggregate job budget. New exact-head CI/review and installation remain pending; no physical performance claim. Earlier checkpoints are historical.
+
+---
+
 # Current next steps — corrected owner-first candidate
 
 22 October 2026, `feature/guided-padel-setup`: the bounded Watch deletion/staging and phone consent-analysis corrections pass local automation and source review. Publish the correction and evidence, finish exact-source CI and committed review, then verify separate iPhone/Watch installation. Follow the controlled dry run before forehand/backhand contact collection. Sensor/background/battery performance and automatic recognition remain unverified. No merge or release authorization.
