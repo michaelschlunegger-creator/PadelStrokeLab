@@ -1,0 +1,9 @@
+# Full O9 deletion tests — independent local review
+
+22 October 2026. Separate non-Astra Sol read-only: **ACCEPTED** after matching all three hashes and reading904lines of actual synthetic fixtures. Core242lines/6methods10cases SHA9f8a3081f4fd26fb73e17b8cf068d4e94546848bca57e85c7c10257753cb1e94; phone372lines/4methods4cases SHA16ba6cc6b83e70564d55e0e950226c10db3040b8b7df6e0d13a39b441d256e87; Watch290lines/3methods3cases SHA5a37d64658852254b4c972c38b3aa98acfccdfa5d72db5c09d29f1ae5bd54fad. Total13methods/17expanded cases.
+
+Coverage uses actual two-stroke/two-revision raw, notes, contexts, O6 telemetry, bundles/staging/inbox/outbox/exports and retained legacy/external copies. It exercises durable partial-stage restart, real capture/publication/transaction leases, synchronous pending Delete versus held rename, late import/receipt/export denial, deletion after full withdrawal, actual native/writer closure and exact scoped offline peer acknowledgement/idempotence/conflict. No fake shutdown, second owner store or default data.
+
+After independent O9p acceptance, exact drafts were mechanically placed/frozen O9-01:111inputs, inherited271productiondelta, manifest4ed8df4649302e58061e7ccf2673dc3028d489e50b090eda4623a089ce5e46f4; archivecd8a9c3d3ab4df691646447f9c590a289206a4b750fd1c709fd38f8a1a494278. Meaningful reds02 Core exit1/4.468s and03 app exit65/5.568s contain only planned missing deletion codec/transport/app interfaces; all111inputs remained unchanged. Actual command/log/result/assessment artifacts remain in PhysicalReadiness1.
+
+Root-authorized Astra High is released only the original eight production paths, incremental functional Core cleanup, Watch, then phone. Combined O9p+O9 ceiling1,900readable added-plus-removed lines against O8b20. Accepted p WatchCoordinator and all tests stay frozen. No production/runtime acceptance, formal G6, CI, merge or physical clearance follows from this test review.

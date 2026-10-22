@@ -5,266 +5,113 @@ import PadelCore
 
 @MainActor
 struct PadelStrokeLab_Watch_AppTests {
-    @Test func freshModelRequiresPlacementConfirmationAndNeverAutoStarts() {
-        let settings = PreparationSettingsFixture()
-        let model = WatchRecorderModel(preferences: settings.preferences)
-        #expect(model.state == .ready)
-        #expect(!model.armConfirmed)
-        #expect(model.snapshot == nil)
-        #expect(!model.canStart(arm: .left))
-        #expect(!model.canStart(arm: .right))
+    @Test func savedWatchPreferencesCannotReplaceAcceptedPhonePreparation() async throws {
+        let fixture = try PreparationSettingsFixture()
+        let coordinator = try #require(fixture.services.coordinator)
+        try await coordinator.load()
+        fixture.preferences.set("right", forKey: WatchRecorderModel.armPreferenceKey)
+        fixture.preferences.set("right", forKey: WatchRecorderModel.handPreferenceKey)
+        fixture.preferences.set("forehandGroundstroke", forKey: WatchRecorderModel.drillPreferenceKey)
+        let model = fixture.model()
+        model.beginPreparation(); model.confirmPlacement(); model.confirmOrientation(); model.confirmFit(); model.start()
+        #expect(!model.hasAcceptedPreparation && !model.canStart && model.preparation.step == nil)
+        #expect(model.state == .ready && model.capturedMetadata == nil)
+        #expect(throws: (any Error).self) { try model.makeMetadata() }
+        await coordinator.closeForTesting()
     }
-
-    @Test func configuredWristMismatchCannotStart() {
-        let settings = PreparationSettingsFixture()
-        let model = WatchRecorderModel(preferences: settings.preferences)
-        model.armConfirmed = true
-        let wrongArm: PlayingArm = model.configuredWrist == .left ? .right : .left
-        #expect(!model.canStart(arm: wrongArm))
-        model.start(arm: wrongArm, handedness: .right)
-        #expect(model.state == .ready && model.snapshot == nil)
+    @Test(arguments: [RecordingDrill.forehandGroundstroke, .backhandGroundstroke])
+    func phonePreparationOwnsShotAndArm(drill: RecordingDrill) async throws {
+        let fixture = try await OwnerLifecycleFixture(drill: drill)
+        let prepared = fixture.preparation
+        let model = fixture.model
+        try await fixture.beginAndRun()
+        #expect(model.preparation.accepted == prepared && model.selectedDrill == drill)
+        #expect(!model.canStart)
+        fixture.preparePhysical()
+        #expect(model.canStart)
+        let metadata = try model.makeMetadata()
+        #expect(metadata.drill == drill.rawValue && metadata.playingArm == .right && metadata.watchWrist == .right)
+        #expect(metadata.playingArmConfirmed && metadata.protocolVersion == RecordingDrill.protocolVersion)
+        await fixture.finish()
     }
-
-    @Test func simulatorHasHonestCapabilityError() {
-        #if targetEnvironment(simulator)
-        let settings = PreparationSettingsFixture()
-        let model = WatchRecorderModel(preferences: settings.preferences)
-        model.armConfirmed = true
-        #expect(model.capabilityIssue?.contains("physical Apple Watch") == true)
+    @Test func draftAloneCannotOpenWatchCheck() async throws {
+        let fixture = try PreparationSettingsFixture()
+        let preparation = try await fixture.enroll()
+        let coordinator = try #require(fixture.services.coordinator)
+        _ = try await coordinator.receive(.draft(preparation))
+        let model = fixture.model(); model.beginPreparation()
+        #expect(!model.canPrepare && !model.canStart && model.preparation.step == nil)
+        await fixture.close()
+    }
+    @Test func wristAndCrownChangeRequireFreshPhysicalChecks() async throws {
+        let fixture = try await OwnerLifecycleFixture()
+        var settings = WatchPreparationSettings(wrist: .right, crownDescription: "Crown right",
+            unavailableReason: nil, frequencyDescription: "Injected native motion")
+        let source = try WatchMotionSource(hardware: fixture.motion, environment: fixture.services.environment)
+        let model = WatchRecorderModel(preparationSettingsProvider: { settings }, services: fixture.services,
+            motionSource: source, storageValidation: { nil })
+        try await fixture.beginAndRun()
+        model.beginPreparation(); model.confirmPlacement(); model.confirmOrientation(); model.confirmFit()
+        #expect(model.canStart)
+        settings.crownDescription = "Crown left"
         model.refreshPreparation()
-        #expect(model.capabilityIssue?.contains("physical Apple Watch") == true)
-        #expect(!model.canStart(arm: model.configuredWrist))
-        model.start(arm: model.configuredWrist, handedness: .right)
-        #expect(model.state == .ready && model.snapshot == nil)
-        #endif
+        #expect(!model.canStart && !model.preparation.orientationConfirmed && !model.preparation.fitConfirmed)
+        model.beginPreparation(); model.confirmPlacement(); model.confirmOrientation(); model.confirmFit()
+        #expect(model.canStart)
+        settings.wrist = .left; model.refreshPreparation()
+        model.confirmPlacement(); model.confirmOrientation(); model.confirmFit()
+        #expect(!model.canStart && !model.preparation.orientationConfirmed)
+        await fixture.finish()
     }
-
-    @Test func preparationRecoversFromMotionDenialWithoutRecreatingModel() {
-        let settings = PreparationSettingsFixture()
-        settings.value.unavailableReason = "Motion access is denied. Enable Motion & Fitness access in Settings."
-        let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, preferences: settings.preferences)
-        model.armConfirmed = true
-        #expect(!model.canStart(arm: .right))
-
-        settings.value.unavailableReason = nil
-        settings.value.frequencyDescription = "Newly available reported frequencies"
-        model.refreshPreparation()
-
-        #expect(settings.readCount == 2)
-        #expect(model.capabilityIssue == nil)
-        #expect(model.frequencyDescription == settings.value.frequencyDescription)
-        #expect(model.armConfirmed && model.canStart(arm: .right))
-        #expect(model.state == .ready && model.snapshot == nil && model.message == nil)
+    @Test func orientationTapCannotAcknowledgeSettingsChangedSinceDisplay() async throws {
+        let fixture = try PreparationSettingsFixture(); _ = try await fixture.accept()
+        let model = fixture.model(); model.beginPreparation(); model.confirmPlacement()
+        fixture.value.crownDescription = "Crown left"
+        model.confirmOrientation()
+        #expect(!model.preparation.orientationConfirmed && !model.canStart)
+        await fixture.close()
     }
-
-    @Test func preparationRecoversFromWristMismatchWithFreshConfirmation() {
-        let settings = PreparationSettingsFixture()
-        let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, preferences: settings.preferences)
-        model.armConfirmed = true
-        #expect(!model.canStart(arm: .left))
-
-        settings.value.wrist = .left
-        model.refreshPreparation()
-
-        #expect(model.configuredWrist == .left)
-        #expect(!model.armConfirmed && !model.canStart(arm: .left))
-        model.armConfirmed = true
-        #expect(model.canStart(arm: .left))
-        #expect(model.state == .ready && model.snapshot == nil && model.message == nil)
+    @Test func backgroundAndCancellationRequireFreshCheck() async throws {
+        let fixture = try PreparationSettingsFixture(); _ = try await fixture.accept()
+        let model = fixture.model(); fixture.complete(model)
+        model.preparationLeftForeground()
+        #expect(!model.canStart && model.hasAcceptedPreparation)
+        fixture.complete(model); model.cancelPreparation()
+        #expect(!model.canStart && model.preparation.step == nil)
+        model.beginPreparation()
+        #expect(!model.preparation.placementConfirmed && !model.preparation.fitConfirmed)
+        await fixture.close()
     }
-
-    @Test func crownChangeInvalidatesPlacementConfirmation() {
-        let settings = PreparationSettingsFixture()
-        let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, preferences: settings.preferences)
-        model.armConfirmed = true
-        settings.value.crownDescription = "Crown left"
-        model.refreshPreparation()
-        #expect(model.configuredWrist == .right && model.crownDescription == "Crown left")
-        #expect(!model.armConfirmed && !model.canStart(arm: .right))
-        #expect(model.state == .ready && model.snapshot == nil)
+    @Test func capabilityAndStorageFailuresDenyLocalStart() async throws {
+        let fixture = try PreparationSettingsFixture(); _ = try await fixture.accept()
+        let model = fixture.model(); fixture.complete(model)
+        fixture.value.unavailableReason = "A physical Apple Watch is required."
+        model.start()
+        #expect(model.state == .ready && model.capturedMetadata == nil && !model.canStart)
+        fixture.value.unavailableReason = nil; fixture.storageIssue = "Storage denied"
+        model.start()
+        #expect(model.state == .ready && model.capturedMetadata == nil && !model.canStart)
+        await fixture.close()
     }
-
-    @Test func unchangedConfigurationPreservesReadyAndTerminalState() {
-        for state: MotionCaptureState in [.ready, .saved, .interrupted, .failed] {
-            let settings = PreparationSettingsFixture()
-            let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, initialState: state, preferences: settings.preferences)
-            model.armConfirmed = true
-            settings.value.frequencyDescription = "Refreshed reported frequencies"
-            model.refreshPreparation()
-            #expect(settings.readCount == 2)
-            #expect(model.armConfirmed)
-            #expect(model.state == state && model.snapshot == nil && model.message == nil)
-            #expect(model.frequencyDescription == settings.value.frequencyDescription)
-            #expect(model.canStart(arm: .right) == (state == .ready))
-        }
+    @Test func cancelPhonePreparationSynchronouslyRemovesLocalAdmission() async throws {
+        let fixture = try PreparationSettingsFixture(); let prepared = try await fixture.accept()
+        let model = fixture.model(); fixture.complete(model)
+        let coordinator = try #require(fixture.services.coordinator)
+        _ = try await coordinator.receive(.retire(correlation: .init(requestID: UUID(),
+            generations: coordinator.generations, preparation: prepared.identity), reason: .cancelPreparation))
+        #expect(!model.hasAcceptedPreparation && !model.canStart)
+        model.start(); #expect(model.capturedMetadata == nil)
+        await fixture.close()
     }
-
-    @Test func preparationRefreshDoesNotReadOrChangeSettingsInAnyActivePhase() {
-        for state: MotionCaptureState in [.starting, .recording, .pausing, .paused, .resuming, .stopping] {
-            let settings = PreparationSettingsFixture()
-            let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, initialState: state, preferences: settings.preferences)
-            model.armConfirmed = true
-            settings.value = WatchPreparationSettings(wrist: .left, crownDescription: "Crown left",
-                unavailableReason: "Motion access is denied.", frequencyDescription: "Changed frequencies")
-            model.refreshPreparation()
-            model.start(arm: .right, handedness: .right)
-            #expect(settings.readCount == 1)
-            #expect(model.state == state && model.snapshot == nil && model.message == nil)
-            #expect(model.configuredWrist == .right && model.crownDescription == "Crown right")
-            #expect(model.frequencyDescription == "Initial reported frequencies")
-            #expect(model.capabilityIssue == nil && model.armConfirmed)
-            #expect(!model.canStart(arm: .right))
-        }
+    @Test func syntheticServiceOwnsOnlyItsChildNamespace() async throws {
+        let fixture = try PreparationSettingsFixture()
+        let paths = try #require(fixture.services.paths)
+        #expect(!fixture.services.environment.allowsHardware && fixture.services.connectivity == nil)
+        #expect(paths.rawRoot.path.hasPrefix(try #require(fixture.services.environment.base).path + "/"))
+        #expect(fixture.services.environment.preferenceSuite?.contains(fixture.id.uuidString) == true)
+        let coordinator = try #require(fixture.services.coordinator); try await coordinator.load()
+        await fixture.close()
     }
-
-    @Test func preparationRefreshPreservesBlockingCapabilityReasons() {
-        for reason in ["Motion access is denied. Enable Motion & Fitness access in Settings.",
-                       "Motion access is restricted on this Watch.",
-                       "This Watch does not support both required batched motion streams."] {
-            let settings = PreparationSettingsFixture()
-            let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, preferences: settings.preferences)
-            model.armConfirmed = true
-            settings.value.unavailableReason = reason
-            model.refreshPreparation()
-            #expect(model.capabilityIssue == reason)
-            #expect(!model.canStart(arm: .right))
-            model.start(arm: .right, handedness: .right)
-            #expect(model.state == .ready && model.snapshot == nil && model.message == nil)
-        }
-    }
-
-    @Test func startRechecksConfigurationBeforeAnyWorkoutOrCapture() {
-        for change in ["wrist", "crown", "permission"] {
-            let settings = PreparationSettingsFixture()
-            let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, preferences: settings.preferences)
-            model.armConfirmed = true
-            #expect(model.canStart(arm: .right))
-            switch change {
-            case "wrist": settings.value.wrist = .left
-            case "crown": settings.value.crownDescription = "Crown left"
-            default: settings.value.unavailableReason = "Motion access is denied."
-            }
-            model.start(arm: .right, handedness: .right)
-            #expect(settings.readCount == 2)
-            #expect(!model.canStart(arm: .right))
-            #expect(model.state == .ready && model.snapshot == nil && model.message == nil)
-            if change != "permission" { #expect(!model.armConfirmed) }
-        }
-    }
-
-    @Test func newSetRefreshesPreparationAndRequiresConfirmation() {
-        let settings = PreparationSettingsFixture()
-        settings.value.unavailableReason = "Motion access is denied."
-        let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, initialState: .interrupted, preferences: settings.preferences)
-        settings.value = WatchPreparationSettings(wrist: .left, crownDescription: "Crown left",
-            unavailableReason: nil, frequencyDescription: "Refreshed reported frequencies")
-        model.armConfirmed = true
-        model.newSet()
-        #expect(settings.readCount == 2)
-        #expect(model.state == .ready && model.snapshot == nil && model.message == nil)
-        #expect(model.configuredWrist == .left && model.crownDescription == "Crown left")
-        #expect(model.capabilityIssue == nil && model.frequencyDescription == settings.value.frequencyDescription)
-        #expect(!model.armConfirmed && !model.canStart(arm: .left))
-    }
-
-    @Test func missingAndUnknownPreferencesBlockMetadataAndStartWithoutCoercion() {
-        for raw: String? in [nil, "", "futureDrill"] {
-            let settings = PreparationSettingsFixture()
-            settings.preferences.set(raw, forKey: WatchRecorderModel.drillPreferenceKey)
-            let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, preferences: settings.preferences)
-            #expect(model.selectedDrill == nil)
-            #expect(model.drillSelectionMessage == (raw == nil ?
-                "Choose shot type" : "Saved shot type unavailable—choose again"))
-            model.armConfirmed = true
-            #expect(!model.canStart(arm: .right))
-            #expect(throws: (any Error).self) { try model.makeMetadata(arm: .right, handedness: .right) }
-            model.start(arm: .right, handedness: .right)
-            #expect(model.state == .ready && model.capturedMetadata == nil && model.snapshot == nil)
-            #expect(settings.preferences.string(forKey: WatchRecorderModel.drillPreferenceKey) == raw)
-        }
-    }
-
-    @Test func validChoicePersistsButConfirmationDoesNotAndChangesResetIt() {
-        let settings = PreparationSettingsFixture()
-        let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, preferences: settings.preferences)
-        model.armConfirmed = true
-        model.selectDrill(.backhandVolley)
-        #expect(!model.armConfirmed && model.selectedDrill == .backhandVolley)
-        #expect(settings.preferences.string(forKey: WatchRecorderModel.drillPreferenceKey) == "backhandVolley")
-        model.armConfirmed = true
-        model.selectDrill(.backhandVolley)
-        #expect(model.armConfirmed) // The same value is not an input change.
-        model.selectDrill(.otherUnclassified)
-        #expect(!model.armConfirmed && model.selectedDrill == .otherUnclassified)
-        #expect(model.drillSelectionMessage == "Other / unclassified")
-        model.armConfirmed = true
-        model.preparationInputChanged()
-        #expect(!model.armConfirmed) // Shared handler used by both arm and handedness changes.
-        model.armConfirmed = true
-        let relaunched = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, preferences: settings.preferences)
-        #expect(relaunched.selectedDrill == .otherUnclassified && !relaunched.armConfirmed)
-        #expect(relaunched.capturedMetadata == nil && relaunched.state == .ready)
-    }
-
-    @Test(arguments: RecordingDrill.allCases)
-    func actualSynchronousStartMetadataUsesSelectedTypeAndNewProtocol(_ drill: RecordingDrill) throws {
-        let settings = PreparationSettingsFixture()
-        let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, preferences: settings.preferences)
-        model.selectDrill(drill); model.armConfirmed = true
-        let metadata = try model.makeMetadata(arm: .right, handedness: .left)
-        let bytes = try RecordingChunkCodec.encodeMetadata(metadata)
-        #expect(metadata.drill == drill.rawValue && metadata.protocolVersion == "owner-manual-training-logger-1")
-        #expect(metadata.playingArm == .right && metadata.handedness == .left && metadata.watchWrist == .right)
-        #expect(metadata.playingArmConfirmed && metadata.watchOrientation == "Crown right")
-        #expect(model.state == .ready && model.snapshot == nil && model.capturedMetadata == nil)
-        model.selectDrill(drill == .lob ? .serve : .lob)
-        settings.value.wrist = .left; model.refreshPreparation()
-        #expect(try RecordingChunkCodec.encodeMetadata(metadata) == bytes)
-        #expect(throws: (any Error).self) { try model.makeMetadata(arm: .left, handedness: .left) }
-        model.armConfirmed = true
-        #expect(throws: (any Error).self) { try model.makeMetadata(arm: .right, handedness: .left) }
-    }
-
-    @Test func allActiveAndTerminalStatesRejectChoiceChangesAndPreserveCapturedIntent() throws {
-        let settings = PreparationSettingsFixture()
-        let preparation = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, preferences: settings.preferences)
-        preparation.selectDrill(.bandeja); preparation.armConfirmed = true
-        let metadata = try preparation.makeMetadata(arm: .right, handedness: .right)
-        let original = try RecordingChunkCodec.encodeMetadata(metadata)
-        for state: MotionCaptureState in [.starting, .recording, .pausing, .paused, .resuming, .stopping, .saved, .interrupted, .failed] {
-            // The existing state seam supplies a truthful immutable header, without pretending sensors ran.
-            let model = WatchRecorderModel(preparationSettingsProvider: { settings.read() }, initialState: state,
-                preferences: settings.preferences, initialMetadata: metadata)
-            model.armConfirmed = true
-            model.selectDrill(.smash)
-            #expect(model.selectedDrill == .bandeja && model.displayedDrillTitle == "Bandeja")
-            #expect(model.capturedMetadata == metadata && model.armConfirmed)
-            #expect(settings.preferences.string(forKey: WatchRecorderModel.drillPreferenceKey) == "bandeja")
-            #expect(!model.canSelectDrill && !model.canStart(arm: .right))
-            #expect(throws: (any Error).self) { try model.makeMetadata(arm: .right, handedness: .right) }
-            if state.isTerminal {
-                settings.value.crownDescription = "Crown left"
-                model.refreshPreparation()
-                #expect(model.capturedMetadata == metadata && model.displayedDrillTitle == "Bandeja")
-                model.newSet()
-                #expect(model.state == .ready && model.canSelectDrill && model.capturedMetadata == nil)
-                #expect(model.selectedDrill == .bandeja && !model.armConfirmed)
-                model.selectDrill(.serve)
-                #expect(model.selectedDrill == .serve)
-                settings.preferences.set("bandeja", forKey: WatchRecorderModel.drillPreferenceKey)
-            } else {
-                model.newSet()
-                #expect(model.state == state && model.capturedMetadata == metadata)
-                if state == .starting {
-                    model.stop()
-                    #expect(model.state == .interrupted && model.capturedMetadata == metadata)
-                    #expect(model.displayedDrillTitle == "Bandeja")
-                }
-            }
-            #expect(try RecordingChunkCodec.encodeMetadata(metadata) == original)
-        }
-    }
-
     @Test func rapidResumeWaitsForBothPauseAcknowledgements() {
         var gate = WatchPauseGate()
         let unexpectedPauseAccepted = gate.workoutDidPause()
@@ -354,21 +201,42 @@ struct PadelStrokeLab_Watch_AppTests {
 
 @MainActor
 private final class PreparationSettingsFixture {
-    let preferences: UserDefaults
-    private let suiteName = "PadelStrokeLab.WatchTests.\(UUID().uuidString)"
-    init() {
-        preferences = UserDefaults(suiteName: suiteName)!
-        preferences.set("forehandGroundstroke", forKey: WatchRecorderModel.drillPreferenceKey)
-    }
-    isolated deinit { preferences.removePersistentDomain(forName: suiteName) }
-
+    let id = UUID()
+    let services: WatchRecordingServices
+    var preferences: UserDefaults { services.preferences }
     var value = WatchPreparationSettings(wrist: .right, crownDescription: "Crown right",
-        unavailableReason: nil, frequencyDescription: "Initial reported frequencies")
-    private(set) var readCount = 0
-    func read() -> WatchPreparationSettings {
-        readCount += 1
-        return value
+        unavailableReason: nil, frequencyDescription: "Synthetic settings; no hardware acquisition")
+    var storageIssue: String?
+    init() throws {
+        services = WatchRecordingServices(environment: try .resolve(arguments: ["--owner-watch-fixture=\(id.uuidString)"], environment: [:]))
     }
+    func model() -> WatchRecorderModel {
+        WatchRecorderModel(preparationSettingsProvider: { self.value }, services: services,
+            storageValidation: { self.storageIssue })
+    }
+    func enroll(drill: RecordingDrill = .forehandGroundstroke) async throws -> OwnerPreparation {
+        let coordinator = try #require(services.coordinator); try await coordinator.load()
+        let owner = try OwnerPracticeIdentity.enrolled(ownerID: UUID(), phoneInstallationEpoch: UUID(),
+            watchInstallationEpoch: #require(coordinator.watchEpoch), attestsWatchAccountOwner: true,
+            acceptsMotionStudy: true, includesHeartRate: false, decisionID: UUID(), confirmedAtUnixSeconds: 1_800_000_000,
+            policyDigest: OwnerPracticePolicy.digest)
+        _ = try await coordinator.receive(.mutate(requestID: UUID(), generations: coordinator.generations, mutation: .enrollment(owner)))
+        let draft = try PracticeSetupDraft(originInstallationEpoch: owner.phoneInstallationEpoch,
+            preparationID: UUID(), revision: 1, preferences: .init(currentRacketArm: .right, usualHand: .right, intendedDrill: drill))
+        return try OwnerPreparation(authority: owner, practiceID: UUID(), draft: draft)
+    }
+    func accept(drill: RecordingDrill = .forehandGroundstroke) async throws -> OwnerPreparation {
+        let preparation = try await enroll(drill: drill)
+        let coordinator = try #require(services.coordinator)
+        _ = try await coordinator.receive(.prepare(correlation: .init(requestID: UUID(), generations: coordinator.generations,
+            preparation: preparation.identity), preparation: preparation))
+        #expect(coordinator.acceptedPreparation == preparation)
+        return preparation
+    }
+    func complete(_ model: WatchRecorderModel) {
+        model.beginPreparation(); model.confirmPlacement(); model.confirmOrientation(); model.confirmFit()
+    }
+    func close() async { await services.coordinator?.closeForTesting() }
 }
 
 nonisolated private final class BackgroundCompletionEvidence: @unchecked Sendable {

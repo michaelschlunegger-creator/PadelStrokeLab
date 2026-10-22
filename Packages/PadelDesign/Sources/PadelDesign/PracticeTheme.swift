@@ -2,35 +2,45 @@ import SwiftUI
 
 /// Presentation only. Practice metadata stays independent of SwiftUI in PadelCore.
 public enum PracticeTheme {
-    public static let navy = Color(red: 0.035, green: 0.09, blue: 0.21)
-    public static let royal = Color(red: 0.08, green: 0.24, blue: 0.67)
-    public static let yellow = Color(red: 1, green: 0.84, blue: 0.25)
-    public static let watchSurface = Color(red: 0.065, green: 0.14, blue: 0.29)
+    private static let canvasColor = color(0x050809)
+    private static let surfaceColor = color(0x131B1D)
+    public static let elevatedSurface = color(0x1B272A)
+    public static let accentColor = color(0x10D7CE)
+    public static let onAccent = color(0x041313)
+    /// Native Watch navigation keeps white glyphs, so its fill is darker.
+    public static let navigationFill = color(0x006F6A)
+    public static let controlOutline = color(0x68858A)
+    public static let separator = color(0x2C3A3D)
     public static let hero = LinearGradient(
-        colors: [Color(red: 0.055, green: 0.19, blue: 0.51), royal],
+        colors: [surfaceColor, elevatedSurface],
         startPoint: .topLeading, endPoint: .bottomTrailing
     )
 
+    // Keep the semantic interface for callers; the app always presents dark.
     public static func canvas(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? navy : Color(red: 0.94, green: 0.96, blue: 0.99)
+        canvasColor
     }
 
     public static func surface(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? watchSurface : .white
+        surfaceColor
     }
 
     public static func ink(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? .white : navy
+        color(0xF5FAFA)
     }
 
     public static func secondaryInk(_ scheme: ColorScheme) -> Color {
-        scheme == .dark
-            ? Color(red: 0.74, green: 0.81, blue: 0.92)
-            : Color(red: 0.30, green: 0.37, blue: 0.48)
+        color(0xAEBFC3)
     }
 
     public static func accent(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(red: 0.61, green: 0.76, blue: 1) : royal
+        accentColor
+    }
+
+    private static func color(_ rgb: UInt32) -> Color {
+        Color(.sRGB, red: Double((rgb >> 16) & 0xff) / 255,
+              green: Double((rgb >> 8) & 0xff) / 255,
+              blue: Double(rgb & 0xff) / 255, opacity: 1)
     }
 
     public enum Space {
@@ -43,6 +53,7 @@ public enum PracticeTheme {
 
 private struct PracticeCard: ViewModifier {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.colorSchemeContrast) private var contrast
 
     func body(content: Content) -> some View {
         content
@@ -51,7 +62,8 @@ private struct PracticeCard: ViewModifier {
             .background(PracticeTheme.surface(scheme), in: .rect(cornerRadius: 26))
             .overlay {
                 RoundedRectangle(cornerRadius: 26)
-                    .strokeBorder(PracticeTheme.ink(scheme).opacity(0.07), lineWidth: 1)
+                    .strokeBorder(contrast == .increased
+                                  ? PracticeTheme.controlOutline : PracticeTheme.separator, lineWidth: 1)
             }
     }
 }
@@ -82,13 +94,13 @@ public struct PracticeActionStyle: PrimitiveButtonStyle {
         if reduceTransparency {
             Button(configuration)
                 .buttonStyle(.borderedProminent)
-                .tint(PracticeTheme.yellow)
-                .foregroundStyle(PracticeTheme.navy)
+                .tint(PracticeTheme.accentColor)
+                .foregroundStyle(PracticeTheme.onAccent)
         } else {
             Button(configuration)
                 .buttonStyle(.glassProminent)
-                .tint(PracticeTheme.yellow)
-                .foregroundStyle(PracticeTheme.navy)
+                .tint(PracticeTheme.accentColor)
+                .foregroundStyle(PracticeTheme.onAccent)
         }
     }
 }
@@ -116,7 +128,7 @@ public struct PracticeCourt: View {
                 }
                 .stroke(.white.opacity(0.28), lineWidth: 1.25)
                 Circle()
-                    .fill(PracticeTheme.yellow)
+                    .fill(PracticeTheme.accentColor)
                     .frame(width: 13, height: 13)
                     .position(x: width * 0.72, y: height * 0.31)
             }

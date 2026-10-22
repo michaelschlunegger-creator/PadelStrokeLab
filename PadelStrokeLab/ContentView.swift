@@ -3,7 +3,9 @@ import PadelCore
 import PadelDesign
 
 struct ContentView: View {
+    @Environment(RecordingLibraryModel.self) private var recordings
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         NavigationStack {
@@ -13,6 +15,8 @@ struct ContentView: View {
                     hero
                     sessionsLink
                     preparationNote
+                    NavigationLink("Practice guide") { PracticeGuideView() }
+                        .font(.headline).accessibilityIdentifier("practiceGuideLink")
                     contactGuide
                     watchReminder
                 }
@@ -35,12 +39,12 @@ struct ContentView: View {
         HStack(spacing: 9) {
             Image(systemName: "figure.racquetball")
                 .foregroundStyle(PracticeTheme.accent(scheme))
-            Text("PADEL STROKE LAB")
-                .tracking(2)
+            Text("PADEL MASTER")
+                .tracking(1.6)
         }
         .font(.caption.weight(.bold))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("PadelStrokeLab")
+        .accessibilityLabel("Padel Master")
     }
 
     private var hero: some View {
@@ -48,16 +52,18 @@ struct ContentView: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 12) {
                     PracticeEyebrow("Your training")
-                        .foregroundStyle(PracticeTheme.yellow)
+                        .foregroundStyle(PracticeTheme.accentColor)
                     Image(systemName: "figure.racquetball")
                         .font(.system(size: 38, weight: .regular))
                         .accessibilityHidden(true)
                 }
-                Spacer(minLength: 12)
-                PracticeCourt()
-                    .frame(width: 88, height: 112)
-                    .rotationEffect(.degrees(12))
-                    .padding(.trailing, 8)
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Spacer(minLength: 12)
+                    PracticeCourt()
+                        .frame(width: 88, height: 112)
+                        .rotationEffect(.degrees(12))
+                        .padding(.trailing, 8)
+                }
             }
             VStack(alignment: .leading, spacing: 10) {
                 Text("Choose your shot.\nBuild your practice.")
@@ -66,14 +72,16 @@ struct ContentView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 Text("One intended shot type. One short set at a time.")
                     .font(.body)
-                    .foregroundStyle(.white.opacity(0.85))
+                    .foregroundStyle(PracticeTheme.secondaryInk(scheme))
                     .fixedSize(horizontal: false, vertical: true)
             }
             NavigationLink {
-                PracticeGuideView()
+                if let model = recordings.practiceSetup { PracticeSetupView(model: model) }
+                else { ContentUnavailableView("Setup unavailable", systemImage: "exclamationmark.triangle",
+                    description: Text(recordings.error ?? "Recording storage is unavailable.")) }
             } label: {
                 HStack {
-                    Text("Plan your training set")
+                    Text("Let’s Play")
                     Spacer(minLength: 12)
                     Image(systemName: "arrow.up.right")
                 }
@@ -82,8 +90,8 @@ struct ContentView: View {
             }
             .buttonStyle(PracticeActionStyle())
             .controlSize(.large)
-            .accessibilityIdentifier("practiceGuideLink")
-            .accessibilityHint("Opens the training and recording guide.")
+            .accessibilityIdentifier("practiceSetupLink")
+            .accessibilityHint("Review owner consent and prepare your practice on iPhone.")
         }
         .foregroundStyle(.white)
         .padding(PracticeTheme.Space.large)
@@ -179,23 +187,31 @@ private struct PracticeGuideView: View {
                 GuideHeading(eyebrow: "Practice with intent", title: "Your training set",
                              subtitle: "Choose a shot you want to practise.", symbol: "figure.racquetball")
                 VStack(alignment: .leading, spacing: 25) {
-                    guideStep("01", title: "Set up your Watch",
-                              detail: "Wear it on your racket arm. Select your intended shot type, playing arm and handedness. Check the wrist and crown settings, then confirm placement before each new set.")
+                    Text("Set up on iPhone once per practice. Review your choices for each next set, then complete the brief physical check and Start on Watch. A phone connection is not required during local capture.")
+                        .accessibilityIdentifier("watchSetupGuidance")
+                    guideStep("01", title: "Review owner consent on iPhone",
+                              detail: "Confirm that you own the Watch and agree to this motion study. Heart rate is optional. Review saved choices explicitly whenever you reopen the app.")
                     Divider()
-                    guideStep("02", title: "Keep each set consistent",
-                              detail: "Record one intended shot type per short set. Use controlled attempts during normal practice, up to 120 active seconds. Select a different type when preparing the next set.",
+                    guideStep("02", title: "Choose forehand or backhand",
+                              detail: "Record one intended shot type per short set, up to 120 active seconds. Choose the racket arm and usual hand on iPhone. Changes during recording apply to the next set.",
                               identifier: "trainingSetGuidance")
                     Divider()
-                    guideStep("03", title: "Notice the contact",
-                              detail: "Use your experience and contact feel. Where the ball lands is a separate observation.")
+                    guideStep("03", title: "Wear Watch on your racket arm",
+                              detail: "Move it if needed, or confirm it is already on that arm. Physical placement is your confirmation.")
+                    Divider()
+                    guideStep("04", title: "Check wrist, crown and fit",
+                              detail: "Compare the actual watchOS wrist and crown settings with how you wear it. Fasten the strap securely and comfortably. Confirm placement and fit freshly on Watch for every set.")
+                    Divider()
+                    guideStep("05", title: "Review and start on Watch",
+                              detail: "Check the summary and freshly confirm placement and fit. End other workouts, then tap Start recording on Watch and allow workout and motion access if requested. No workout summary is saved by this app; system activity metrics may still change. Pause and resume stay within the same set.")
                 }
                 .practiceCard()
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Supported intended shot types").font(.title3.bold())
-                    ForEach(RecordingDrill.allCases) { drill in
+                    ForEach([RecordingDrill.forehandGroundstroke, .backhandGroundstroke]) { drill in
                         Text(drill.title).fixedSize(horizontal: false, vertical: true)
                     }
-                    Text("Other / unclassified leaves intended type unspecified. It is separate from contact labels such as Uncertain or Air swing. All motion is recorded; your choice does not detect or classify shots.")
+                    Text("This owner study uses manual forehand and backhand choices. Earlier recordings retain their original intended type. Contact labels such as Uncertain or Air swing remain separate; your choice does not detect or classify shots.")
                         .font(.footnote).foregroundStyle(PracticeTheme.secondaryInk(scheme))
                 }
                 .practiceCard()
@@ -276,10 +292,10 @@ private struct ContactGuideView: View {
                     Text("A clean contact and a ball landing in are different observations. Choose Uncertain whenever you cannot tell.")
                         .font(.body)
                 }
-                .foregroundStyle(PracticeTheme.navy)
+                .foregroundStyle(PracticeTheme.onAccent)
                 .padding(PracticeTheme.Space.large)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(PracticeTheme.yellow, in: .rect(cornerRadius: 26))
+                .background(PracticeTheme.accentColor, in: .rect(cornerRadius: 26))
                 Text("After a set, open Sessions to save your own attempt labels. Use Uncertain whenever the evidence is unclear.")
                     .font(.footnote)
                     .foregroundStyle(PracticeTheme.secondaryInk(scheme))
@@ -317,6 +333,7 @@ private struct ContactGuideView: View {
 }
 
 private struct GuideHeading: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let eyebrow: String
     let title: String
     let subtitle: String
@@ -326,11 +343,13 @@ private struct GuideHeading: View {
         VStack(alignment: .leading, spacing: 17) {
             HStack(alignment: .top) {
                 PracticeEyebrow(eyebrow)
-                    .foregroundStyle(PracticeTheme.yellow)
-                Spacer(minLength: 12)
-                Image(systemName: symbol)
-                    .font(.title2)
-                    .accessibilityHidden(true)
+                    .foregroundStyle(PracticeTheme.accentColor)
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Spacer(minLength: 12)
+                    Image(systemName: symbol)
+                        .font(.title2)
+                        .accessibilityHidden(true)
+                }
             }
             Text(title)
                 .font(.largeTitle.weight(.bold))
@@ -339,7 +358,7 @@ private struct GuideHeading: View {
                 .accessibilityAddTraits(.isHeader)
             Text(subtitle)
                 .font(.body)
-                .foregroundStyle(.white.opacity(0.85))
+                .foregroundStyle(PracticeTheme.secondaryInk(.dark))
         }
         .foregroundStyle(.white)
         .padding(PracticeTheme.Space.large)

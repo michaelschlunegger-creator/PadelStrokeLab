@@ -3,33 +3,100 @@ import Foundation
 import PadelCore
 
 @MainActor
-final class WatchMotionSource {
+protocol WatchMotionHardware: AnyObject {
+    var isAccelerometerSupported: Bool { get }
+    var isDeviceMotionSupported: Bool { get }
+    var authorizationStatus: CMAuthorizationStatus { get }
+    var accelerometerDataFrequency: Int { get }
+    var deviceMotionDataFrequency: Int { get }
+    var isAccelerometerActive: Bool { get }
+    var isDeviceMotionActive: Bool { get }
+    func startAccelerometerUpdates(handler: @escaping @Sendable ([CMAccelerometerData]?, (any Error)?) -> Void)
+    func startDeviceMotionUpdates(handler: @escaping @Sendable ([CMDeviceMotion]?, (any Error)?) -> Void)
+    func stopAccelerometerUpdates()
+    func stopDeviceMotionUpdates()
+}
+
+@MainActor
+private final class NativeWatchMotionHardware: WatchMotionHardware {
     private let manager = CMBatchedSensorManager()
+    var isAccelerometerSupported: Bool { CMBatchedSensorManager.isAccelerometerSupported }
+    var isDeviceMotionSupported: Bool { CMBatchedSensorManager.isDeviceMotionSupported }
+    var authorizationStatus: CMAuthorizationStatus { CMBatchedSensorManager.authorizationStatus }
+    var accelerometerDataFrequency: Int { manager.accelerometerDataFrequency }
+    var deviceMotionDataFrequency: Int { manager.deviceMotionDataFrequency }
+    var isAccelerometerActive: Bool { manager.isAccelerometerActive }
+    var isDeviceMotionActive: Bool { manager.isDeviceMotionActive }
+    func startAccelerometerUpdates(handler: @escaping @Sendable ([CMAccelerometerData]?, (any Error)?) -> Void) {
+        manager.startAccelerometerUpdates(handler: handler)
+    }
+    func startDeviceMotionUpdates(handler: @escaping @Sendable ([CMDeviceMotion]?, (any Error)?) -> Void) {
+        manager.startDeviceMotionUpdates(handler: handler)
+    }
+    func stopAccelerometerUpdates() { manager.stopAccelerometerUpdates() }
+    func stopDeviceMotionUpdates() { manager.stopDeviceMotionUpdates() }
+}
+
+struct WatchMotionStopEpoch {
+    fileprivate let id = UUID()
+    fileprivate init() {}
+}
+
+/// Only an observation of this source's current SDK activity, never callback or writer drain.
+struct WatchMotionClosureWitness {
+    fileprivate let epoch: WatchMotionStopEpoch
+}
+
+@MainActor
+final class WatchMotionSource {
+    private let manager: any WatchMotionHardware
+    private let isInjected: Bool
+    private var stopEpoch: WatchMotionStopEpoch?
     private var authorizationID: UUID?
     private var authorizationTimeout: Task<Void, Never>?
 
+    init() {
+        manager = NativeWatchMotionHardware()
+        isInjected = false
+    }
+
+    init(hardware: any WatchMotionHardware, environment: WatchRuntimeEnvironment) throws {
+        guard let id = environment.fixtureID, !environment.allowsHardware, environment.failure == nil else {
+            throw OwnerCaptureFailure.unavailable
+        }
+        let expected = try WatchRuntimeEnvironment.resolve(arguments: ["--owner-watch-fixture=\(id.uuidString)"], environment: [:])
+        guard expected.fixtureID == id, !expected.allowsHardware,
+              environment.base == expected.base, environment.preferenceSuite == expected.preferenceSuite else {
+            throw OwnerCaptureFailure.unavailable
+        }
+        manager = hardware
+        isInjected = true
+    }
+
     var unavailableReason: String? {
         #if targetEnvironment(simulator)
-        return "Batched motion requires a supported physical Apple Watch. The simulator cannot record shots."
-        #else
-        guard CMBatchedSensorManager.isAccelerometerSupported, CMBatchedSensorManager.isDeviceMotionSupported else {
+        if !isInjected { return "Batched motion requires a supported physical Apple Watch. The simulator cannot record shots." }
+        #endif
+        guard isInjected || WatchRuntimeEnvironment.current.allowsHardware else {
+            return "Motion is disabled for this isolated test process."
+        }
+        guard manager.isAccelerometerSupported, manager.isDeviceMotionSupported else {
             return "This Watch does not support both required batched motion streams."
         }
-        switch CMBatchedSensorManager.authorizationStatus {
+        switch manager.authorizationStatus {
         case .denied: return "Motion access is denied. Enable Motion & Fitness access in Settings."
         case .restricted: return "Motion access is restricted on this Watch."
         default: return nil
         }
-        #endif
     }
 
     var configurations: [RecordingStreamConfiguration] {
         get throws {
             try [RecordingStreamConfiguration(stream: .accelerometer,
-                  supported: CMBatchedSensorManager.isAccelerometerSupported, requestedRateHz: nil,
+                  supported: manager.isAccelerometerSupported, requestedRateHz: nil,
                   knownSensorLimit: nil),
                  RecordingStreamConfiguration(stream: .deviceMotion,
-                  supported: CMBatchedSensorManager.isDeviceMotionSupported, requestedRateHz: nil,
+                  supported: manager.isDeviceMotionSupported, requestedRateHz: nil,
                   knownSensorLimit: nil)]
         }
     }
@@ -47,18 +114,21 @@ final class WatchMotionSource {
     /// This explicit setup stage runs only after the workout is running. Samples used to request
     /// Motion permission are discarded before the recording clock window opens, never reported as captured.
     func authorize(completion: @escaping @MainActor (String?) -> Void) {
-        guard CMBatchedSensorManager.authorizationStatus == .notDetermined else {
+        stopEpoch = nil
+        if authorizationID != nil { manager.stopAccelerometerUpdates() }
+        cancelAuthorization()
+        guard unavailableReason == nil else { completion(unavailableReason); return }
+        guard manager.authorizationStatus == .notDetermined else {
             completion(unavailableReason); return
         }
         let request = UUID(); authorizationID = request
         let gate = MotionAuthorizationGate()
         manager.startAccelerometerUpdates { @Sendable [weak self] _, error in
-            let status = CMBatchedSensorManager.authorizationStatus
-            guard error != nil || status != .notDetermined, gate.take() else { return }
             let reason = error?.localizedDescription
             Task { @MainActor [weak self] in
-                guard let self, self.authorizationID == request else { return }
-                self.authorizationID = nil; self.authorizationTimeout?.cancel(); self.authorizationTimeout = nil
+                guard let self, self.authorizationID == request,
+                      reason != nil || self.manager.authorizationStatus != .notDetermined, gate.take() else { return }
+                self.cancelAuthorization()
                 self.manager.stopAccelerometerUpdates()
                 completion(reason ?? self.unavailableReason)
             }
@@ -66,12 +136,14 @@ final class WatchMotionSource {
         authorizationTimeout = Task { [weak self] in
             do { try await Task.sleep(for: .seconds(30)) } catch { return }
             guard let self, self.authorizationID == request else { return }
-            self.authorizationID = nil; self.manager.stopAccelerometerUpdates()
+            self.cancelAuthorization(); self.manager.stopAccelerometerUpdates()
             completion("Motion permission was not resolved within 30 seconds. Allow access, then start a new set.")
         }
     }
 
     func start(engine: MotionCaptureEngine, generation: UUID) {
+        stopEpoch = nil
+        cancelAuthorization()
         guard unavailableReason == nil else { engine.interrupt(unavailableReason!); return }
         manager.startAccelerometerUpdates(handler: Self.accelerometerHandler(engine: engine, generation: generation))
         manager.startDeviceMotionUpdates(handler: Self.deviceMotionHandler(engine: engine, generation: generation))
@@ -114,10 +186,26 @@ final class WatchMotionSource {
         }
     }
 
-    func stop() {
-        authorizationID = nil; authorizationTimeout?.cancel(); authorizationTimeout = nil
+    @discardableResult
+    func stop() -> WatchMotionStopEpoch {
+        cancelAuthorization()
+        let epoch = WatchMotionStopEpoch()
+        stopEpoch = epoch
         manager.stopAccelerometerUpdates()
         manager.stopDeviceMotionUpdates()
+        return epoch
+    }
+
+    func closureWitness(for epoch: WatchMotionStopEpoch) -> WatchMotionClosureWitness? {
+        guard stopEpoch?.id == epoch.id, authorizationID == nil,
+              !manager.isAccelerometerActive, !manager.isDeviceMotionActive else { return nil }
+        return WatchMotionClosureWitness(epoch: epoch)
+    }
+
+    private func cancelAuthorization() {
+        authorizationID = nil
+        authorizationTimeout?.cancel()
+        authorizationTimeout = nil
     }
 }
 

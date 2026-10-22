@@ -1,3 +1,50 @@
+# Current candidate — GitHub publication and device verification
+
+22 October 2026. `feature/guided-padel-setup`, based on `bc5e73d473dfbcd33fbb8196c1cafc5436ed9f3e`. The owner explicitly authorizes installing and adding all code/required documentation to GitHub. Publish a stacked draft PR into `feature/watch-recording-storage`; no merge or release.
+
+[Final local verification](testing/261022_Owner_First_Final_Local_Verification_v1.0.md) records portable source identity, full phone93/145 PASS and full Watch123/194 PASS, corrected UI drivers, both Release identities, signed products/profiles and retained failures. [Product](PRODUCT.md), [architecture](ARCHITECTURE.md), [release gates](RELEASE.md) and the physical runbook describe the current scope. Current PR evidence/checks carry final Watch/CI/device results as they arrive. Physical capture is not claimed verified.
+
+One next action: publish the fully locally tested candidate, obtain exact-head CI/committed-source review, then install and verify phone and Watch separately. Device connection is being established; no installed/physical-capture claim. Earlier checkpoints below remain historical.
+
+---
+# Current testing checkpoint — O8b accepted locally, 22 October 2026
+
+[O8b final verification](testing/261022_Owner_First_O8b_Local_Verification_v1.0.md): source20 exact105inputs/637delta. Focused Core6/10, Watch5/8, phone7/8; full serialized Core373/668, Watch105/172, phone56/101; zero failures/skips. Both OS27 Simulator Release builds pass. Independent Sol accepted source/tests/actual final evidence. Failed runs02/03/05/06/14 remain preserved. Guards mean no additional changes since incident46 ONLY.
+
+O9 tests-first is active; O10/O11/final UI/default-path/launch-performance, current CI, committed-HEAD review and physical evidence remain. No physical readiness or install. Earlier sections are historical.
+
+---
+
+# Current testing checkpoint — 22 October 2026
+
+## Current — 22 October 2026
+
+[O6 local verification](testing/261022_Owner_First_O6_Local_Verification_v1.0.md) is accepted after independent review: source15 exact94inputs/1,220lines; focused79methods/148runs; full346methods/613runs; Watch48/67 and phone49/93 current app-host checks; both OS27 Release products and final default-data guard. Full Core commands MUST explicitly pass `--no-parallel`; default full17 remains failed resource-scheduling evidence. Assertions/deadlines unchanged. Default guards prove no further changes since retained incident46 only.
+
+O7p/O7 and the rest of the first candidate remain unimplemented/unverified. Final UI, current CI, committed-HEAD review and physical evidence remain distinct mandatory gates. No physical-test readiness or replacement install. Earlier sections below are historical.
+
+## Latest O4q correction verification — 21 October 2026
+
+[Fresh v1.1 evidence](testing/261021_Owner_First_O4q_Local_Evidence_v1.1.md) records Core267/20 PASS, focused identity7/1 PASS, app-host build/enumeration PASS and actual isolated phone29/4 PASS. All29 actual Passed IDs match the approved selection, including16 bootstrap functions; only the prior default-writing test is excluded. Both OS27 Release builds PASS. Explicit Xcode27 DEVELOPER_DIR was used throughout.
+
+Before/after guard:28 phone/88 Watch protected entries exact, including hashes/mode/inode/mtime; phone container path migration recorded separately. Source82/current/archive/embedded manifest and78 protected O4a inputs match; all266 evidence hashes and final review hash verified. Production changes129 lines. Corrected concurrency fixtures exercise real overlap while preserving5s/100ms/10s budgets and all original assertions. Earlier failures and the evidence-parser reporting failure remain recorded; no blind retry or hidden timing increase.
+
+[Independent local review v1.1](reviews/261021_Owner_First_O4q_Review_v1.1.md) clears the correction. This is not committed-HEAD G6 or physical evidence. Phone/Watch integration, clean CI, formal review and physical G7 remain outstanding; no shot-testing readiness claim. Earlier testing checkpoints below are history.
+
+**O4q is BLOCKED, source82 `05598704`.** Tests-first missing-API failure retained; focused47/2 reports PASS253.445s; full core04 FAILED260/20 with1 issue (112.837s, process exit1): existing import/delete test receipt wait timed out at10s, cause UNKNOWN. No retry. Independent Sol High review found a missing invariant/regression for aliasing local End and direct/replacement wire retirement UUIDs. Current app-host/Release/physical checks are not run, and earlier O4a builds are not proof for this changed source. [O4q evidence](testing/261021_Owner_First_O4q_Local_Evidence_v1.0.md) distinguishes executed checks and remaining gates. Astra quota prevents the required foundational fix under the owner's latest model restriction.
+
+**Latest owner-first checkpoint: O4a accepted locally.** [Evidence](testing/261021_Owner_First_O4a_Local_Evidence_v1.0.md) and [independent review](reviews/261021_Owner_First_O4a_Review_v1.0.md) cover the exact82-input freeze and both OS27 Release builds. Original run04: functional30/4 PASS, default-container guard FAIL, retained without metadata restoration. Authorized run08:29/4 PASS, exact one-test exclusion (the existing explicit default-container writer), protected entries exact on phone/Watch; phone container migration is separately recorded. Core245/19 carries only unchanged predecessor inputs. These checks validate bootstrap ownership/persistence, not integrated setup, physical motion, HR or the complete first candidate.
+
+**Latest palette work, 21 October:** [Theme A](testing/261020_Black_Turquoise_White_A_Local_Evidence_v1.0.md) and [Icon B](testing/261021_Black_Turquoise_White_Icon_B_Local_Evidence_v1.0.md) are accepted locally at combined69-entry source `9c69a73b…72ff0`. Both Release builds50/51, native phone/Watch icons and normal launches pass; actual installed Info/executable/asset bytes match products. A4's actual2/2 test40 and corrected ordinary/MAX/keyboard/landscape form evidence pass; earlier unchanged-input checks carry only within their stated boundaries. All eight original files, Watch preferences and simulator settings are restored. Preserve zero-test39 and stale-Watch-icon55 failures plus authorized recovery56. Reported largest-Watch and transcribed AX limits remain explicit. No behavior suites were rerun for asset-only B; both executable bytes remained A38-exact. Formal current hosted CI/G6, physical and merge/release acceptance remain separate.
+
+The preceding locally accepted statistics package is identified by its [69-entry manifest](testing/261020_Motion_Statistics_A_Code_State.sha256), SHA `cd0f9af6fd4d7bb3ea0873983c1f5d34441589edd9a8cc297cbf5ccb83b7ee9a`. [Evidence](testing/261020_Motion_Statistics_A_Local_Evidence_v1.0.md) records core138/13 suites, phone app-host14/3 suites, both relevant Release builds and final full UI21 PASS (12 unique cases/15 executions). Its independent source/evidence review, seven actual visuals, original fixture/settings restoration and normal Release launch were completed before Theme A began. Preserve failed UI14 and source-specific appearance qualifications. These are prior-package results, not new sensor or guest-runtime evidence. Participant A/B, guest acquisition and integrated phone-led setup remain unfinished.
+
+Baseline `bc5e73d` has successful CI, independent review and separate version1.0/build 4 installation/launch receipts on both physical devices. See [installation checkpoint](testing/261020_Build4_Installation_Checkpoint_v1.0.md). No physical recording, delivery or export has yet passed.
+
+The owner-approved **Let’s Play** wizard on local `feature/guided-padel-setup` has completed local G4 automation: core 108; Watch model 21 unique/30 expanded; phone 14 unique/19 expanded (8 app-host/10 expanded plus 6 UI/9 expanded); Watch UI 8 unique/9 expanded; both Release builds; signed build 5 and separate strict phone/Watch signatures. Final 57-entry manifest `208bc67b2f6017358ef13a559a6359a24f02bb7ab0159b8f9e45020a787b28b3` differs from passing runtime source 1f93 only in the reviewed one-line CI branch filter. See [full evidence and failure ledger](testing/261020_Guided_Padel_Setup_Local_Evidence_v1.0.md). Use the [guided first-set runbook](testing/261020_Guided_Setup_First_Set_Runbook_v1.0.md) after publication/CI/review and applicable installation authorization. No physical recording claim or merge/release readiness follows from simulator/build results. Current [Gate Card](../GATE_CARD.md) governs.
+
+## Historical evidence checkpoints
+
 # Testing
 
 ## Complete-training increment — current 19 October2026

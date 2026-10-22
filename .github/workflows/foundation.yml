@@ -2,7 +2,7 @@ name: Foundation checks
 
 on:
   pull_request:
-    branches: [main, chore/project-governance]
+    branches: [main, chore/project-governance, feature/watch-recording-storage]
   workflow_dispatch:
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
 jobs:
   foundation:
     runs-on: xcode-27
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
     defaults:
@@ -37,7 +37,7 @@ jobs:
           exec > >(tee "$EVIDENCE/preflight.log") 2>&1
           git rev-parse HEAD
           git status --short
-          shasum -a 256 -c docs/testing/261019_Complete_Training_Screen_Capture_Code_State.sha256
+          shasum -a 256 -c docs/testing/261022_Owner_First_Final_Code_State.sha256
           test -d "$DEVELOPER_DIR"
           toolchain_version="$(xcodebuild -version)"
           printf '%s\n' "$toolchain_version"
@@ -116,15 +116,71 @@ jobs:
           set -euo pipefail
           xcodebuild -project PadelStrokeLab.xcodeproj -scheme 'PadelStrokeLab Watch App' -configuration Release -destination "platform=watchOS Simulator,id=$WATCH_ID" -derivedDataPath "$DERIVED_DATA" CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$EVIDENCE/watch-release.log"
 
+      - name: Build current simulator test products
+        run: |
+          set -euo pipefail
+          xcodebuild -project PadelStrokeLab.xcodeproj -scheme PadelStrokeLab -configuration Debug -destination "platform=iOS Simulator,id=$PHONE_ID" -derivedDataPath "$DERIVED_DATA" CODE_SIGNING_ALLOWED=NO build-for-testing 2>&1 | tee "$EVIDENCE/iphone-test-build.log"
+          xcodebuild -project PadelStrokeLab.xcodeproj -scheme 'PadelStrokeLab Watch App' -configuration Debug -destination "platform=watchOS Simulator,id=$WATCH_ID" -derivedDataPath "$DERIVED_DATA" CODE_SIGNING_ALLOWED=NO build-for-testing 2>&1 | tee "$EVIDENCE/watch-test-build.log"
+
+      - name: Isolate all test hosts before application launch
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, os, plistlib, uuid
+          from pathlib import Path
+
+          products = Path(os.environ['DERIVED_DATA']) / 'Build/Products'
+          evidence = Path(os.environ['EVIDENCE'])
+          phone_targets = {'PadelStrokeLabTests', 'PadelStrokeLabUITests'}
+          watch_targets = {'PadelStrokeLab Watch AppTests', 'PadelStrokeLab Watch AppUITests'}
+          for platform, pattern, expected in (
+              ('PHONE', 'PadelStrokeLab_PadelStrokeLab_*.xctestrun', phone_targets),
+              ('WATCH', 'PadelStrokeLab Watch App_*.xctestrun', phone_targets | watch_targets),
+          ):
+              sources = list(products.glob(pattern))
+              if len(sources) != 1:
+                  raise SystemExit(f'Expected one generated {platform} runner; found {len(sources)}')
+              runner = plistlib.loads(sources[0].read_bytes())
+              identity = str(uuid.uuid4()).upper()
+              configurations = runner.get('TestConfigurations', [])
+              if not configurations:
+                  raise SystemExit('Missing test configurations')
+              for configuration in configurations:
+                  targets = configuration.get('TestTargets', [])
+                  if len(targets) != len(expected) or {t.get('BlueprintName') for t in targets} != expected:
+                      raise SystemExit(f'Unexpected {platform} test target shape')
+                  for target in targets:
+                      name = target['BlueprintName']
+                      if target.get('SkipTestIdentifiers') or target.get('OnlyTestIdentifiers'):
+                          raise SystemExit(f'Unexpected test filtering in {name}')
+                      if name == 'PadelStrokeLabTests':
+                          args = ['--motion-statistics-fixture=unavailable']
+                      elif name == 'PadelStrokeLabUITests':
+                          args = ['--owner-setup-fixture=offline']
+                      else:
+                          args = ['--owner-watch-fixture=' + identity]
+                      target['CommandLineArguments'] = args
+              destination = products / f'{platform}-Isolated.xctestrun'
+              with destination.open('xb') as output:
+                  output.write(plistlib.dumps(runner))
+              report = {'runner': str(destination), 'sha256': hashlib.sha256(destination.read_bytes()).hexdigest(),
+                        'source_sha256': hashlib.sha256(sources[0].read_bytes()).hexdigest(),
+                        'watch_fixture_id': identity if platform == 'WATCH' else None}
+              (evidence / f'{platform}-runner.json').write_text(json.dumps(report, indent=2))
+              (evidence / destination.name).write_bytes(destination.read_bytes())
+              with open(os.environ['GITHUB_ENV'], 'a') as environment:
+                  environment.write(f'{platform}_RUNNER={destination}\n')
+          PY
+
       - name: Run full existing iPhone simulator suite
         run: |
           set -euo pipefail
-          xcodebuild -project PadelStrokeLab.xcodeproj -scheme PadelStrokeLab -configuration Debug -destination "platform=iOS Simulator,id=$PHONE_ID" -derivedDataPath "$DERIVED_DATA" -resultBundlePath "$EVIDENCE/iphone-tests.xcresult" -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO test 2>&1 | tee "$EVIDENCE/iphone-tests.log"
+          xcodebuild test-without-building -xctestrun "$PHONE_RUNNER" -destination "platform=iOS Simulator,id=$PHONE_ID" -resultBundlePath "$EVIDENCE/iphone-tests.xcresult" -parallel-testing-enabled NO 2>&1 | tee "$EVIDENCE/iphone-tests.log"
 
       - name: Run full existing Watch simulator suite
         run: |
           set -euo pipefail
-          xcodebuild -project PadelStrokeLab.xcodeproj -scheme 'PadelStrokeLab Watch App' -configuration Debug -destination "platform=watchOS Simulator,id=$WATCH_ID" -derivedDataPath "$DERIVED_DATA" -resultBundlePath "$EVIDENCE/watch-tests.xcresult" -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO test 2>&1 | tee "$EVIDENCE/watch-tests.log"
+          xcodebuild test-without-building -xctestrun "$WATCH_RUNNER" -destination "platform=watchOS Simulator,id=$WATCH_ID" '-only-testing:PadelStrokeLab Watch AppTests' '-only-testing:PadelStrokeLab Watch AppUITests' -resultBundlePath "$EVIDENCE/watch-tests.xcresult" -parallel-testing-enabled NO 2>&1 | tee "$EVIDENCE/watch-tests.log"
 
       - name: Retain successful and failed evidence
         if: always()

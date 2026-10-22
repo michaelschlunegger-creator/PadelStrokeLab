@@ -15,39 +15,52 @@ struct WatchRetainedRecording: Identifiable, Sendable {
 
 /// Read-only preparation inputs. The production provider always reads the actual Watch.
 struct WatchPreparationSettings {
-    var wrist: PlayingArm
+    var wrist: PlayingArm?
     var crownDescription: String
     var unavailableReason: String?
     var frequencyDescription: String
 
     @MainActor static func current(source: WatchMotionSource) -> Self {
         let device = WKInterfaceDevice.current()
-        return Self(wrist: device.wristLocation == .left ? .left : .right,
+        let wrist: PlayingArm?
+        switch device.wristLocation {
+        case .left: wrist = .left
+        case .right: wrist = .right
+        @unknown default: wrist = nil
+        }
+        return Self(wrist: wrist,
                     crownDescription: device.crownOrientation == .left ? "Crown left" : "Crown right",
                     unavailableReason: source.unavailableReason,
                     frequencyDescription: source.frequencyDescription)
     }
 }
 
+/// Cohesive synthetic input for UUID-isolated recorder tests. Native adapters do not conform.
+/// Supplying this never replaces the coordinator, capture engine, writer, or admission checks.
+@MainActor
+protocol WatchRecorderSyntheticMotion: AnyObject {
+    var capabilityReport: String { get }
+    var configurations: [RecordingStreamConfiguration] { get throws }
+    func authorize(completion: @escaping @MainActor (String?) -> Void)
+    func start(engine: MotionCaptureEngine, generation: UUID) throws
+    func stop()
+}
+
 @MainActor @Observable
 final class WatchRecorderModel {
     static let drillPreferenceKey = "recording.intendedDrill"
+    static let armPreferenceKey = "practice.playingArm"
+    static let handPreferenceKey = "practice.handedness"
     private let preferences: UserDefaults
-    private(set) var selectedDrillRawValue: String?
+    private(set) var preparation = WatchPreparationState()
     private(set) var capturedMetadata: RecordingMetadata?
-    var selectedDrill: RecordingDrill? { selectedDrillRawValue.flatMap(RecordingDrill.init(rawValue:)) }
-    var canSelectDrill: Bool { state == .ready }
-    var drillSelectionMessage: String {
-        if let selectedDrill { return selectedDrill.title }
-        return selectedDrillRawValue == nil ?
-            "Choose shot type" : "Saved shot type unavailable—choose again"
-    }
+    var selectedDrillRawValue: String? { preparation.drillRawValue }
+    var selectedDrill: RecordingDrill? { preparation.drill }
     var displayedDrillTitle: String {
-        if let capturedMetadata { return RecordingDrill.recordedTitle(for: capturedMetadata.drill) }
-        return drillSelectionMessage
+        capturedMetadata.map { RecordingDrill.recordedTitle(for: $0.drill) }
+            ?? selectedDrill?.title ?? "Prepare this Watch on iPhone"
     }
-
-    private(set) var state: MotionCaptureState = .ready
+    private(set) var state: MotionCaptureState = .ready { didSet { publishObservation() } }
     private(set) var snapshot: MotionCaptureSnapshot?
     private(set) var message: String?
     private(set) var retained: [WatchRetainedRecording] = []
@@ -57,144 +70,308 @@ final class WatchRecorderModel {
     private(set) var deletionStatus: String?
     private(set) var capabilityIssue: String?
     private(set) var frequencyDescription = ""
-    private(set) var configuredWrist: PlayingArm = .right
+    private(set) var configuredWrist: PlayingArm?
     private(set) var crownDescription = ""
-    var armConfirmed = false
-    private let services = WatchRecordingServices.shared
-    private let source: WatchMotionSource
-    private let workout = WatchWorkoutDriver()
+    var recoveryNotice: String {
+        get { preferences.string(forKey: "recording.recoveryNotice") ?? "" }
+        set { preferences.set(newValue, forKey: "recording.recoveryNotice") }
+    }
+    var isSyntheticFixture: Bool { !services.environment.allowsHardware }
+    var ownerIssue: String? { services.storageError ?? coordinator?.lastError }
+    var hasAcceptedPreparation: Bool { preparation.accepted != nil }
+    var ownerStatus: String {
+        guard services.ownerLoaded else { return ownerIssue ?? "Checking owner preparation…" }
+        return hasAcceptedPreparation ? "Phone setup accepted. Check wrist, crown and fit before Start."
+            : "Prepare this Watch on your iPhone before starting a set."
+    }
+    private let storageValidation: (@MainActor () -> String?)?
+    private let services: WatchRecordingServices
+    private var coordinator: OwnerCaptureCoordinator? { services.coordinator }
+    let source: WatchMotionSource
+    private let workout: WatchWorkoutDriver
+    private let syntheticMotion: (any WatchRecorderSyntheticMotion)?
+    private var allowsMotionInput: Bool { initializationIssue == nil && (services.environment.allowsHardware || hasInjectedSource || syntheticMotion != nil) }
+    enum InitializationIssue { case untrustedInjectedDependencies }
+    let initializationIssue: InitializationIssue?
+    private let hasInjectedSource: Bool
+    private let beforeWriterDrain: (@MainActor () async -> Void)?
+    private var stopEpoch: WatchMotionStopEpoch?
+    private var rawStopTime: Double?
+    private var drainRequestID: UUID?
+    var practice: OwnerPracticeCoordinator? { services.practice }
     private let preparationSettingsProvider: @MainActor () -> WatchPreparationSettings
     private var engine: MotionCaptureEngine?
+    private var attempt: OwnerCaptureAttempt?
+    private var pendingAdmissionID: UUID?
     private var activeRecordingID: UUID?
     private var paths: RecordingPaths?
     private var connectivity: RecordingConnectivity?
     private var observationTask: Task<Void, Never>?
+    private var startupTask: Task<Void, Never>?
+    private var drainTask: Task<Void, Never>?
+    private var drainDeadline: Task<Void, Never>?
+    private var writerDrainComplete = false
+    private var drainingAttemptID: UUID?
     private var changes: AsyncStream<MotionCaptureSnapshot>.Continuation?
     private var completed: Set<UUID> = []
     private var deletedRecordings: Set<UUID> = []
     private var pauseGate = WatchPauseGate()
 
-    // Injection permits lifecycle tests without authorizing or starting hardware. UI uses defaults.
     init(preparationSettingsProvider: (@MainActor () -> WatchPreparationSettings)? = nil,
-         initialState: MotionCaptureState = .ready,
-         preferences: UserDefaults = .standard, initialMetadata: RecordingMetadata? = nil) {
-        self.preferences = preferences
-        selectedDrillRawValue = preferences.string(forKey: Self.drillPreferenceKey)
+         initialState: MotionCaptureState = .ready, preferences: UserDefaults? = nil,
+         initialMetadata: RecordingMetadata? = nil, services: WatchRecordingServices? = nil,
+         workout: WatchWorkoutDriver? = nil,
+         syntheticMotion: (any WatchRecorderSyntheticMotion)? = nil,
+         motionSource: WatchMotionSource? = nil,
+         beforeWriterDrain: (@MainActor () async -> Void)? = nil,
+         storageValidation: (@MainActor () -> String?)? = nil) {
+        let services = services ?? WatchRecordingServices.shared
+        self.services = services
+        self.preferences = preferences ?? services.preferences
+        self.workout = workout ?? services.practice?.workout ?? WatchWorkoutDriver(allowsHardware: false)
+        let trusted = services.environment.isCoherentFixture
+        initializationIssue = (motionSource != nil || beforeWriterDrain != nil) && !trusted ? .untrustedInjectedDependencies : nil
+        hasInjectedSource = trusted && motionSource != nil
+        self.beforeWriterDrain = trusted ? beforeWriterDrain : nil
+        self.syntheticMotion = services.environment.fixtureID != nil && !services.environment.allowsHardware
+            && services.environment.failure == nil ? syntheticMotion : nil
+        self.storageValidation = storageValidation
         capturedMetadata = initialState == .ready ? nil : initialMetadata
         activeRecordingID = initialState == .ready ? nil : initialMetadata?.recordingID
-        let source = WatchMotionSource()
+        let source = trusted ? motionSource ?? WatchMotionSource() : WatchMotionSource()
         self.source = source
         self.preparationSettingsProvider = preparationSettingsProvider ?? { .current(source: source) }
-        paths = services.paths
-        connectivity = services.connectivity
-        refreshPreparation()
-        state = initialState
-        workout.onEvent = { [weak self] event in self?.workoutChanged(event) }
+        paths = services.paths; connectivity = services.connectivity; state = initialState
+        if allowsMotionInput { stopEpoch = source.stop() }
+        services.practice?.onNativeState = { [weak self] kind in self?.workoutChanged(kind) }
+        services.practice?.onStopSet = { [weak self] reason in self?.shutdown(reason: reason) }
+        services.practice?.onClosureCheck = { [weak self] in self?.acknowledgeClosure() }
+        services.practice?.sourceClosed = { [weak self] in
+            guard let self else { return true }
+            return (!self.allowsMotionInput && self.engine == nil) || self.liveSourceWitness != nil
+        }
+        services.practice?.recorderClosed = { [weak self] in
+            guard let self else { return true }
+            return self.engine == nil || (self.writerDrainComplete && self.snapshot?.state.isTerminal == true)
+        }
+        coordinator?.onChange = { [weak self] in self?.ownerChanged() }
+        coordinator?.onInvalidation = { [weak self] reason in self?.shutdown(reason: reason) }
+        services.onPracticeDeleted = { [weak self] ids in
+            guard let self else { return }
+            self.deletedRecordings.formUnion(ids)
+            self.retained.removeAll { self.deletedRecordings.contains($0.id) }
+            if let metadata = self.capturedMetadata, ids.contains(metadata.recordingID) { self.capturedMetadata = nil }
+        }
+        ownerChanged()
         let stream = AsyncStream<MotionCaptureSnapshot>(bufferingPolicy: .bufferingNewest(1)) { changes = $0 }
         observationTask = Task { [weak self] in
             for await snapshot in stream { self?.update(snapshot) }
         }
         refreshRetained()
     }
-
-    isolated deinit { observationTask?.cancel(); changes?.finish() }
-
-    var canPrepare: Bool { state == .ready || state.isTerminal }
-    func canStart(arm: PlayingArm) -> Bool {
-        state == .ready && selectedDrill != nil && armConfirmed && arm == configuredWrist && capabilityIssue == nil && paths != nil
+    isolated deinit {
+        observationTask?.cancel(); startupTask?.cancel(); drainTask?.cancel(); drainDeadline?.cancel(); changes?.finish()
     }
-
-    func selectDrill(_ drill: RecordingDrill) {
-        guard canSelectDrill, selectedDrill != drill else { return }
-        selectedDrillRawValue = drill.rawValue
-        preferences.set(drill.rawValue, forKey: Self.drillPreferenceKey)
-        armConfirmed = false
+    var canPrepare: Bool { state == .ready && hasAcceptedPreparation && coordinator?.canBeginNextSet == true }
+    var canStart: Bool {
+        canPrepare && preparation.isComplete && preparation.arm == configuredWrist &&
+            configuredWrist != nil && capabilityIssue == nil && paths != nil && practice?.canStartSet == true
     }
-
-    /// Both playing-arm and handedness changes require a new placement confirmation.
-    func preparationInputChanged() {
-        guard state == .ready else { return }
-        armConfirmed = false
+    var canBeginNextSet: Bool { state.isTerminal && coordinator?.canBeginNextSet == true && practice?.canStartSet == true }
+    private var liveSourceWitness: WatchMotionClosureWitness? { stopEpoch.flatMap { source.closureWitness(for: $0) } }
+    private func ownerChanged() {
+        if state == .ready { preparation.adopt(coordinator?.acceptedPreparation); refreshPreparation() }
     }
-
-    /// Returning from Settings can recover preparation, but cannot change an active set's inputs.
-    func refreshPreparation() {
+    func beginPreparation() {
         guard canPrepare else { return }
-        let settings = preparationSettingsProvider()
-        if configuredWrist != settings.wrist || crownDescription != settings.crownDescription {
-            armConfirmed = false
-        }
-        configuredWrist = settings.wrist
-        crownDescription = settings.crownDescription
-        frequencyDescription = settings.frequencyDescription
-        capabilityIssue = services.storageError ?? settings.unavailableReason
+        refreshPreparation(); preparation.begin(); publishObservation()
     }
-
-    func start(arm: PlayingArm, handedness: PlayingArm) {
+    func cancelPreparation() {
+        guard state == .ready else { return }
+        preparation.reset(); coordinator?.invalidatePhysical(); publishObservation()
+    }
+    func confirmPlacement() { guard state == .ready else { return }; preparation.confirmPlacement() }
+    func confirmOrientation() {
+        guard state == .ready, preparation.step == .check else { return }
+        let wrist = configuredWrist, crown = crownDescription
+        refreshPreparation()
+        guard configuredWrist == wrist, crownDescription == crown else { return }
+        preparation.confirmOrientation(wrist: configuredWrist)
+    }
+    func confirmFit() { guard state == .ready else { return }; preparation.confirmFit() }
+    func preparationLeftForeground() {
+        if state == .ready { preparation.invalidatePhysical() }
+        // An admitted local set survives phone loss/background; an unadmitted start does not.
+        if state == .ready || state == .starting { coordinator?.invalidatePhysical() }
+    }
+    func refreshPreparation() {
+        guard state == .ready else { return }
+        let settings = preparationSettingsProvider()
+        let changed = configuredWrist != settings.wrist || crownDescription != settings.crownDescription
+        configuredWrist = settings.wrist; crownDescription = settings.crownDescription
+        if changed { preparation.orientationChanged(); coordinator?.invalidatePhysical() }
+        frequencyDescription = settings.frequencyDescription
+        capabilityIssue = initializationIssue != nil ? "Injected dependencies require a coherent isolated fixture."
+            : !allowsMotionInput ? "An isolated motion source is required for this fixture."
+            : currentStorageIssue() ?? settings.unavailableReason
+        if configuredWrist == nil { capabilityIssue = "Watch wrist setting unavailable. Check Watch Orientation settings." }
+        publishObservation()
+    }
+    private func publishObservation() {
+        let observed: PracticeSetupWatchState
+        switch state {
+        case .ready: observed = preparation.step == nil ? .idle : .awaitingConfirmation
+        case .starting: observed = .awaitingConfirmation
+        case .recording, .resuming: observed = .recording
+        case .pausing, .paused: observed = .paused
+        case .stopping: observed = .stopping
+        case .saved: observed = .saved
+        case .interrupted: observed = .interrupted
+        case .failed: observed = .failed
+        }
+        coordinator?.updateObservation(state: observed,
+            wrist: configuredWrist == .left ? .left : configuredWrist == .right ? .right : .unknown,
+            crown: crownDescription == "Crown left" ? .left : crownDescription == "Crown right" ? .right : .unknown,
+            capability: capabilityIssue == nil ? .supported : .unsupported)
+    }
+    private func currentStorageIssue() -> String? {
+        if let storageValidation { return storageValidation() }
+        if let error = services.storageError { return error }
+        guard let paths, FileManager.default.isWritableFile(atPath: paths.rawRoot.path),
+              FileManager.default.isWritableFile(atPath: paths.notesRoot.path) else {
+            return "Recording storage unavailable. Restart the app and check free Watch storage."
+        }
+        return nil
+    }
+    func start() {
         guard state == .ready else { return }
         refreshPreparation()
-        guard canStart(arm: arm), let paths, let changes else { return }
+        guard canStart, let coordinator, let paths, let changes else { return }
         do {
-            let metadata = try makeMetadata(arm: arm, handedness: handedness)
-            // Freeze intent before starting any asynchronous workout, permission or capture work.
-            capturedMetadata = metadata
-            activeRecordingID = metadata.recordingID
-            engine = MotionCaptureEngine(metadata: metadata, rawRoot: paths.rawRoot, notesRoot: paths.notesRoot,
-                                         onChange: { changes.yield($0) })
-            pauseGate.reset()
-            state = .starting; message = "Allow workout and motion access to begin. Waiting for the workout."
-            armConfirmed = false; workout.start()
-        } catch { state = .failed; message = "Setup failed: \(error.localizedDescription)"; source.stop(); workout.end() }
+            guard let practice else { throw OwnerCaptureFailure.unavailable }
+            try practice.setWillStart()
+            let rawBefore = ProcessInfo.processInfo.systemUptime
+            let metadata = try makeMetadata()
+            let calibrationInstant = try practice.now()
+            let rawAfter = ProcessInfo.processInfo.systemUptime
+            let confirmation = coordinator.confirmPhysical(wrist: configuredWrist, crown: crownDescription,
+                fit: preparation.isComplete)
+            guard let confirmation, preparation.consume() else { return }
+            capturedMetadata = metadata; activeRecordingID = metadata.recordingID
+            pauseGate.reset(); state = .starting; message = "Checking accepted phone preparation."
+            startupTask = Task { [weak self] in
+                do {
+                    let attempt = try await coordinator.prepareCapture(metadata: metadata, confirmation: confirmation)
+                    guard let self else { coordinator.retireCapture(attempt); coordinator.engineDrained(attempt); coordinator.workoutClosed(attempt); return }
+                    self.attempt = attempt
+                    guard self.state == .starting, self.activeRecordingID == attempt.recordingID,
+                          coordinator.isCurrent(attempt), !Task.isCancelled else {
+                        self.shutdown(reason: "Preparation changed before capture admission."); return
+                    }
+                    try await practice.admitSet(context: attempt.context, before: rawBefore, after: rawAfter, instant: calibrationInstant)
+                    guard self.attempt == attempt, self.state == .starting, coordinator.isCurrent(attempt) else { throw OwnerCaptureFailure.stale }
+                    self.engine = MotionCaptureEngine(metadata: metadata, rawRoot: paths.rawRoot,
+                        notesRoot: paths.notesRoot, onChange: { changes.yield($0) })
+                    self.message = "Allow motion access to begin the set."
+                    guard let engine = self.engine else { throw OwnerCaptureFailure.unavailable }
+                    self.pendingAdmissionID = attempt.id
+                    self.authorizeMotion { [weak self] error in
+                        guard let self, self.attempt == attempt, self.engine === engine,
+                            self.state == .starting, coordinator.isCurrent(attempt) else { return }
+                        if let error { self.shutdown(reason: error) }
+                        else { self.stopEpoch = self.source.stop(); self.admit(engine: engine, attempt: attempt, resuming: false) }
+                    }
+                } catch {
+                    guard let self, self.activeRecordingID == metadata.recordingID else { return }
+                    self.shutdown(reason: "Capture preparation failed: \(error.localizedDescription)")
+                }
+            }
+        } catch { shutdown(reason: "Setup failed: \(error.localizedDescription)") }
     }
-
-    /// The synchronous header path used by Start. Construction alone never authorizes or starts hardware.
-    /// Start separately rechecks current settings, capability and durable storage before calling this.
-    func makeMetadata(arm: PlayingArm, handedness: PlayingArm) throws -> RecordingMetadata {
-        guard state == .ready, let selectedDrill, armConfirmed, arm == configuredWrist else {
-            throw RecordingError.invalid("Choose a shot type and confirm the Watch on your playing arm.")
-        }
+    func makeMetadata() throws -> RecordingMetadata {
+        guard canStart, let arm = preparation.arm, let handedness = preparation.usualHand,
+              let configuredWrist, let selectedDrill else { throw OwnerCaptureFailure.unprepared }
         let device = WKInterfaceDevice.current()
         return try RecordingMetadata(recordingID: UUID(),
             clock: RecordingClock(domainID: UUID(), monotonicAnchorSeconds: ProcessInfo.processInfo.systemUptime,
-                          wallAnchorUnixSeconds: Date().timeIntervalSince1970),
+                wallAnchorUnixSeconds: Date().timeIntervalSince1970),
             appBuild: "\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"))",
             protocolVersion: RecordingDrill.protocolVersion, deviceModel: hardwareModel(device: device),
             operatingSystem: "\(device.systemName) \(device.systemVersion)", handedness: handedness,
             playingArm: arm, watchWrist: configuredWrist, watchOrientation: crownDescription,
-            playingArmConfirmed: armConfirmed, drill: selectedDrill.rawValue,
-            capabilityReport: source.capabilityReport,
-            streams: source.configurations)
+            playingArmConfirmed: preparation.finalConfirmed, drill: selectedDrill.rawValue,
+            capabilityReport: syntheticMotion?.capabilityReport ?? source.capabilityReport,
+            streams: syntheticMotion?.configurations ?? source.configurations)
     }
-
     func pause() {
         guard state == .recording else { return }
-        let cutoff = ProcessInfo.processInfo.systemUptime
         state = .pausing; pauseGate.request()
-        engine?.pause(at: cutoff)
-        source.stop()
+        engine?.pause(at: ProcessInfo.processInfo.systemUptime); stopMotion()
     }
     func resume() {
-        guard state == .paused, pauseGate.canResume else { return }
-        pauseGate.reset()
-        state = .resuming; workout.resume()
+        guard state == .paused, pauseGate.canResume, let attempt, coordinator?.isAdmitted(attempt) == true else { return }
+        pauseGate.reset(); state = .resuming; practice?.resume()
     }
     func stop() {
-        guard [.starting, .recording, .paused, .resuming].contains(state) else { return }
-        let cutoff = ProcessInfo.processInfo.systemUptime
-        state = .stopping; engine?.stop(at: cutoff); source.stop(); workout.end()
-        // Before the workout ever runs, there is no raw recording to seal.
-        if snapshot == nil {
-            engine?.interrupt("Stopped before motion capture began.")
-            state = .interrupted; message = "Stopped before motion capture began."
+        guard [.starting, .recording, .pausing, .paused, .resuming].contains(state) else { return }
+        shutdown(reason: nil)
+    }
+    private func shutdown(reason: String?) {
+        guard state != .ready, state != .stopping || attempt != nil else { return }
+        if let attempt, drainingAttemptID == attempt.id { return }
+        let wasAdmitted = attempt.map { coordinator?.isAdmitted($0) == true } ?? false
+        state = .stopping; pendingAdmissionID = nil; startupTask?.cancel(); stopMotion(); pauseGate.reset()
+        let boundary = ProcessInfo.processInfo.systemUptime
+        rawStopTime = boundary; practice?.setWillClose()
+        if let attempt { coordinator?.retireCapture(attempt); drainingAttemptID = attempt.id }
+        else { coordinator?.invalidatePhysical() }
+        if let engine {
+            if let reason { engine.interrupt(reason) }
+            else if !wasAdmitted { engine.interrupt("Stopped before capture began.") }
+            else { engine.stop(at: boundary) }
+        } else { state = .interrupted }
+        if let reason { message = reason }
+        if let reason { practice?.fail(reason) }
+        guard let attempt, let coordinator else { return }
+        if workout.isClosed { coordinator.workoutClosed(attempt) }
+        guard let engine else { coordinator.engineDrained(attempt); writerDrainComplete = true; acknowledgeClosure(); return }
+        writerDrainComplete = false
+        drainDeadline = Task { [weak self] in
+            do { try await Task.sleep(for: .seconds(5)) } catch { return }
+            self?.checkWriterShutdownDeadlineForTesting()
+        }
+        let request = UUID(), practiceID = attempt.context.practiceID
+        drainRequestID = request
+        drainTask = Task { [weak self] in
+            await self?.beforeWriterDrain?()
+            let drained = await engine.snapshot()
+            guard let self, self.attempt == attempt, self.engine === engine, self.drainRequestID == request,
+                self.practice?.currentPracticeID == practiceID else { return }
+            guard drained.state.isTerminal else {
+                coordinator.shutdownTimedOut(attempt); self.message = "Writer shutdown is incomplete. A new set is blocked."; return
+            }
+            self.writerDrainComplete = true; self.drainDeadline?.cancel()
+            coordinator.engineDrained(attempt); self.acknowledgeClosure()
         }
     }
-    func newSet() {
-        guard state.isTerminal else { return }
-        source.stop(); workout.end(); engine = nil; snapshot = nil; activeRecordingID = nil
-        state = .ready; armConfirmed = false; capturedMetadata = nil; message = nil; pauseGate.reset()
-        refreshPreparation()
+    private func acknowledgeClosure() {
+        guard let attempt, drainingAttemptID == attempt.id, writerDrainComplete, let witness = liveSourceWitness else { return }
+        coordinator?.motionClosed(attempt, witness: witness)
+        if workout.isClosed { coordinator?.workoutClosed(attempt) }
+        if let rawStopTime { practice?.setStopped(rawTime: rawStopTime) }
     }
-
+    func checkWriterShutdownDeadlineForTesting() {
+        guard let attempt, drainingAttemptID == attempt.id, !writerDrainComplete else { return }
+        coordinator?.shutdownTimedOut(attempt)
+        message = "Waiting for writer shutdown. A new set is blocked."
+    }
+    func newSet() {
+        guard canBeginNextSet || (state.isTerminal && practice?.canBeginPractice == true && writerDrainComplete && liveSourceWitness != nil) else { return }
+        rawStopTime = nil; drainRequestID = nil; writerDrainComplete = false
+        engine = nil; attempt = nil; snapshot = nil; activeRecordingID = nil; drainingAttemptID = nil
+        state = .ready; preparation.reset(); capturedMetadata = nil; message = nil; pauseGate.reset()
+        ownerChanged()
+    }
     private func hardwareModel(device: WKInterfaceDevice) -> String {
         var system = utsname()
         guard uname(&system) == 0 else { return device.model }
@@ -202,59 +379,96 @@ final class WatchRecorderModel {
             .prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }
         return "\(device.model) \(String(decoding: bytes, as: UTF8.self))"
     }
-
-    private func workoutChanged(_ event: WatchWorkoutDriver.Event) {
-        switch event {
+    private func workoutChanged(_ kind: WatchWorkoutDriver.Kind) {
+        guard let attempt else { return }
+        switch kind {
         case .running:
-            guard let engine, [.starting, .resuming].contains(state) else { workout.end(); return }
-            let completion: @Sendable (UUID?) -> Void = { [weak self] generation in
-                Task { @MainActor [weak self] in
-                    guard let self, self.engine === engine, [.starting, .resuming, .recording].contains(self.state),
-                          let generation else { return }
-                    self.source.start(engine: engine, generation: generation)
-                }
-            }
-            if state == .resuming { engine.resume(completion: completion) }
-            else {
-                message = "Preparing motion permission (up to 30 seconds). Setup samples are not recorded."
-                source.authorize { [weak self] error in
-                    guard let self, self.engine === engine, self.state == .starting else { return }
-                    if let error { self.source.stop(); self.workout.end(); engine.interrupt(error); self.message = error; self.state = .interrupted }
-                    else { self.frequencyDescription = self.source.frequencyDescription; engine.begin(completion: completion) }
-                }
-            }
+            guard state == .resuming, pendingAdmissionID != attempt.id, let engine, coordinator?.isCurrent(attempt) == true else { return }
+            pendingAdmissionID = attempt.id; admit(engine: engine, attempt: attempt, resuming: true)
         case .paused:
-            guard pauseGate.workoutDidPause() else {
-                source.stop(); engine?.interrupt("Workout paused unexpectedly; recording interrupted."); workout.end()
-                state = .interrupted; message = "Workout paused unexpectedly."
-                return
+            if [.starting, .recording, .resuming].contains(state) {
+                shutdown(reason: "Workout paused without an acknowledged capture pause."); return
             }
-            if pauseGate.canResume { state = .paused }
-        case .ended: break
-        case .failed(let reason):
-            source.stop(); workout.end(); engine?.interrupt(reason)
-            state = .interrupted; message = reason; pauseGate.reset()
+            guard state == .pausing || state == .paused else { return }
+            if pauseGate.workoutDidPause(), pauseGate.canResume { state = .paused }
+        case .ended, .closedWithoutSession:
+            if drainingAttemptID != attempt.id { shutdown(reason: "Workout ended before capture was stopped.") }
+            coordinator?.workoutClosed(attempt)
+        case .shutdownTimedOut:
+            coordinator?.shutdownTimedOut(attempt); message = "Waiting for actual workout end."
+        case let .failed(reason): shutdown(reason: reason)
         }
     }
-
+    private func admit(engine: MotionCaptureEngine, attempt: OwnerCaptureAttempt, resuming: Bool) {
+        guard let coordinator else { return }
+        Task { [weak self] in
+            defer { if self?.pendingAdmissionID == attempt.id { self?.pendingAdmissionID = nil } }
+            do {
+                let operation: @MainActor () throws -> Void = { [weak self] in
+                    guard let self, self.attempt == attempt, self.engine === engine,
+                          self.state == (resuming ? .resuming : .starting),
+                          let metadata = self.capturedMetadata else { throw OwnerCaptureFailure.stale }
+                    let settings = self.preparationSettingsProvider()
+                    guard settings.wrist == metadata.watchWrist, settings.crownDescription == metadata.watchOrientation,
+                          settings.unavailableReason == nil, self.currentStorageIssue() == nil,
+                          self.allowsMotionInput, self.practice?.permitsResume == true,
+                          self.liveSourceWitness != nil else { throw OwnerCaptureFailure.physicalCheck }
+                    let completion: @Sendable (UUID?) -> Void = { [weak self] generation in
+                        Task { @MainActor [weak self] in
+                            guard let self, self.attempt == attempt, self.engine === engine,
+                                  [.starting, .resuming, .recording].contains(self.state),
+                                  coordinator.isAdmitted(attempt), let generation else { return }
+                            guard self.liveSourceWitness != nil, self.practice?.permitsResume == true else {
+                                self.shutdown(reason: "Motion closure changed before native acquisition."); return
+                            }
+                            self.startMotion(engine: engine, generation: generation)
+                        }
+                    }
+                    if resuming { engine.resume(completion: completion) }
+                    else { engine.begin(completion: completion) }
+                }
+                if resuming { try await coordinator.resume(attempt, operation: operation) }
+                else { try await coordinator.admit(attempt, operation: operation) }
+            } catch {
+                guard let self, self.attempt == attempt else { return }
+                self.shutdown(reason: "Capture admission denied: \(error.localizedDescription)")
+            }
+        }
+    }
+    private func authorizeMotion(completion: @escaping @MainActor (String?) -> Void) {
+        if let syntheticMotion { syntheticMotion.authorize(completion: completion) }
+        else if allowsMotionInput { source.authorize(completion: completion) }
+        else { completion("Synthetic fixtures cannot request native motion access.") }
+    }
+    private func startMotion(engine: MotionCaptureEngine, generation: UUID) {
+        do {
+            if let syntheticMotion { try syntheticMotion.start(engine: engine, generation: generation) }
+            else {
+                guard allowsMotionInput else { throw OwnerCaptureFailure.unavailable }
+                source.start(engine: engine, generation: generation)
+            }
+        } catch { shutdown(reason: "Motion acquisition failed: \(error.localizedDescription)") }
+    }
+    private func stopMotion() {
+        if let syntheticMotion { syntheticMotion.stop() }
+        else if allowsMotionInput { stopEpoch = source.stop() }
+    }
     private func update(_ value: MotionCaptureSnapshot) {
         guard engine != nil, activeRecordingID == value.recordingID else { return }
         snapshot = value
         if state == .stopping && !value.state.isTerminal { return }
         if state == .pausing && value.state != .paused && !value.state.isTerminal { return }
-        state = value.state
-        message = value.detail
+        state = value.state; message = value.detail
         if value.state == .paused {
             let shouldPauseWorkout = pauseGate.engineDidPause()
             state = pauseGate.canResume ? .paused : .pausing
-            if shouldPauseWorkout { workout.pause() }
+            if shouldPauseWorkout { practice?.pause() }
         }
         if value.state.isTerminal {
-            pauseGate.reset()
-            source.stop(); workout.end()
-            if value.hasLocalRecording, completed.insert(value.recordingID).inserted {
-                refreshRetained()
-                connectivity?.queue(recordingID: value.recordingID, timeline: value.timeline)
+            shutdown(reason: value.detail)
+            state = value.state; message = value.detail
+            if value.hasLocalRecording, !deletedRecordings.contains(value.recordingID), completed.insert(value.recordingID).inserted {
+                refreshRetained(); services.queueRecording(value.recordingID, timeline: value.timeline)
             }
         }
     }
@@ -265,7 +479,7 @@ final class WatchRecorderModel {
 
     func retryTransfer(_ entry: WatchRetainedRecording) {
         guard entry.canTransfer, Self.canTransfer(recordingID: entry.id, activeRecordingID: activeRecordingID, state: state), let timeline = entry.timeline else { return }
-        connectivity?.queue(recordingID: entry.id, timeline: timeline)
+        services.queueRecording(entry.id, timeline: timeline)
     }
 
     nonisolated static func canDelete(recordingID: UUID, activeRecordingID: UUID?, state: MotionCaptureState,

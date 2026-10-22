@@ -70,6 +70,26 @@ final class RecordingLocalTransaction {
 }
 
 public enum RecordingLocalCopies {
+    /// Whole-practice cleanup already holds capture and transaction ownership.
+    static func removeForPracticeDeletion(recordingID: UUID, paths: RecordingPaths,
+                                         transaction: RecordingLocalTransaction, device: OwnerPracticeDevice) throws {
+        guard transaction.recordingID == recordingID else { throw RecordingError.integrity("deletion transaction scope") }
+        try transaction.markDeleted(device: device.rawValue)
+        try removePrivateCopies(recordingID: recordingID, paths: paths)
+        let outbox = try AnnotationFiles.root(paths.outboxRoot)
+        defer { close(outbox) }
+        for name in try AnnotationFiles.names(outbox, limit: 4096) {
+            let prefix = ".pending-auto-\(recordingID.uuidString)-"
+            let pending = name.hasPrefix(prefix) && UUID(uuidString: String(name.dropFirst(prefix.count))) != nil
+            let exportPrefix = "export-\(recordingID.uuidString)-"
+            let exported = name.hasPrefix(exportPrefix) && name.hasSuffix(".pslrecording") &&
+                UUID(uuidString: String(name.dropFirst(exportPrefix.count).dropLast(13))) != nil
+            if pending || exported || isAutomaticOutboxName(name, recordingID: recordingID) || name == recordingID.uuidString + ".transfer.json" {
+                guard unlinkat(outbox, name, 0) == 0 else { throw AnnotationFiles.error("remove practice raw export") }
+            }
+        }
+        try AnnotationFiles.sync(outbox)
+    }
     /// A durable tombstone is published before deleting data. Retried or delayed transfers cannot
     /// recreate the phone copy. Watch originals and independent outbox exports are untouched.
     public static func deletePhoneCopy(recordingID: UUID, paths: RecordingPaths) throws {

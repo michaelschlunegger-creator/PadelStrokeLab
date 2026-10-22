@@ -42,6 +42,7 @@ final class PadelStrokeLabUITests: XCTestCase {
         XCUIDevice.shared.orientation = orientation
         defer { XCUIDevice.shared.orientation = .portrait }
         let app = XCUIApplication()
+        app.launchArguments = ["--owner-setup-fixture=offline"]
         if largeText {
             app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
                                     "-AppleInterfaceStyle", "Dark"]
@@ -49,6 +50,9 @@ final class PadelStrokeLabUITests: XCTestCase {
         app.launch()
         let home = app.scrollViews["homeScreen"]
         XCTAssertTrue(home.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.descendants(matching: .any).matching(
+            NSPredicate(format: "label == %@", "Padel Master")).firstMatch.exists)
+        XCTAssertFalse(app.staticTexts["PADEL STROKE LAB"].exists)
         capture(app, name: "01-Practice-home")
 
         let practice = app.buttons["practiceGuideLink"]
@@ -57,11 +61,20 @@ final class PadelStrokeLabUITests: XCTestCase {
         let practiceGuide = app.scrollViews["practiceGuideScreen"]
         XCTAssertTrue(practiceGuide.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Your training set"].exists)
+        let setupGuide = app.staticTexts["watchSetupGuidance"]
+        reveal(setupGuide, in: practiceGuide)
+        XCTAssertTrue(setupGuide.label.contains("Set up on iPhone"))
+        XCTAssertTrue(setupGuide.label.contains("Start on Watch"))
+        for title in ["Review owner consent on iPhone", "Choose forehand or backhand", "Wear Watch on your racket arm",
+                      "Check wrist, crown and fit", "Review and start on Watch"] {
+            let step = app.staticTexts[title]
+            reveal(step, in: practiceGuide)
+            XCTAssertTrue(step.exists)
+        }
         let intent = app.staticTexts["trainingSetGuidance"]
         reveal(intent, in: practiceGuide)
         XCTAssertTrue(intent.label.contains("one intended shot type per short set"))
-        for title in ["Forehand groundstroke", "Backhand groundstroke", "Forehand volley", "Backhand volley",
-                      "Serve", "Lob", "Bandeja", "Víbora", "Smash", "Other / unclassified"] {
+        for title in ["Forehand groundstroke", "Backhand groundstroke"] {
             let choice = app.staticTexts[title]
             reveal(choice, in: practiceGuide)
             XCTAssertTrue(choice.exists, "Missing intended type: \(title)")
@@ -99,6 +112,7 @@ final class PadelStrokeLabUITests: XCTestCase {
     @MainActor
     func testSessionsEmptyStateAndBackNavigation() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["--owner-setup-fixture=offline"]
         app.launch()
         let home = app.scrollViews["homeScreen"]
         XCTAssertTrue(home.waitForExistence(timeout: 10))
@@ -162,9 +176,12 @@ final class PadelStrokeLabUITests: XCTestCase {
 
     @MainActor
     func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
+        // Simulator synthetic-launch regression; fixture I/O is included, not physical launch evidence.
+        let app = XCUIApplication()
+        app.launchArguments = ["--owner-setup-fixture=offline"]
         measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
+            app.launch()
         }
+        XCTAssertTrue(app.scrollViews["homeScreen"].waitForExistence(timeout: 10))
     }
 }

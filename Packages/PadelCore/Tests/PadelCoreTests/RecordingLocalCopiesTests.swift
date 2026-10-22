@@ -9,6 +9,34 @@ private final class TransactionTestErrors: @unchecked Sendable {
     var isEmpty: Bool { lock.withLock { values.isEmpty } }
 }
 
+private final class ReceiptRaceTimingTrace: @unchecked Sendable {
+    private let lock = NSLock()
+    private let origin = DispatchTime.now().uptimeNanoseconds
+    private var phases: [String: UInt64] = [:]
+    private var emitted = false
+
+    func markFirst(_ phase: String) {
+        let now = DispatchTime.now().uptimeNanoseconds
+        lock.withLock {
+            if phases[phase] == nil { phases[phase] = now }
+        }
+    }
+
+    func emitOnce(_ reason: String) {
+        let snapshot: [String: UInt64]? = lock.withLock {
+            guard !emitted else { return nil }
+            emitted = true
+            return phases
+        }
+        guard let snapshot else { return }
+        let summary = snapshot.sorted { $0.value < $1.value }.map { phase, time in
+            let milliseconds = Double(time - origin) / 1_000_000
+            return "\(phase)=\(String(format: "%.3f", milliseconds))ms"
+        }.joined(separator: ", ")
+        print("Receipt race timing [\(reason)]: \(summary)")
+    }
+}
+
 struct RecordingLocalCopiesTests {
     @Test func confirmedWatchDeleteCancelsAndRemovesOnlyAutomaticCopies() async throws {
         let (fixture, paths, timeline, _) = try archiveFixture()
@@ -66,6 +94,9 @@ struct RecordingLocalCopiesTests {
     }
 
     @Test func deletionWaitsForImportThenWithholdsAckAndPreventsResurrection() throws {
+        let trace = ReceiptRaceTimingTrace()
+        trace.markFirst("test-start")
+        defer { trace.emitOnce("early-exit") }
         let (source, paths, timeline, bundle) = try archiveFixture()
         defer { withExtendedLifetime(source) {} }
         let receipt = try RecordingArchive.write(recordingID: recordingTestID, rawRoot: paths.rawRoot, timeline: timeline, destination: bundle)
@@ -82,31 +113,54 @@ struct RecordingLocalCopiesTests {
         let importFinished = DispatchSemaphore(value: 0)
         let deleteFinished = DispatchSemaphore(value: 0)
         let errors = TransactionTestErrors()
-        DispatchQueue.global().async {
+        let importWorker = Thread {
+            trace.markFirst("import-start")
             defer { importFinished.signal() }
             do {
                 _ = try RecordingArchive.importBundle(from: incoming, rawRoot: target.rawRoot, notesRoot: target.notesRoot,
                     beforeReceipt: {
+                        trace.markFirst("before-receipt")
                         atReceipt.signal()
-                        guard releaseImport.wait(timeout: .now() + 10) == .success else { throw RecordingError.closed }
+                        let releaseResult = releaseImport.wait(timeout: .now() + 10)
+                        trace.markFirst(releaseResult == .success ? "import-release-wait-success" : "import-release-wait-timeout")
+                        guard releaseResult == .success else { throw RecordingError.closed }
                     })
-            } catch { errors.append(error) }
+                trace.markFirst("import-complete")
+            } catch {
+                trace.markFirst("import-error-\(String(reflecting: type(of: error)))")
+                errors.append(error)
+            }
         }
-        #expect(atReceipt.wait(timeout: .now() + 10) == .success)
-        DispatchQueue.global().async {
+        defer { withExtendedLifetime(importWorker) {} }
+        importWorker.qualityOfService = .userInitiated
+        trace.markFirst("import-submit")
+        importWorker.start()
+        trace.markFirst("receipt-wait-start")
+        let receiptResult = atReceipt.wait(timeout: .now() + 10)
+        trace.markFirst(receiptResult == .success ? "receipt-wait-success" : "receipt-wait-timeout")
+        #expect(receiptResult == .success)
+        let deleteWorker = Thread {
             defer { deleteFinished.signal() }
             do {
                 try RecordingLocalCopies.deletePhoneCopy(recordingID: recordingTestID, paths: target,
-                                                         onContention: { deleteContended.signal() })
+                                                         onContention: {
+                                                             trace.markFirst("delete-contended")
+                                                             deleteContended.signal()
+                                                         })
             } catch { errors.append(error) }
         }
+        defer { withExtendedLifetime(deleteWorker) {} }
+        deleteWorker.qualityOfService = .userInitiated
+        deleteWorker.start()
         // This signal is emitted only after the real transaction lock reports EWOULDBLOCK.
         #expect(deleteContended.wait(timeout: .now() + 10) == .success)
         #expect(try notes.loadLabels(recordingID: recordingTestID) == [label])
         #expect(FileManager.default.fileExists(atPath: target.rawRoot.appendingPathComponent(recordingTestID.uuidString).path))
+        trace.markFirst("import-release")
         releaseImport.signal()
         #expect(importFinished.wait(timeout: .now() + 10) == .success)
         #expect(deleteFinished.wait(timeout: .now() + 10) == .success)
+        trace.emitOnce("after-joins")
         #expect(errors.isEmpty)
         #expect(!FileManager.default.fileExists(atPath: target.rawRoot.appendingPathComponent(recordingTestID.uuidString).path))
         #expect(!FileManager.default.fileExists(atPath: incoming.path))
