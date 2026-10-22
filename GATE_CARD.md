@@ -1,3 +1,13 @@
+# Current checkpoint — CI execution mitigation
+
+23 October2026. Branch `feature/guided-padel-setup`, amendment base `cbd6c4fc17ae4456cc106bbfb3abe074d7a0d71e`. Two verified different workers stalled shared-code verification beyond its15-minute limit; both run39864792158 attempts were cancelled and yielded no logs/artifacts. Cause remains UNKNOWN; no app failure is inferred. See [execution evidence and mitigation](docs/testing/261023_CI_Worker_Diagnostics_v1.0.md).
+
+The unchanged Core step now runs before simulator creation, with bounded resource diagnostics and an allowlisted baseline upload before Core. Tests/coverage/assertions/deadlines and every required gate remain intact. YAML/Bash checks and controlled success/failure/monitor-cleanup probes pass; independent source review clears the workflow. Source6 manifest SHA256 `445fd7684ec752b681b28fdd551d6cda0ad214339ed44cf82ff1c4ebb285b94c`; only workflow differs from Source5, preserving all app/Core/signing evidence. The mitigation requires real remote verification. No installation or physical pass is claimed.
+
+One next action: publish this bounded workflow correction and complete exact-head CI/review, then install and verify both available devices. PR#3 carries live observations; earlier checkpoints are historical.
+
+---
+
 # Current checkpoint — final UI driver verification
 
 23 October2026. Branch `feature/guided-padel-setup`, amendment base `a56ebeea51d7395bed9e2b36c77ae02c09105f3c`. CI39847924301 is FAILED evidence: Core and both Release builds passed; exactly one of27 phone UI executions failed in largest-text landscape scrolling, so Watch CI was skipped. The single-file test-driver correction preserves every assertion and40attempts; independent source review clears it and the formerly failing case passes locally. All seven affected Motion UI methods pass across two scoped runs, zero failures/skips (focused landscape1/1 plus six remaining regressions6/6). See [correction/evidence](docs/testing/261023_UI_Scroll_Driver_Correction_v1.0.md).

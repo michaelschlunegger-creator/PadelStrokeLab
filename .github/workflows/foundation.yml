@@ -50,6 +50,55 @@ jobs:
           xcrun swift --version
           xcrun simctl list -j > "$EVIDENCE/simulators-before.json"
 
+      - name: Record pre-Core worker baseline
+        timeout-minutes: 2
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          {
+            date -u '+%Y-%m-%dT%H:%M:%SZ'
+            git rev-parse HEAD || true
+            printf 'Run: %s; attempt: %s; before task-created simulator pair\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+            xcodebuild -version || true
+            sysctl hw.memsize hw.ncpu || true
+            vm_stat || true
+            df -h "$RUNNER_TEMP" || true
+            ps -axo pid,ppid,etime,state,%cpu,rss,comm | awk 'NR <= 80' || true
+            xcrun simctl list devices || true
+          } 2>&1 | tee "$EVIDENCE/core-preflight.log" || true
+      - name: Retain pre-Core worker baseline
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: core-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE }}/core-preflight.log
+          if-no-files-found: error
+          retention-days: 14
+      - name: Verify shared metadata
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          (
+            core_sleep_pid=''
+            trap 'if [[ -n "$core_sleep_pid" ]]; then kill "$core_sleep_pid" 2>/dev/null || true; wait "$core_sleep_pid" 2>/dev/null || true; fi' EXIT
+            trap 'exit 0' INT TERM
+            for sample in {1..30}; do
+              {
+                date -u '+%Y-%m-%dT%H:%M:%SZ'
+                vm_stat || true
+                ps -axo pid,ppid,etime,state,%cpu,rss,comm | awk 'NR == 1 || /swift|xctest|Simulator/ { if (++count <= 40) print }' || true
+              } 2>&1 | tee -a "$EVIDENCE/core-resource-heartbeat.log" || true
+              sleep 30 &
+              core_sleep_pid=$!
+              wait "$core_sleep_pid" || break
+              core_sleep_pid=''
+            done
+          ) &
+          core_monitor_pid=$!
+          trap 'core_status=$?; trap - EXIT; kill "$core_monitor_pid" 2>/dev/null || true; wait "$core_monitor_pid" 2>/dev/null || true; exit "$core_status"' EXIT
+          xcrun swift test --package-path Packages/PadelCore --scratch-path "$RUNNER_TEMP/foundation-core" --no-parallel 2>&1 | tee "$EVIDENCE/core-tests.log"
+
       - name: Create an available OS 27 simulator pair
         run: |
           set -euo pipefail
@@ -99,12 +148,6 @@ jobs:
           (evidence / 'simulators-ready.json').write_text(
               subprocess.check_output(['xcrun', 'simctl', 'list', '-j'], text=True))
           PY
-
-      - name: Verify shared metadata
-        timeout-minutes: 15
-        run: |
-          set -euo pipefail
-          xcrun swift test --package-path Packages/PadelCore --scratch-path "$RUNNER_TEMP/foundation-core" --no-parallel 2>&1 | tee "$EVIDENCE/core-tests.log"
 
       - name: Build iPhone Release
         run: |

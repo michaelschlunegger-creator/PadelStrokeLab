@@ -1,3 +1,7 @@
+# 23 October2026 — CI execution diagnostics
+
+Run unchanged shared-code tests before simulator creation; retain bounded resource diagnostics and a baseline before Core. Preserve all deadlines/assertions/coverage. Both unresponsive-worker attempts remain cancelled evidence with unknown cause. [Verification](testing/261023_CI_Worker_Diagnostics_v1.0.md).
+
 # 23 October2026 — largest-text scroll driver
 
 Test-only feedback compensates measured pan activation loss; full visibility,40attempts and assertions are preserved. All seven affected Motion UI methods pass across two scoped runs, zero failures/skips. Aggregate CI cap120 minutes budgets measured mandatory work, retaining all individual deadlines. See [evidence](testing/261023_UI_Scroll_Driver_Correction_v1.0.md).
