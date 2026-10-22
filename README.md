@@ -4,7 +4,7 @@ An iPhone and Apple Watch prototype investigating whether Watch signals can pred
 
 ## Current state
 
-**23 October 2026:** corrected owner forehand/backhand candidate on `feature/guided-padel-setup`. Full Core388/696, Watch130/206, phone app-host74/125 and four affected UI checks pass. Both Release builds and signed-device products/profiles pass. A test-only fixture portability correction resolves the first GitHub run's permissions failure; new exact-source CI/review and separate installation remain pending. See [portability verification](docs/testing/261023_Core_CI_Portability_v1.0.md), [PR#3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and [Gate Card](GATE_CARD.md). Physical capture/background/battery remain unverified.
+**23 October 2026:** owner forehand/backhand candidate on `feature/guided-padel-setup`. The remaining largest-text landscape UI driver failure is corrected and all seven affected Motion UI methods pass with zero failures/skips. Full Core, Watch/phone host, Release and signed-product evidence retain unchanged app inputs. New exact-head CI/review and separate installation remain pending. See [correction/evidence](docs/testing/261023_UI_Scroll_Driver_Correction_v1.0.md), [PR#3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and [Gate Card](GATE_CARD.md). Physical sensors/background/battery remain unverified.
 
 [Product/scope](docs/PRODUCT.md) · [Architecture](docs/ARCHITECTURE.md) · [App Specifications v1.1](docs/product/261016_App_Specifications_PSL-SPEC-001_v1.1.txt) · [Verification](docs/testing/261022_Owner_First_Final_Local_Verification_v1.0.md) · [Development release gates](docs/RELEASE.md) · [Physical runbook](docs/testing/261021_Owner_Forehand_Backhand_Physical_Runbook_v1.0.md)
 

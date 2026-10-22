@@ -1,3 +1,7 @@
+# 23 October2026 — largest-text scroll driver
+
+Test-only feedback compensates measured pan activation loss; full visibility,40attempts and assertions are preserved. All seven affected Motion UI methods pass across two scoped runs, zero failures/skips. Aggregate CI cap120 minutes budgets measured mandatory work, retaining all individual deadlines. See [evidence](testing/261023_UI_Scroll_Driver_Correction_v1.0.md).
+
 # 22 October 2026 — owner forehand/backhand candidate
 
 Implements phone-led owner preparation, fresh Watch checks, durable wrist streams, optional owner heart rate/recovery, verified whole-practice transfer/readback/deletion and phone charts/manual-label/export workflows. Consolidates product, architecture, release and test documentation. Corrects accessible results presentation and test navigation; retains all failed evidence. Physical behavior remains to be verified. See [final evidence](testing/261022_Owner_First_Final_Local_Verification_v1.0.md).

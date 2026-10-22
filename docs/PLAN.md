@@ -1,3 +1,13 @@
+# Current checkpoint — final UI driver verification
+
+23 October2026. Branch `feature/guided-padel-setup`, amendment base `a56ebeea51d7395bed9e2b36c77ae02c09105f3c`. CI39847924301 is FAILED evidence: Core and both Release builds passed; exactly one of27 phone UI executions failed in largest-text landscape scrolling, so Watch CI was skipped. The single-file test-driver correction preserves every assertion and40attempts; independent source review clears it and the formerly failing case passes locally. All seven affected Motion UI methods pass across two scoped runs, zero failures/skips (focused landscape1/1 plus six remaining regressions6/6). See [correction/evidence](testing/261023_UI_Scroll_Driver_Correction_v1.0.md).
+
+Only the aggregate CI cap also changes90→120 minutes: measured CI plus the skipped Watch suite exceeds93 minutes. Individual deadlines, complete CI coverage and no-retry policy remain unchanged. Current115-input manifest SHA256 `f374785cdd9784728de4f7d98a8e42c2c9614eb378d3509ef086dd27d1f6849f`. App/Core production and signed-product inputs are unchanged. New exact-head CI/review and separate installations are pending; no physical sensor pass is claimed.
+
+One next action: publish the locally verified bounded correction, then complete exact-head CI/review and install on each available device. Subsequent observations belong on PR#3 and linked evidence. Earlier checkpoints are historical.
+
+---
+
 # Current — Core CI portability verified locally
 
 23 October2026. Full serialized Core388/696 passes; app/Watch source is unchanged and retains all previous passing evidence. See [portability verification](testing/261023_Core_CI_Portability_v1.0.md) for the first failed CI root cause, narrow correction, source identity and justified aggregate job budget. New exact-head CI/review and installation remain pending; no physical performance claim. Earlier checkpoints are historical.

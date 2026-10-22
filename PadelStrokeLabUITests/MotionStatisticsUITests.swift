@@ -159,6 +159,7 @@ final class MotionStatisticsUITests: XCTestCase {
     }
 
     @MainActor private func reveal(_ element: XCUIElement, in scroll: XCUIElement) {
+        var previousPan: (midY: CGFloat, distance: CGFloat, direction: CGFloat)?
         for _ in 0..<40 {
             let viewport = scroll.frame
             let navigation = XCUIApplication().navigationBars.firstMatch
@@ -171,8 +172,18 @@ final class MotionStatisticsUITests: XCTestCase {
                 if fits ? frame.contains(target) : frame.contains(CGPoint(x: target.midX, y: target.midY)) { return }
             }
             if element.exists && !element.frame.isEmpty {
-                let distance = min(abs(element.frame.midY - frame.midY), frame.height * 0.7)
-                let direction: CGFloat = element.frame.midY < frame.midY ? 1 : -1
+                let target = element.frame
+                var panLoss: CGFloat = 0
+                if let previousPan {
+                    let movement = (target.midY - previousPan.midY) * previousPan.direction
+                    // Compensate measured pan activation loss without imposing a minimum final scroll.
+                    let unconsumed = movement < 1 ? previousPan.distance + frame.height * 0.05
+                        : max(0, previousPan.distance - movement)
+                    if movement >= 0 { panLoss = min(unconsumed, frame.height * 0.2) }
+                }
+                let distance = min(abs(target.midY - frame.midY) + panLoss, frame.height * 0.7)
+                let direction: CGFloat = target.midY < frame.midY ? 1 : -1
+                previousPan = (target.midY, distance, direction)
                 let origin = scroll.coordinate(withNormalizedOffset: .zero)
                 let start = origin.withOffset(CGVector(dx: frame.midX - viewport.minX,
                     dy: frame.midY - viewport.minY - direction * distance / 2))
@@ -180,6 +191,7 @@ final class MotionStatisticsUITests: XCTestCase {
                     dy: frame.midY - viewport.minY + direction * distance / 2))
                 start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.1)
             } else {
+                previousPan = nil
                 scroll.swipeUp(velocity: .slow)
             }
         }
