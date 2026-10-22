@@ -104,7 +104,7 @@ jobs:
         timeout-minutes: 15
         run: |
           set -euo pipefail
-          xcrun swift test --package-path Packages/PadelCore --scratch-path "$RUNNER_TEMP/foundation-core" 2>&1 | tee "$EVIDENCE/core-tests.log"
+          xcrun swift test --package-path Packages/PadelCore --scratch-path "$RUNNER_TEMP/foundation-core" --no-parallel 2>&1 | tee "$EVIDENCE/core-tests.log"
 
       - name: Build iPhone Release
         run: |

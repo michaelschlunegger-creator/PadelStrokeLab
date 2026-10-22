@@ -7,6 +7,150 @@ import Testing
 // Private O10 proposal: real accepted owner stores, actual import/review/save/export.
 // Existing O6 math is the oracle for the correct set; no new sensor/quality inference.
 @Suite(.serialized) @MainActor struct OwnerPracticeReviewTests {
+    @Test(arguments: ["preview", "export", "persistenceFailure"])
+    func localWithdrawalImmediatelyRemovesAnalysisAndExportButKeepsDeletion(mode: String) async throws {
+        try await o10Fixture { f, model in
+            let source = try f.source(), (bundle, receipt) = try source.write()
+            _ = try await f.receive(bundle, receipt)
+            await model.refresh()
+            let id = source.contexts[0].recordingID
+            await model.open(id)
+            let original = try #require(model.selectedPractice)
+            let rawBefore = try o10Files(original.snapshot.rawRoot)
+            #expect(model.selected?.motionStatistics != nil && !original.recoveryByRecordingID.isEmpty)
+            if mode == "preview" {
+                await model.previewPracticeExport(id); try #require(model.practiceExportPreview != nil)
+            } else {
+                await model.prepareExport(id); try #require(model.exportURL != nil)
+            }
+            let gap = O10ReviewBarrier()
+            f.setup.beforeConsentPersistence = { await gap.hold() }
+            let withdrawal = f.setup.withdrawMotionConsent()
+            // No suspension: the user's local intent must fence displayed state immediately.
+            #expect(model.selected?.motionStatistics == nil)
+            #expect(model.selectedPractice?.recoveryByRecordingID.isEmpty == true)
+            #expect(model.selectedPractice?.snapshot.receipt == receipt)
+            #expect(model.practiceExportPreview == nil && model.exportURL == nil)
+            try await o10Eventually { gap.entered }
+            #expect(f.setup.channel?.authority?.isCollectionAllowed == true, "Exercise the pre-persistence gap")
+            await model.open(id)
+            #expect(model.selected?.id == id && model.selected?.motionStatistics == nil)
+            #expect(model.selectedPractice?.recoveryByRecordingID.isEmpty == true)
+            await model.previewPracticeExport(id); await model.prepareExport(id)
+            #expect(model.practiceExportPreview == nil && model.exportURL == nil)
+            #expect(try o10Files(original.snapshot.rawRoot) == rawBefore)
+            if mode == "persistenceFailure" { await f.setup.closeForTesting() }
+            gap.release(); await withdrawal.value
+            if mode == "persistenceFailure" {
+                #expect(f.setup.lastError != nil)
+                await model.open(id)
+                #expect(model.selected?.motionStatistics == nil && model.exportURL == nil)
+            } else {
+                await model.refresh()
+                #expect(model.recordings.contains { $0.id == id })
+                await model.deletePractice(receipt.practiceID).value
+                let deletion = try OwnerPracticeDeletion.status(base: f.phone, practiceID: receipt.practiceID)
+                #expect(deletion?.localComplete == true)
+            }
+        }
+    }
+
+    @Test func inFlightOwnerReviewCannotReappearAfterLocalWithdrawal() async throws {
+        try await o10Fixture { f, model in
+            let source = try f.source(), (bundle, receipt) = try source.write()
+            _ = try await f.receive(bundle, receipt)
+            let id = source.contexts[0].recordingID, reviewGap = O10ReviewBarrier(), persistenceGap = O10ReviewBarrier()
+            model.detailReviewDidComplete = { _ in await reviewGap.hold() }
+            let opening = Task { await model.open(id) }
+            try await o10Eventually { reviewGap.entered }
+            f.setup.beforeConsentPersistence = { await persistenceGap.hold() }
+            let withdrawal = f.setup.withdrawMotionConsent()
+            try await o10Eventually { persistenceGap.entered }
+            reviewGap.release(); await opening.value
+            #expect(model.selected?.motionStatistics == nil)
+            #expect(model.selectedPractice?.recoveryByRecordingID.isEmpty != false)
+            #expect(model.exportURL == nil && model.practiceExportPreview == nil)
+            model.detailReviewDidComplete = nil
+            await model.open(id)
+            #expect(model.selected?.id == id && model.selectedPractice?.snapshot.receipt == receipt)
+            #expect(model.selected?.motionStatistics == nil && model.selectedPractice?.recoveryByRecordingID.isEmpty == true)
+            persistenceGap.release(); await withdrawal.value
+        }
+    }
+
+    @Test func durableWithdrawalDeniesAnalysisAndExplicitReconsentPreservesOriginalIdentity() async throws {
+        try await o10Fixture { f, model in
+            let source = try f.source(), (bundle, receipt) = try source.write()
+            _ = try await f.receive(bundle, receipt)
+            let id = source.contexts[0].recordingID
+            await model.open(id)
+            let original = try #require(model.selectedPractice)
+            let originalBytes = try o10Files(original.snapshot.directoryURL)
+            try await f.deliver(f.remote.restrict(heartRateOnly: false))
+            await model.open(id)
+            #expect(model.selected?.id == id && model.selected?.motionStatistics == nil)
+            #expect(model.selectedPractice?.recoveryByRecordingID.isEmpty == true)
+            await model.previewPracticeExport(id); await model.prepareExport(id)
+            #expect(model.exportURL == nil && model.practiceExportPreview == nil)
+            #expect(try o10Files(original.snapshot.directoryURL) == originalBytes)
+            try await f.deliver(f.remote.reconsent())
+            await model.open(id)
+            #expect(model.selected?.motionStatistics != nil)
+            #expect(model.selectedPractice?.snapshot.receipt == receipt)
+            #expect(model.selectedPractice?.snapshot.sets.map(\.context) == original.snapshot.sets.map(\.context))
+        }
+    }
+
+    @Test func withdrawnRelaunchKeepsMetadataAndWholePracticeDeletionAvailable() async throws {
+        try await o10Fixture { f, model in
+            f.connection.onChange = nil
+            let source = try f.source(), (bundle, receipt) = try source.write()
+            _ = try await f.receive(bundle, receipt)
+            let id = source.contexts[0].recordingID
+            await model.open(id)
+            let original = try #require(model.selectedPractice)
+            let rawBefore = try o10Files(original.snapshot.rawRoot)
+            try await f.deliver(f.remote.restrict(heartRateOnly: false))
+            #expect(f.setup.channel?.authority?.isCollectionAllowed == false)
+            await f.setup.closeForTesting()
+            let reopened = RecordingLibraryModel(paths: try RecordingPaths(base: f.phone), activateConnectivity: false)
+            await reopened.open(id)
+            #expect(reopened.selected?.id == id && reopened.selected?.motionStatistics == nil)
+            #expect(reopened.selectedPractice?.snapshot.receipt == receipt)
+            #expect(reopened.selectedPractice?.recoveryByRecordingID.isEmpty == true)
+            #expect(reopened.selected?.streams.allSatisfy { $0.segments.isEmpty } == true)
+            #expect(!reopened.loading)
+            await reopened.previewPracticeExport(id); await reopened.prepareExport(id)
+            #expect(reopened.exportURL == nil && reopened.practiceExportPreview == nil)
+            #expect(try o10Files(original.snapshot.rawRoot) == rawBefore)
+            await reopened.refresh()
+            #expect(reopened.recordings.contains { $0.id == id })
+            await reopened.deletePractice(receipt.practiceID).value
+            let deletion = try OwnerPracticeDeletion.status(base: f.phone, practiceID: receipt.practiceID)
+            #expect(deletion?.localComplete == true)
+            await reopened.practiceSetup?.closeForTesting()
+        }
+    }
+
+    @Test func consentedRelaunchAndLegacyReviewDoNotDependOnDefaultOffConsentToggles() async throws {
+        try await o10Fixture { f, _ in
+            f.connection.onChange = nil
+            let source = try f.source(), (bundle, receipt) = try source.write()
+            _ = try await f.receive(bundle, receipt)
+            let paths = try RecordingPaths(base: f.phone), legacy = try o10Legacy(paths)
+            await f.setup.closeForTesting()
+            let reopened = RecordingLibraryModel(paths: paths, activateConnectivity: false)
+            await reopened.open(source.contexts[0].recordingID)
+            #expect(reopened.practiceSetup?.motionConsent == false)
+            #expect(reopened.selected?.motionStatistics != nil && reopened.selectedPractice?.snapshot.receipt == receipt)
+            await reopened.practiceSetup?.withdrawMotionConsent().value
+            await reopened.open(legacy)
+            #expect(reopened.selected?.id == legacy && reopened.selectedPractice == nil)
+            #expect(reopened.selected?.motionStatistics != nil)
+            await reopened.practiceSetup?.closeForTesting()
+        }
+    }
+
     @Test(arguments: ["included", "absent", "excluded"])
     func exactPracticeAndSetReviewPreservesHeartRateDispositionAndSparseRecovery(mode: String) async throws {
         try await o10Fixture { f, model in
@@ -358,6 +502,14 @@ private nonisolated func o10Legacy(_ paths: RecordingPaths) throws -> UUID {
                 "sha256": receipt.bundleSHA256]) { continuation.resume(with: $0) }
         }
     }
+    func deliver(_ transition: OwnerAuthorityTransition) async throws {
+        let bytes = try OwnerPreparationCodec.encode(.transition(transition))
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+            connection.receiveOwnerData(bytes, delivery: .control) { result in
+                continuation.resume(with: result.map { _ in () }.mapError { $0 as any Error })
+            }
+        }
+    }
     func close() async { await setup.closeForTesting(); try? FileManager.default.removeItem(at: root) }
 }
 private nonisolated final class O10PhoneRemote: @unchecked Sendable {
@@ -375,6 +527,11 @@ private nonisolated final class O10PhoneRemote: @unchecked Sendable {
             ? OwnerAuthorityMutation.heartRate(from: authority, allowed: false, decisionID: UUID(), confirmedAtUnixSeconds: 1_800_000_100)
             : .withdraw(from: authority, decisionID: UUID(), confirmedAtUnixSeconds: 1_800_000_101)
         return try channel.sequence(command)
+    } }
+    func reconsent() throws -> OwnerAuthorityTransition { try queue.sync {
+        let snapshot = try channel.readSnapshot(), owner = try #require(snapshot.authority)
+        return try channel.sequence(.reconsent(from: owner, includesHeartRate: true, acknowledgesWithdrawal: true,
+            decisionID: UUID(), confirmedAtUnixSeconds: 1_800_000_202))
     } }
     func control(_ data: Data) throws { try queue.sync {
         if case let .acknowledge(value) = try OwnerPreparationCodec.decode(data) { try channel.acknowledge(value) }

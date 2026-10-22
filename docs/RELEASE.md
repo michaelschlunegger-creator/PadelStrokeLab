@@ -1,5 +1,7 @@
 # Development installation and release gates
 
+The three software findings on the original published `7d5dc2a` candidate are addressed by the [bounded privacy corrections](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md). The current 115-input portable manifest SHA256 is `1850b6e4802b6fb8218cd9812ee3037bd159071e042e832ce946ad9523a25f67`. Live exact-commit CI, independent review and separate installation observations belong in [PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and its linked evidence; a locally passing suite does not establish those later gates. This keeps observations attached to the tested source without changing it merely to record subsequent device outcomes.
+
 This is a development candidate for owner forehand/backhand recording, not a TestFlight or App Store release. The bundle identifiers and companion relationship remain unchanged; display name is Padel Master.
 
 ## Candidate

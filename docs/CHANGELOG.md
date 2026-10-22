@@ -122,3 +122,11 @@ Added a bounded physical-test runbook and GitHub foundation verification workflo
 - Added synchronous single-caller storage with exclusive immutable chunks, checked synchronization, atomic/read-back manifests, retained-coverage finalization and non-destructive bounded recovery.
 - Added real filesystem/fault/recovery/process-interruption tests; retained initial test harness failures and their root-cause corrections in the evidence.
 - No app UI, live sensor, workout, permissions, connectivity, scoring or AI changes. Code is local/uncommitted; no publication, physical install, merge or release.
+# 22 October 2026 — development build 6 privacy corrections
+
+- Attribute initial Watch transfer staging before publication; complete-practice cleanup covers unpublished checked bundles.
+- Route the actual Watch retained-data deletion action through owner-wide cleanup, keep legacy copy deletion and fail closed for uncertain owner evidence.
+- Immediately remove owner analysis/export availability after full consent withdrawal while retaining metadata and whole-practice deletion, including after relaunch. Preserve legacy review synchronization.
+- Add production-entry regressions and preserve every failed run. Serialize Core CI tests explicitly as already required by the test policy.
+
+See the [verification record](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md) for exact evidence and remaining gates. No merge or distribution release is authorized.

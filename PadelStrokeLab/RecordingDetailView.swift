@@ -25,7 +25,12 @@ struct RecordingDetailView: View {
                     #endif
                     summary(review)
                     if let practice = model.selectedPractice {
-                        OwnerPracticeStatisticsView(review: practice, recordingID: recordingID)
+                        if model.ownerAnalysisAvailable {
+                            OwnerPracticeStatisticsView(review: practice, recordingID: recordingID)
+                        } else {
+                            Text(RecordingReview.ownerAnalysisUnavailable).fixedSize(horizontal: false, vertical: true)
+                                .practiceCard().accessibilityIdentifier("ownerAnalysisUnavailable")
+                        }
                     } else {
                         Text("Legacy recording — owner evidence unassigned. Heart rate and owner practice recovery are unavailable.")
                             .fixedSize(horizontal: false, vertical: true).practiceCard()
@@ -288,7 +293,7 @@ struct RecordingDetailView: View {
                 }
             }
             .buttonStyle(PracticeActionStyle())
-            .disabled(model.busy || showDelete || deletionInFlight || review.timeline == nil || review.annotationWarning != nil)
+            .disabled(model.busy || showDelete || deletionInFlight || review.timeline == nil || review.annotationWarning != nil || (model.selectedPractice != nil && !model.ownerAnalysisAvailable))
             .accessibilityIdentifier("prepareRecordingExport")
             if model.busy { ProgressView("Working with your recording…") }
             if let url = model.exportURL {

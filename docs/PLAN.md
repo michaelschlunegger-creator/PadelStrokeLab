@@ -1,3 +1,11 @@
+# Current next steps — corrected owner-first candidate
+
+22 October 2026, `feature/guided-padel-setup`: the bounded Watch deletion/staging and phone consent-analysis corrections pass local automation and source review. Publish the correction and evidence, finish exact-source CI and committed review, then verify separate iPhone/Watch installation. Follow the controlled dry run before forehand/backhand contact collection. Sensor/background/battery performance and automatic recognition remain unverified. No merge or release authorization.
+
+[Verification](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md) · [PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3). Earlier checkpoints below are historical.
+
+---
+
 # Current candidate — GitHub publication and device verification
 
 22 October 2026. `feature/guided-padel-setup`, based on `bc5e73d473dfbcd33fbb8196c1cafc5436ed9f3e`. The owner explicitly authorizes installing and adding all code/required documentation to GitHub. Publish a stacked draft PR into `feature/watch-recording-storage`; no merge or release.

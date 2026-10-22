@@ -121,12 +121,12 @@ struct ContentView: View {
                             if let transfer = recorder.transfers[recording.id] { Text(transfer).font(.footnote) }
                             Button("Send to iPhone") { recorder.retryTransfer(recording) }
                                 .disabled(!recording.canTransfer || recorder.deletingRecordingID != nil)
-                            Button("Delete Watch copy", role: .destructive) { deletionCandidate = recording }
+                            Button("Delete retained data", role: .destructive) { deletionCandidate = recording }
                                 .disabled(!recorder.canDelete(recording))
                                 .accessibilityIdentifier("watchDeleteCopy-\(recording.id.uuidString)")
                         }
                     }
-                    Button("Refresh retained recordings") { recorder.refreshRetained() }.disabled(recorder.refreshing || !recorder.canPrepare)
+                    Button("Refresh retained recordings") { recorder.refreshRetained() }.disabled(recorder.refreshing || !recorder.canRefreshRetained)
                     Text("Watch originals stay here after transfer. Interrupted recordings require review on iPhone.").font(.caption2)
                 }
                 .listRowBackground(PracticeTheme.surface(.dark).clipShape(.rect(cornerRadius: 20)))
@@ -134,16 +134,16 @@ struct ContentView: View {
             .listStyle(.carousel).scrollContentBackground(.hidden)
             .background(PracticeTheme.canvas(.dark).ignoresSafeArea())
             .navigationTitle("Practice").containerBackground(PracticeTheme.canvas(.dark), for: .navigation)
-            .confirmationDialog("Delete this Watch copy?", isPresented: Binding(
+            .confirmationDialog("Delete retained data?", isPresented: Binding(
                 get: { deletionCandidate != nil }, set: { if !$0 { deletionCandidate = nil } }), titleVisibility: .visible) {
                 if let recording = deletionCandidate {
-                    Button("Delete Watch copy", role: .destructive) {
+                    Button("Delete retained data", role: .destructive) {
                         recorder.deleteWatchCopy(recording); deletionCandidate = nil
                     }.accessibilityIdentifier("watchConfirmDeleteCopy")
                 }
                 Button("Cancel", role: .cancel) { deletionCandidate = nil }
             } message: {
-                Text("Deletes only this Watch's recording, notes and queued transfer copy. Any copy already on iPhone and independent exports remain.")
+                Text(WatchRecorderModel.deletionConfirmationMessage)
             }
             }
         }

@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 import Observation
 import PadelCore
 import WatchKit
@@ -18,18 +19,21 @@ final class WatchRecordingServices {
     private(set) var transfers: [UUID: String] = [:]
     private(set) var practiceDeletionMessage: String?
     var onPracticeDeleted: (([UUID]) -> Void)?
+    private let beforePracticeImport: (@MainActor (URL) async throws -> Void)?
 
     init(environment: WatchRuntimeEnvironment = .current,
          afterPublication: (@MainActor (OwnerContextPublication) async -> Void)? = nil,
          workout: WatchWorkoutDriver? = nil, heartRate: OwnerHeartRateSource? = nil,
          practiceClock: (@MainActor () throws -> OwnerTelemetryInstant)? = nil,
          beforeTelemetryPublication: (@MainActor (OwnerPracticeTelemetry) async throws -> Void)? = nil,
-         injectedConnectivity: RecordingConnectivity? = nil) {
+         injectedConnectivity: RecordingConnectivity? = nil,
+         beforePracticeImport: (@MainActor (URL) async throws -> Void)? = nil) {
         self.environment = environment
+        self.beforePracticeImport = beforePracticeImport
         preferences = environment.preferenceSuite.flatMap(UserDefaults.init(suiteName:))
             ?? (environment.allowsHardware ? .standard : UserDefaults(suiteName: "PadelStrokeLab.Blocked.\(UUID().uuidString)")!)
         do {
-            let injected = workout != nil || heartRate != nil || practiceClock != nil || beforeTelemetryPublication != nil || injectedConnectivity != nil
+            let injected = workout != nil || heartRate != nil || practiceClock != nil || beforeTelemetryPublication != nil || injectedConnectivity != nil || beforePracticeImport != nil
             guard environment.failure == nil, !injected || environment.isCoherentFixture else { throw OwnerCaptureFailure.unavailable }
             try environment.prepareFixtureDirectory()
             let paths = try RecordingPaths(base: environment.base)
@@ -87,7 +91,7 @@ final class WatchRecordingServices {
         transfers[id] = "Preparing retained practice…"
         Task { [weak self] in
             do {
-                let prepared = try await WatchPracticeTransferWorker.prepare(id: id, paths: paths)
+                let prepared = try await WatchPracticeTransferWorker.prepare(id: id, paths: paths, beforeImport: self?.beforePracticeImport)
                 guard let prepared else { connectivity.queue(recordingID: id, timeline: timeline); return }
                 defer { prepared.publication.cancel() }
                 _ = try await coordinator.publishVerifiedPractice(scope: prepared.publication.scope,
@@ -101,6 +105,30 @@ final class WatchRecordingServices {
 
     func removeTransfer(_ id: UUID) { transfers.removeValue(forKey: id) }
 
+    /// Collection consent is not deletion authority. Unknown owner evidence never becomes legacy.
+    func deletionPracticeID(recordingID: UUID) async throws -> UUID? {
+        guard ownerLoaded, storageError == nil, let coordinator, let paths else { throw OwnerCaptureFailure.unavailable }
+        let stored = try await coordinator.inspectContext(recordingID: recordingID)
+        let retained = try await WatchPracticeTransferWorker.deletionContext(id: recordingID, paths: paths)
+        let context: OwnerRecordingContext
+        switch stored {
+        case .missing:
+            guard retained == nil else { throw OwnerPracticeBundleError.integrity }
+            return nil
+        case .valid(let value):
+            guard retained == nil || retained == value else { throw OwnerPracticeBundleError.conflict }
+            context = value
+        case .retired:
+            guard let retained else { throw OwnerPracticeBundleError.integrity }
+            context = retained
+        case .partial, .corrupt: throw OwnerPracticeBundleError.integrity
+        }
+        guard let owner = coordinator.authority, context.ownerID == owner.ownerID,
+              context.phoneInstallationEpoch == owner.phoneInstallationEpoch,
+              context.watchInstallationEpoch == owner.watchInstallationEpoch else { throw OwnerPracticeBundleError.integrity }
+        return context.practiceID
+    }
+
     @discardableResult func deletePractice(_ practiceID: UUID) -> Task<Void, Never> {
         coordinator?.fencePracticeDeletion(practiceID)
         connectivity?.fencePracticeDeletion(practiceID)
@@ -110,7 +138,7 @@ final class WatchRecordingServices {
             do {
                 let acknowledgment = try await performPracticeDeletion(practiceID)
                 for id in acknowledgment.command.recordingIDs { transfers.removeValue(forKey: id) }
-                practiceDeletionMessage = "Deleted on this Watch. Paired device deletion pending."
+                practiceDeletionMessage = "Owner practice deleted on this Watch. Paired device deletion pending. Independent exports remain."
                 connectivity?.resumePracticeDeletions()
             } catch { practiceDeletionMessage = "Deletion incomplete. Retry to finish removing this practice." }
         }
@@ -200,35 +228,75 @@ nonisolated final class WatchBackgroundCompletionGate: @unchecked Sendable {
 /// Discovery/export run off MainActor and never reopen the active exclusive O6 store.
 private nonisolated enum WatchPracticeTransferWorker {
     struct Prepared: Sendable { let url: URL; let publication: OwnerPracticePreparedPublication }
+    private struct Candidate: Sendable { let url: URL; let newlyWritten: Bool }
     private static let queue = DispatchQueue(label: "PadelStrokeLab.watch-practice-export", qos: .utility)
-    static func prepare(id: UUID, paths: RecordingPaths) async throws -> Prepared? {
+
+    private static func run<Value: Sendable>(_ operation: @escaping @Sendable () throws -> Value) async throws -> Value {
         try await withCheckedThrowingContinuation { continuation in
             queue.async {
-                do {
-                    let base = paths.rawRoot.deletingLastPathComponent().deletingLastPathComponent()
-                    let revisions = try OwnerPracticeTransferInventory.snapshots(base: base)
-                    if let existing = revisions.first(where: { $0.receipt.recordingIDs.contains(id) }) {
-                        let url = existing.directoryURL.appendingPathComponent("bundle.pslpractice")
-                        continuation.resume(returning: try Prepared(url: url,
-                            publication: OwnerPracticeBundle.prepareImport(from: url, destinationBase: base)))
-                        return
-                    }
-                    var historical: OwnerPracticeTelemetry?
-                    try OwnerPracticeRecoveryReader.forEachCandidate(base: base) { candidate in
-                        if candidate.sets.contains(where: { $0.context.recordingID == id }) {
-                            guard historical == nil else { throw OwnerPracticeBundleError.conflict }
-                            historical = candidate
-                        }
-                    }
-                    guard let historical else { continuation.resume(returning: nil); return }
-                    guard historical.status != .open, historical.finalization != nil else { throw OwnerPracticeBundleError.unavailable }
-                    let url = paths.outboxRoot.appendingPathComponent(UUID().uuidString + ".pslpractice")
-                    _ = try OwnerPracticeBundle.write(telemetry: historical, rawRoot: paths.rawRoot, notesRoot: paths.notesRoot,
-                        revision: 1, heartRate: .asRecorded, destination: url)
-                    continuation.resume(returning: try Prepared(url: url,
-                        publication: OwnerPracticeBundle.prepareImport(from: url, destinationBase: base)))
-                } catch { continuation.resume(throwing: error) }
+                do { continuation.resume(returning: try operation()) }
+                catch { continuation.resume(throwing: error) }
             }
+        }
+    }
+
+    static func deletionContext(id: UUID, paths: RecordingPaths) async throws -> OwnerRecordingContext? {
+        try await run {
+            let base = paths.rawRoot.deletingLastPathComponent().deletingLastPathComponent()
+            var found: OwnerRecordingContext?
+            func consider(_ value: OwnerRecordingContext) throws {
+                guard value.recordingID == id else { return }
+                guard found == nil || found == value else { throw OwnerPracticeBundleError.conflict }
+                found = value
+            }
+            for revision in try OwnerPracticeTransferInventory.snapshots(base: base) {
+                for set in revision.sets { try consider(set.context) }
+            }
+            try OwnerPracticeRecoveryReader.forEachCandidate(base: base) { candidate in
+                for set in candidate.sets { try consider(set.context) }
+            }
+            return found
+        }
+    }
+
+    static func prepare(id: UUID, paths: RecordingPaths,
+                        beforeImport: (@MainActor (URL) async throws -> Void)?) async throws -> Prepared? {
+        let candidate: Candidate? = try await run {
+            let base = paths.rawRoot.deletingLastPathComponent().deletingLastPathComponent()
+            let revisions = try OwnerPracticeTransferInventory.snapshots(base: base)
+            if let existing = revisions.first(where: { $0.receipt.recordingIDs.contains(id) }) {
+                return Candidate(url: existing.directoryURL.appendingPathComponent("bundle.pslpractice"), newlyWritten: false)
+            }
+            var historical: OwnerPracticeTelemetry?
+            try OwnerPracticeRecoveryReader.forEachCandidate(base: base) { candidate in
+                if candidate.sets.contains(where: { $0.context.recordingID == id }) {
+                    guard historical == nil else { throw OwnerPracticeBundleError.conflict }
+                    historical = candidate
+                }
+            }
+            guard let historical else { return nil }
+            guard historical.status != .open, historical.finalization != nil else { throw OwnerPracticeBundleError.unavailable }
+            // The same checked readback namespace used on iPhone is attributable before a receipt exists.
+            // Unknown/incomplete writer debris remains visible and makes deletion fail closed.
+            let name = ".owner-readback-" + UUID().uuidString
+            let parent = open(paths.outboxRoot.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)
+            guard parent >= 0 else { throw RecordingError.io(operation: "open practice staging parent", code: errno) }
+            defer { close(parent) }
+            guard mkdirat(parent, name, 0o700) == 0, fsync(parent) == 0 else {
+                throw RecordingError.io(operation: "create durable practice stage", code: errno)
+            }
+            let url = paths.outboxRoot.appendingPathComponent(name).appendingPathComponent("bundle")
+            _ = try OwnerPracticeBundle.write(telemetry: historical, rawRoot: paths.rawRoot, notesRoot: paths.notesRoot,
+                revision: 1, heartRate: .asRecorded, destination: url)
+            guard fsync(parent) == 0 else { throw RecordingError.io(operation: "sync practice stage", code: errno) }
+            return Candidate(url: url, newlyWritten: true)
+        }
+        guard let candidate else { return nil }
+        if candidate.newlyWritten { try await beforeImport?(candidate.url) }
+        return try await run {
+            let base = paths.rawRoot.deletingLastPathComponent().deletingLastPathComponent()
+            return try Prepared(url: candidate.url,
+                publication: OwnerPracticeBundle.prepareImport(from: candidate.url, destinationBase: base))
         }
     }
 }

@@ -1,3 +1,20 @@
+# Current checkpoint — privacy corrections verified locally
+
+22 October 2026. Branch `feature/guided-padel-setup`; original published candidate `7d5dc2a54f2157631254272131fbace60f6533f1`. All three reviewed software findings are corrected and independently cleared at source level. Final 115-input manifest SHA256 `1850b6e4802b6fb8218cd9812ee3037bd159071e042e832ce946ad9523a25f67`. Full Watch130 and phone app-host74 methods pass; four affected phone UI methods, including largest-text native accessibility, pass. Both Release builds, signed embedded phone/Watch build, signatures and actual-device profile coverage pass. Failures and narrow corrections remain recorded in the verification report.
+
+Exact committed-head CI and independent review are pending publication; physical collection is NOT YET VERIFIED and this candidate has not been installed. Both physical devices are connected with development services available. The owner authorizes code/document publication and development installation; no merge or distribution release is authorized. Live CI/review and separate install observations belong in PR#3 and linked evidence for the tested commit.
+
+One next action: publish the correction, obtain exact-source CI/review clearance, then install and verify iPhone and Watch separately before the controlled dry run. Earlier checkpoints below are historical.
+
+---
+
+# Current controlling checkpoint — software corrections required
+
+22 October 2026. Exact committed/pushed `7d5dc2a54f2157631254272131fbace60f6533f1` on `feature/guided-padel-setup` is independently **BLOCKED for physical collection** despite passing local suites. [Committed review](reviews/261022_Owner_First_Committed_Review_7d5dc2a_v1.0.md) identifies unpublished Watch bundle retention, visible Watch deletion bypassing whole-practice cleanup, and withdrawal leaving phone analysis open. [Correction contract](testing/261022_Privacy_Readiness_Corrections_Contract_v1.0.md) is independently challenged and ratified; Astra High executes P1 then P2 with tests first. CI39827275417 is held/canceled for this superseded candidate, not passing evidence. No installation or real capture performed.
+
+One next action: reproduce and fix the bounded Watch privacy paths, then withdrawal analysis, refresh affected tests/source/signing/review/CI and install. Earlier local test passes remain valid observations of their original source, not readiness clearance.
+
+---
 # Current candidate — GitHub publication and device verification
 
 22 October 2026. `feature/guided-padel-setup`, based on `bc5e73d473dfbcd33fbb8196c1cafc5436ed9f3e`. The owner explicitly authorizes installing and adding all code/required documentation to GitHub. Publish a stacked draft PR into `feature/watch-recording-storage`; no merge or release.

@@ -48,6 +48,7 @@ protocol WatchRecorderSyntheticMotion: AnyObject {
 
 @MainActor @Observable
 final class WatchRecorderModel {
+    static let deletionConfirmationMessage = "Deletes the entire owner practice from this Watch and requests paired-device deletion, including all sets, motion, heart rate and notes. Legacy recordings delete only this Watch copy. Independent exports remain. Unverified owner data is kept."
     static let drillPreferenceKey = "recording.intendedDrill"
     static let armPreferenceKey = "practice.playingArm"
     static let handPreferenceKey = "practice.handedness"
@@ -492,31 +493,50 @@ final class WatchRecorderModel {
                        deletionInProgress: deletingRecordingID != nil)
     }
 
-    /// Called only by the explicit destructive confirmation; shared transaction owns files and cancellation.
-    func deleteWatchCopy(_ entry: WatchRetainedRecording) {
-        guard canDelete(entry), retained.contains(where: { $0.id == entry.id }), let connectivity else { return }
+    /// The visible confirmation covers whole owner practices; only checked legacy data uses copy deletion.
+    @discardableResult func deleteWatchCopy(_ entry: WatchRetainedRecording) -> Task<Void, Never>? {
+        guard canDelete(entry), retained.contains(where: { $0.id == entry.id }) else { return nil }
         deletingRecordingID = entry.id
-        deletionStatus = "Deleting this Watch copy…"
-        connectivity.deleteWatchCopy(recordingID: entry.id) { [weak self] result in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.deletingRecordingID = nil
-                switch result {
-                case .success:
-                    self.deletedRecordings.insert(entry.id)
-                    self.retained.removeAll { $0.id == entry.id }
-                    self.services.removeTransfer(entry.id)
-                    if self.activeRecordingID == entry.id, self.state.isTerminal { self.newSet() }
-                    self.deletionStatus = "Watch copy deleted. Any iPhone copy and independent exports remain."
-                case .failure(let error):
-                    self.deletionStatus = "Deletion failed: \(error.localizedDescription)"
+        deletionStatus = "Checking retained data…"
+        return Task { [weak self] in
+            guard let self else { return }
+            do {
+                if let practiceID = try await services.deletionPracticeID(recordingID: entry.id) {
+                    await services.deletePractice(practiceID).value
+                    deletionStatus = services.practiceDeletionMessage
+                    deletingRecordingID = nil
+                    if let activeRecordingID, deletedRecordings.contains(activeRecordingID), state.isTerminal { newSet() }
+                } else {
+                    guard let connectivity else { throw OwnerCaptureFailure.unavailable }
+                    deletionStatus = "Deleting this Watch copy…"
+                    connectivity.deleteWatchCopy(recordingID: entry.id) { [weak self] result in
+                        Task { @MainActor [weak self] in
+                            guard let self else { return }
+                            self.deletingRecordingID = nil
+                            switch result {
+                            case .success:
+                                self.deletedRecordings.insert(entry.id)
+                                self.retained.removeAll { $0.id == entry.id }
+                                self.services.removeTransfer(entry.id)
+                                if self.activeRecordingID == entry.id, self.state.isTerminal { self.newSet() }
+                                self.deletionStatus = "Watch copy deleted. Any iPhone copy and independent exports remain."
+                            case .failure(let error):
+                                self.deletionStatus = "Deletion failed: \(error.localizedDescription)"
+                            }
+                        }
+                    }
                 }
+            } catch {
+                deletingRecordingID = nil
+                deletionStatus = "Deletion failed: owner scope could not be verified. Retained data kept."
             }
         }
     }
 
+    var canRefreshRetained: Bool { deletingRecordingID == nil && (state == .ready || state.isTerminal) }
+
     func refreshRetained() {
-        guard !refreshing, canPrepare, let paths else { return }
+        guard !refreshing, canRefreshRetained, let paths else { return }
         refreshing = true
         Task { [weak self] in
             let entries = await Task.detached(priority: .utility) { Self.inspect(paths: paths) }.value

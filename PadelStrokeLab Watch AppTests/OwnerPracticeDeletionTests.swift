@@ -5,6 +5,204 @@ import Testing
 
 // Private full-O9 proposal. Explicit whole-practice API; never expands a single-copy action.
 @Suite(.serialized) @MainActor struct OwnerPracticeDeletionTests {
+    // P1 regressions call the same entry point as the retained-row confirmation.
+    @Test(arguments: [false, true])
+    func retainedRowDeleteRemovesWholeOwnerPracticeAfterWithdrawal(withdrawn: Bool) async throws {
+        try await o9wFixture { f in
+            let model = try await f.retainedModel()
+            let entry = try #require(model.retained.first { $0.id == f.receipt.recordingIDs[0] })
+            if withdrawn {
+                let mutation = try OwnerAuthorityMutation.withdraw(from: f.authority,
+                    decisionID: UUID(), confirmedAtUnixSeconds: 1_800_000_200)
+                _ = try await f.owner.receive(.mutate(requestID: UUID(), generations: f.owner.generations, mutation: mutation))
+            }
+            let other = try f.otherBytes()
+            let deletion = try #require(model.deleteWatchCopy(entry))
+            await deletion.value
+            #expect(model.deletingRecordingID == nil)
+            try f.assertGone()
+            let status = try OwnerPracticeDeletion.status(base: f.base, practiceID: f.receipt.practiceID)
+            #expect(status?.localComplete == true && status?.peerComplete == false)
+            #expect(model.deletionStatus?.contains("practice") == true)
+            #expect(try f.otherBytes() == other)
+            #expect(try Data(contentsOf: f.independent) == f.originalBytes)
+        }
+    }
+
+    @Test(arguments: ["missing", "corrupt", "conflicting"])
+    func retainedRowDeleteDoesNotFallBackWhenOwnerContextIsDamaged(damage: String) async throws {
+        try await o9wFixture { f in
+            let model = try await f.retainedModel()
+            let id = f.receipt.recordingIDs[0]
+            let entry = try #require(model.retained.first { $0.id == id })
+            let context = f.base.appendingPathComponent(OwnerPracticeStore.directoryName)
+                .appendingPathComponent("contexts").appendingPathComponent(id.uuidString).appendingPathComponent("context.json")
+            if damage == "missing" { try FileManager.default.removeItem(at: context) }
+            else if damage == "corrupt" { try Data("broken-owner-evidence".utf8).write(to: context) }
+            else { try f.other.contexts[0].encoded().write(to: context) }
+            let raw = f.source.paths.rawRoot.appendingPathComponent(id.uuidString)
+            let before = try Data(contentsOf: raw.appendingPathComponent("metadata.json"))
+            let deletion = try #require(model.deleteWatchCopy(entry))
+            await deletion.value
+            #expect(model.deletingRecordingID == nil)
+            #expect(FileManager.default.fileExists(atPath: raw.path))
+            #expect(try Data(contentsOf: raw.appendingPathComponent("metadata.json")) == before)
+            #expect(model.deletionStatus?.contains("failed") == true || model.deletionStatus?.contains("incomplete") == true)
+        }
+    }
+
+    @Test(arguments: [false, true])
+    func deniedInitialPublicationLeavesNoUnattributedBundleAfterDelete(reopen: Bool) async throws {
+        let f = try O9WatchFixture()
+        do {
+            try await o9wEventually { f.services.ownerLoaded }
+            // Pre-existing unknown UUID files must survive; only the production-created bundle is attributable.
+            let unknown = f.source.paths.outboxRoot.appendingPathComponent(UUID().uuidString + ".pslpractice")
+            let unknownBytes = Data("unrelated unknown payload".utf8)
+            try unknownBytes.write(to: unknown)
+            let mutation = try OwnerAuthorityMutation.withdraw(from: f.authority,
+                decisionID: UUID(), confirmedAtUnixSeconds: 1_800_000_200)
+            _ = try await f.owner.receive(.mutate(requestID: UUID(), generations: f.owner.generations, mutation: mutation))
+            let context = f.source.contexts[0]
+            let notes = try SessionAnnotationsStore(root: f.source.paths.notesRoot)
+            let loadedTimeline = try notes.loadTimeline(recordingID: context.recordingID)
+            let timeline = try #require(loadedTimeline)
+            let before = Set(try FileManager.default.contentsOfDirectory(atPath: f.source.paths.outboxRoot.path))
+            f.services.queueRecording(context.recordingID, timeline: timeline)
+            try await o9wEventually { f.services.transfers[context.recordingID]?.hasPrefix("Complete practice pending:") == true }
+            let created = Set(try FileManager.default.contentsOfDirectory(atPath: f.source.paths.outboxRoot.path)).subtracting(before)
+            #expect(!created.isEmpty, "Exercise complete-bundle creation before the real authority publication rejection")
+            var service = f.services
+            if reopen {
+                await f.services.practice?.closeForTesting(); await f.owner.closeForTesting()
+                service = WatchRecordingServices(environment: f.environment, injectedConnectivity: f.connection)
+                try await o9wEventually { service.ownerLoaded }
+            }
+            await service.deletePractice(f.receipt.practiceID).value
+            let status = try OwnerPracticeDeletion.status(base: f.base, practiceID: f.receipt.practiceID)
+            #expect(status?.localComplete == true)
+            for name in created { #expect(!FileManager.default.fileExists(atPath: f.source.paths.outboxRoot.appendingPathComponent(name).path)) }
+            #expect(try Data(contentsOf: unknown) == unknownBytes)
+            if reopen { await service.practice?.closeForTesting(); await service.coordinator?.closeForTesting() }
+            await f.close()
+        } catch { await f.close(); throw error }
+    }
+
+    @Test func retainedRowLegacyDeleteRemainsCopyOnly() async throws {
+        try await o9wFixture { f in
+            let original = f.source.contexts[0].metadata
+            let metadata = try RecordingMetadata(recordingID: UUID(), clock: original.clock,
+                appBuild: original.appBuild, protocolVersion: original.protocolVersion,
+                deviceModel: original.deviceModel, operatingSystem: original.operatingSystem,
+                handedness: original.handedness, playingArm: original.playingArm,
+                watchWrist: original.watchWrist, watchOrientation: original.watchOrientation,
+                playingArmConfirmed: original.playingArmConfirmed, drill: original.drill,
+                capabilityReport: original.capabilityReport, streams: original.streams)
+            let raw = try RecordingStore.create(root: f.source.paths.rawRoot, metadata: metadata)
+            try raw.finalize(stopRequestTimestamp: metadata.clock.monotonicAnchorSeconds + 1, reason: .userStopped)
+            let model = try await f.retainedModel()
+            let entry = try #require(model.retained.first { $0.id == metadata.recordingID })
+            let other = try f.otherBytes()
+            model.deleteWatchCopy(entry)
+            try await o9wEventually { model.deletingRecordingID == nil }
+            #expect(!FileManager.default.fileExists(atPath: f.source.paths.rawRoot.appendingPathComponent(metadata.recordingID.uuidString).path))
+            #expect(model.deletionStatus?.contains("Watch copy deleted") == true)
+            #expect(try f.otherBytes() == other)
+            #expect(FileManager.default.fileExists(atPath: f.bundle.path))
+        }
+    }
+
+    @Test(arguments: [false, true])
+    func initialBundleBeforeImportRemainsDeletableAfterReopen(cancel: Bool) async throws {
+        var staged: URL?
+        var sentinel: URL?
+        let f = try O9WatchFixture(beforePracticeImport: { url in
+            staged = url
+            if cancel { throw CancellationError() }
+            let base = url.deletingLastPathComponent().deletingLastPathComponent()
+                .deletingLastPathComponent().deletingLastPathComponent()
+            let store = try OwnerPracticeReceiptStore(base: base)
+            let invalid = store.directoryURL.appendingPathComponent(".stage-invalid")
+            try FileManager.default.createDirectory(at: invalid, withIntermediateDirectories: false)
+            try Data("unrelated import blocker".utf8).write(to: invalid.appendingPathComponent("sentinel"))
+            sentinel = invalid
+        })
+        do {
+            try await o9wEventually { f.services.ownerLoaded }
+            let id = f.receipt.recordingIDs[0]
+            let notes = try SessionAnnotationsStore(root: f.source.paths.notesRoot)
+            let loaded = try notes.loadTimeline(recordingID: id), timeline = try #require(loaded)
+            f.services.queueRecording(id, timeline: timeline)
+            try await o9wEventually { f.services.transfers[id]?.hasPrefix("Complete practice pending:") == true }
+            let url = try #require(staged)
+            #expect(FileManager.default.fileExists(atPath: url.path))
+            if !cancel { try #require(sentinel != nil, "The intended import rejection must be armed") }
+            if let sentinel {
+                #expect(try Data(contentsOf: sentinel.appendingPathComponent("sentinel")) == Data("unrelated import blocker".utf8))
+                // The fixture removes its deliberate invalid sibling, never production cleanup.
+                try FileManager.default.removeItem(at: sentinel)
+            }
+            let inventory = try OwnerPracticeTransferInventory.snapshots(base: f.base)
+            #expect(inventory.isEmpty)
+            await f.services.practice?.closeForTesting(); await f.owner.closeForTesting()
+            let reopened = WatchRecordingServices(environment: f.environment, injectedConnectivity: f.connection)
+            try await o9wEventually { reopened.ownerLoaded }
+            let model = WatchRecorderModel(services: reopened)
+            try await o9wEventually { !model.retained.isEmpty }
+            let entry = try #require(model.retained.first { $0.id == id })
+            let deletion = try #require(model.deleteWatchCopy(entry))
+            await deletion.value
+            #expect(model.deletingRecordingID == nil)
+            #expect(!FileManager.default.fileExists(atPath: url.path))
+            let status = try OwnerPracticeDeletion.status(base: f.base, practiceID: f.receipt.practiceID)
+            #expect(status?.localComplete == true)
+            await reopened.practice?.closeForTesting(); await reopened.coordinator?.closeForTesting()
+            await f.close()
+        } catch { await f.close(); throw error }
+    }
+
+    @Test func withdrawnRelaunchStillDiscoversWholePracticeDelete() async throws {
+        try await o9wFixture { f in
+            let mutation = try OwnerAuthorityMutation.withdraw(from: f.authority,
+                decisionID: UUID(), confirmedAtUnixSeconds: 1_800_000_200)
+            _ = try await f.owner.receive(.mutate(requestID: UUID(), generations: f.owner.generations, mutation: mutation))
+            await f.services.practice?.closeForTesting(); await f.owner.closeForTesting()
+            let reopened = WatchRecordingServices(environment: f.environment, injectedConnectivity: f.connection)
+            try await o9wEventually("withdrawn relaunch owner load") { reopened.ownerLoaded || reopened.storageError != nil }
+            try #require(reopened.storageError == nil, "Relaunch load: \(reopened.storageError ?? "none")")
+            let model = WatchRecorderModel(services: reopened)
+            try await o9wEventually("withdrawn relaunch retained inspection") { !model.refreshing }
+            try #require(!model.retained.isEmpty, "Relaunch retained list: state=\(model.state), paths=\(reopened.paths != nil), owner=\(model.ownerIssue ?? "none")")
+            #expect(!model.canPrepare)
+            #expect(WatchRecorderModel.deletionConfirmationMessage.contains("entire owner practice"))
+            #expect(WatchRecorderModel.deletionConfirmationMessage.contains("Legacy"))
+            let entry = try #require(model.retained.first { $0.id == f.receipt.recordingIDs[0] })
+            let deletion = try #require(model.deleteWatchCopy(entry))
+            await deletion.value
+            #expect(model.deletingRecordingID == nil)
+            try f.assertGone()
+            await reopened.practice?.closeForTesting(); await reopened.coordinator?.closeForTesting()
+        }
+    }
+
+    @Test func incompleteAttributableStageBlocksDeletionWithoutRemovingUnknownBytes() async throws {
+        try await o9wFixture { f in
+            let stage = f.source.paths.outboxRoot.appendingPathComponent(".owner-readback-" + UUID().uuidString)
+            try FileManager.default.createDirectory(at: stage, withIntermediateDirectories: false)
+            let partial = Data("incomplete private writer bytes".utf8)
+            try partial.write(to: stage.appendingPathComponent("bundle"))
+            let model = try await f.retainedModel()
+            let id = f.receipt.recordingIDs[0]
+            let entry = try #require(model.retained.first { $0.id == id })
+            let deletion = try #require(model.deleteWatchCopy(entry))
+            await deletion.value
+            #expect(model.deletingRecordingID == nil)
+            #expect(try Data(contentsOf: stage.appendingPathComponent("bundle")) == partial)
+            #expect(FileManager.default.fileExists(atPath: f.source.paths.rawRoot.appendingPathComponent(id.uuidString).path))
+            #expect(model.deletionStatus?.contains("incomplete") == true)
+        }
+    }
+
     @Test func admissionCallbackDoesNotRetainTheSharedIngressLock() async throws {
         let base = FileManager.default.temporaryDirectory.resolvingSymlinksInPath()
             .appendingPathComponent("O9-Admission-Lock-" + UUID().uuidString)
@@ -208,7 +406,7 @@ import Testing
     let receipt: OwnerPracticeReceipt, receipts: [OwnerPracticeReceipt], independent: URL, originalBytes: Data
     let link = O9WDeletionLink(), connection: RecordingConnectivity, services: WatchRecordingServices
     var owner: OwnerCaptureCoordinator { services.coordinator! }
-    init() throws {
+    init(beforePracticeImport: (@MainActor (URL) async throws -> Void)? = nil) throws {
         environment = try WatchRuntimeEnvironment.resolve(arguments: ["--owner-watch-fixture=\(UUID().uuidString)"], environment: [:])
         try environment.prepareFixtureDirectory(); base = try #require(environment.base)
         var bootstrap: OwnerWatchBootstrap? = try OwnerWatchBootstrap(base: base)
@@ -238,8 +436,19 @@ import Testing
         connection = RecordingConnectivity(paths: source.paths, backgroundStateProvider: { .init(activated: true, hasContentPending: false) }, backgroundTimeout: 2,
             practiceTransportAdapter: .init(available: { false }, transferFile: { _, _, _ in }, transferReceipt: { _ in }),
             practiceDeletionTransportAdapter: link.adapter)
-        services = WatchRecordingServices(environment: environment, injectedConnectivity: connection)
+        services = WatchRecordingServices(environment: environment, injectedConnectivity: connection, beforePracticeImport: beforePracticeImport)
         try #require(services.coordinator != nil)
+    }
+    func retainedModel() async throws -> WatchRecorderModel {
+        let draft = try PracticeSetupDraft(originInstallationEpoch: authority.phoneInstallationEpoch,
+            preparationID: UUID(), revision: 100, preferences: .init(currentRacketArm: .right,
+                usualHand: .right, intendedDrill: .forehandGroundstroke))
+        let preparation = try OwnerPreparation(authority: authority, practiceID: UUID(), draft: draft)
+        _ = try await owner.receive(.prepare(correlation: .init(requestID: UUID(), generations: owner.generations,
+            preparation: preparation.identity), preparation: preparation))
+        let model = WatchRecorderModel(services: services)
+        try await o9wEventually { !model.retained.isEmpty }
+        return model
     }
     func seed() async throws { _ = try await publish(bundle); _ = try await publish(revision) }
     func publish(_ bundle: URL) async throws -> OwnerPracticeReceipt {
@@ -294,9 +503,9 @@ private actor O9WDeletionBarrier {
     func hold() async { entered = true; if !open { await withCheckedContinuation { waiter = $0 } } }
     func release() { open = true; waiter?.resume(); waiter = nil }
 }
-@MainActor private func o9wEventually(_ condition: () async -> Bool) async throws {
+@MainActor private func o9wEventually(_ boundary: String = "Watch deletion", _ condition: () async -> Bool) async throws {
     for _ in 0..<200 { if await condition() { return }; try await Task.sleep(for: .milliseconds(10)) }
-    Issue.record("Actual Watch deletion boundary did not complete")
+    Issue.record("Actual boundary did not complete: \(boundary)")
     throw O9AppFixtureFailure.timeout
 }
 @MainActor private func o9wReject(_ operation: () async throws -> Void) async {

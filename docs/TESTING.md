@@ -1,3 +1,9 @@
+# Current checkpoint — corrected candidate automation
+
+Full Watch130, phone app-host74 and four affected UI methods pass with zero failures/skips. Both Release builds and current signed-device products pass. See [privacy correction verification](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md) for exact identity, retained failures, commands/artifact identities and outstanding CI/review/physical gates. PR#3 carries subsequent observations for that tested commit. Earlier checkpoints below are historical.
+
+---
+
 # Current candidate — GitHub publication and device verification
 
 22 October 2026. `feature/guided-padel-setup`, based on `bc5e73d473dfbcd33fbb8196c1cafc5436ed9f3e`. The owner explicitly authorizes installing and adding all code/required documentation to GitHub. Publish a stacked draft PR into `feature/watch-recording-storage`; no merge or release.
@@ -107,3 +113,6 @@ The subsequent [Watch contrast correction](testing/261017_Watch_Navigation_Contr
 The owner-approved [storage test contract](testing/261017_Watch_Recording_Test_Contract_v1.0.md) preceded production edits. New tests exercise the actual codec/filesystem store/recovery paths, injected I/O failures and abrupt child-process exits. [Local evidence](testing/261017_Recording_Storage_Local_Evidence_v1.0.md) records full regression results, both OS27 Release simulator builds, preserved initial failures, exact source identity and remaining gates. No app UI test rerun or physical-device result is claimed for this storage-only package.
 
 Host filesystem success cannot establish Watch sandbox/data-protection behavior, power-loss durability, sensor fidelity, background continuity, rate, battery or court readiness. The storage API has no resume/reopen-for-capture operation and no app integration. Source/configuration hashes identify evidence before any commit. Formal independent committed-HEAD review and new CI remain pending; PR1's cancelled CI is not a pass for this branch.
+# Privacy corrections — current verification record
+
+The [correction verification](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md) supersedes the original candidate's readiness interpretation. Final full Watch simulator suite: **130 methods passed**, zero failures/skips. Final full phone app-host suite: **74 methods passed**, zero failures/skips. These are software observations; physical sensor/background/connectivity conclusions remain unknown. Current UI/build, exact-source CI/review and device observations are recorded with that evidence, the [Gate Card](../GATE_CARD.md) and [PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3). Failed runs remain retained.

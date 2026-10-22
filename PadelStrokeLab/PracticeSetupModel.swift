@@ -33,6 +33,8 @@ final class PracticeSetupModel {
     private var loading = false
     private var endRequested = false
     private var withdrawalRequested = false
+    private var analysisIngressRestrictions: Set<UUID> = []
+    var onOwnerAnalysisInvalidated: (@MainActor () -> Void)?
     private var mutationInFlight = false
     private var statusRequest: UUID?
     private var requests: [UUID: PhoneSetupRequest] = [:]
@@ -48,6 +50,16 @@ final class PracticeSetupModel {
             guard let self else { throw OwnerTransportFailure.cancelled }
             return try await self.receive(message, work: work)
         }
+    }
+
+    var allowsOwnerAnalysis: Bool {
+        loaded && !withdrawalRequested && analysisIngressRestrictions.isEmpty && status != .failed &&
+            channel?.authority?.isCollectionAllowed == true && channel?.motionAccessBlocked == false
+    }
+    func ownerAnalysisAdmission() -> (@Sendable () -> Bool)? {
+        guard allowsOwnerAnalysis else { return nil }
+        let current = fence.current, fence = self.fence
+        return { fence.matches(current) }
     }
 
     var canPrepare: Bool { loaded && !busy && ownerConfirmed && motionConsent && !endRequested && !withdrawalRequested }
@@ -200,6 +212,7 @@ final class PracticeSetupModel {
         motionConsent = false; withdrawalRequested = true
         invalidate(keepRunning: false); status = .pending
         let restriction = fence.restrict(.all, owner: channel?.authority)
+        onOwnerAnalysisInvalidated?()
         return Task { await restrictCollection(motion: true, token: restriction) }
     }
 
@@ -338,6 +351,10 @@ final class PracticeSetupModel {
         else if case .transition = message { /* Verified contiguous owner transitions may arrive as queued control. */ }
         else { throw OwnerTransportFailure.mismatchedReply }
         let restriction = fence.restrict(message)
+        if let restriction, Self.withdrawsAnalysis(message) {
+            analysisIngressRestrictions.insert(restriction)
+            onOwnerAnalysisInvalidated?()
+        }
         await beforeReplyCommit?(message)
         let expectedObservation = observation, liveFence = fence
         let result = try await worker.run { setup, channel -> PhoneSetupValue<OwnerAuthorityAcknowledgement?> in
@@ -380,7 +397,10 @@ final class PracticeSetupModel {
                 return PhoneSetupValue(snapshot: try PhoneSetupStores(setup, channel), value: acknowledgement)
             }
         }
-        if let restriction { fence.reconciled(restriction) }
+        if let restriction {
+            fence.reconciled(restriction)
+            analysisIngressRestrictions.remove(restriction)
+        }
         publish(result.snapshot)
         if let acknowledgement = result.value { try await sendAcknowledgement(acknowledgement) }
         switch message {
@@ -446,6 +466,15 @@ final class PracticeSetupModel {
         return result.value
     }
 
+    private nonisolated static func withdrawsAnalysis(_ message: OwnerPreparationMessage) -> Bool {
+        switch message {
+        case let .mutate(_, _, mutation): return mutation.isFullWithdrawal
+        case let .applied(_, _, transition), let .transition(transition): return transition.mutation.isFullWithdrawal
+        case let .replayResult(_, _, transition): return transition?.mutation.isFullWithdrawal == true
+        default: return false
+        }
+    }
+
     private func publish(_ snapshot: PhoneSetupStores) {
         guard snapshot.serial > published else { return }
         if channel?.authority != snapshot.channel.authority {
@@ -453,6 +482,7 @@ final class PracticeSetupModel {
             if !endRequested && !withdrawalRequested { status = .reviewRequired }
         }
         published = snapshot.serial; stored = snapshot.stores; channel = snapshot.channel
+        if snapshot.channel.motionAccessBlocked || !analysisIngressRestrictions.isEmpty { onOwnerAnalysisInvalidated?() }
         if snapshot.channel.phonePractice?.endRequestID != nil { endRequested = true }
         if snapshot.channel.admissionBlocked { acceptedNext = nil }
     }
@@ -486,6 +516,7 @@ final class PracticeSetupModel {
     }
     private func fail(_ error: any Error) {
         lastError = error.localizedDescription; status = .failed
+        onOwnerAnalysisInvalidated?()
         acceptedCurrent = nil; acceptedNext = nil; fence.advance()
     }
 

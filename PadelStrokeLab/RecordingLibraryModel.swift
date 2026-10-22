@@ -39,6 +39,13 @@ nonisolated struct RecordingReview: Identifiable, Sendable {
     let motionStatistics: MotionStatistics?
     let motionStatisticsUnavailableReason: String?
 
+    static let ownerAnalysisUnavailable = "Owner analysis is unavailable while motion consent is withdrawn or unresolved. Retained data remains available for deletion."
+    var withoutOwnerAnalysis: Self {
+        Self(id: id, report: report, timeline: timeline, labels: labels,
+            streams: streams.map { .init(stream: $0.stream, count: $0.count, first: $0.first, last: $0.last, segments: []) },
+            segments: segments, bytes: bytes, receiptVerified: receiptVerified, annotationWarning: annotationWarning,
+            motionStatistics: nil, motionStatisticsUnavailableReason: Self.ownerAnalysisUnavailable)
+    }
     var latestLabels: [RecordingAttemptLabel] {
         Dictionary(grouping: labels, by: \.attemptID).values.compactMap {
             $0.max { $0.revision < $1.revision }
@@ -134,18 +141,37 @@ actor RecordingLibraryRepository {
         return scope.ownerID == owner.ownerID && scope.phoneInstallationEpoch == owner.phoneInstallationEpoch
             && scope.watchInstallationEpoch == owner.watchInstallationEpoch
     }
-    func selection(_ id: UUID, owner: OwnerPracticeIdentity?) throws -> (RecordingReview, OwnerPracticeReview?) {
+    func selection(_ id: UUID, owner: OwnerPracticeIdentity?,
+                   analysisAllowed: (@Sendable () -> Bool)? = nil) throws -> (RecordingReview, OwnerPracticeReview?) {
         guard let snapshot = try ownerPractice(id) else { return (try review(id), nil) }
         guard Self.matches(snapshot, owner: owner) else { throw OwnerPracticeBundleError.unavailable }
-        let recordings = try snapshot.receipt.recordingIDs.map {
-            try review($0, includeStatistics: true, rawRoot: snapshot.rawRoot, notesRoot: snapshot.notesRoot)
+        func metadataOnly() throws -> (RecordingReview, OwnerPracticeReview?) {
+            let records = try snapshot.receipt.recordingIDs.map {
+                try review($0, includeStatistics: false, rawRoot: snapshot.rawRoot, notesRoot: snapshot.notesRoot).withoutOwnerAnalysis
+            }
+            guard let selected = records.first(where: { $0.id == id }) else { throw OwnerPracticeBundleError.integrity }
+            return (selected, OwnerPracticeReview(snapshot: snapshot, recordings: records, recoveryByRecordingID: [:]))
         }
-        var recovery: [UUID: OwnerRecoverySummary] = [:]
-        if let telemetry = snapshot.telemetry {
-            for recording in recordings { recovery[recording.id] = try .calculate(telemetry: telemetry, recordingID: recording.id) }
+        guard owner?.isCollectionAllowed == true, let analysisAllowed, analysisAllowed() else { return try metadataOnly() }
+        do {
+            let records = try snapshot.receipt.recordingIDs.map {
+                try review($0, includeStatistics: true, rawRoot: snapshot.rawRoot, notesRoot: snapshot.notesRoot,
+                    analysisAllowed: analysisAllowed)
+            }
+            var recovery: [UUID: OwnerRecoverySummary] = [:]
+            if let telemetry = snapshot.telemetry {
+                for recording in records {
+                    guard analysisAllowed() else { throw CancellationError() }
+                    recovery[recording.id] = try .calculate(telemetry: telemetry, recordingID: recording.id)
+                }
+            }
+            guard analysisAllowed() else { throw CancellationError() }
+            guard let selected = records.first(where: { $0.id == id }) else { throw OwnerPracticeBundleError.integrity }
+            return (selected, OwnerPracticeReview(snapshot: snapshot, recordings: records, recoveryByRecordingID: recovery))
+        } catch is CancellationError {
+            if !analysisAllowed() { return try metadataOnly() }
+            throw CancellationError()
         }
-        guard let selected = recordings.first(where: { $0.id == id }) else { throw OwnerPracticeBundleError.integrity }
-        return (selected, OwnerPracticeReview(snapshot: snapshot, recordings: recordings, recoveryByRecordingID: recovery))
     }
 
     func review(_ id: UUID, includeStatistics: Bool = true) throws -> RecordingReview {
@@ -153,7 +179,8 @@ actor RecordingLibraryRepository {
         return try review(id, includeStatistics: includeStatistics,
             rawRoot: practice?.rawRoot ?? paths.rawRoot, notesRoot: practice?.notesRoot ?? paths.notesRoot)
     }
-    private func review(_ id: UUID, includeStatistics: Bool, rawRoot: URL, notesRoot: URL) throws -> RecordingReview {
+    private func review(_ id: UUID, includeStatistics: Bool, rawRoot: URL, notesRoot: URL,
+                        analysisAllowed: (@Sendable () -> Bool)? = nil) throws -> RecordingReview {
         try Task.checkCancellation()
         let report = try RecordingStore.inspect(root: rawRoot, recordingID: id)
         let notes = try SessionAnnotationsStore(root: notesRoot)
@@ -176,6 +203,7 @@ actor RecordingLibraryRepository {
         var motion: MotionStatisticsAccumulator?
         var motionUnavailable: String?
         if includeStatistics {
+            if let analysisAllowed, !analysisAllowed() { throw CancellationError() }
             if report.status == .corrupt || report.status == .limited {
                 motionUnavailable = "Motion statistics are unavailable while retained data needs an integrity check."
             } else if let metadata = report.metadata, !segments.isEmpty {
@@ -193,7 +221,7 @@ actor RecordingLibraryRepository {
             let chunks = report.chunks.filter { $0.stream == stream }
             return RecordingStreamReview(stream: stream, count: chunks.reduce(0) { $0 + $1.sampleCount },
                 first: chunks.map(\.firstTimestamp).min(), last: chunks.map(\.lastTimestamp).max(),
-                                        segments: includeStatistics ? try statistics(id: id, chunks: chunks, segments: segments, motion: &motion, rawRoot: rawRoot) : [])
+                                        segments: includeStatistics ? try statistics(id: id, chunks: chunks, segments: segments, motion: &motion, rawRoot: rawRoot, analysisAllowed: analysisAllowed) : [])
         }
         let bytes = try storageBytes(id, rawRoot: rawRoot, notesRoot: notesRoot)
         return RecordingReview(id: id, report: report, timeline: timeline, labels: labels, streams: streams,
@@ -223,18 +251,23 @@ actor RecordingLibraryRepository {
     }
 
     private func statistics(id: UUID, chunks: [RecordingChunkDescriptor], segments: [RecordingSegment],
-                            motion: inout MotionStatisticsAccumulator?, rawRoot: URL) throws -> [RecordingSegmentStatistics] {
+                            motion: inout MotionStatisticsAccumulator?, rawRoot: URL,
+                            analysisAllowed: (@Sendable () -> Bool)? = nil) throws -> [RecordingSegmentStatistics] {
         var counts = Array(repeating: 0, count: segments.count)
         var first = Array<Double?>(repeating: nil, count: segments.count)
         var previous = first
         var maximum = first
         for descriptor in chunks.sorted(by: { $0.sequence < $1.sequence }) {
             try Task.checkCancellation()
+            if let analysisAllowed, !analysisAllowed() { throw CancellationError() }
             let bytes = try readChunk(id: id, descriptor: descriptor, rawRoot: rawRoot)
             let chunk = try RecordingChunkCodec.decode(bytes)
             try motion?.consume(chunk)
             for (indexInChunk, sample) in chunk.samples.enumerated() {
-                if indexInChunk.isMultiple(of: 256) { try Task.checkCancellation() }
+                if indexInChunk.isMultiple(of: 256) {
+                    try Task.checkCancellation()
+                    if let analysisAllowed, !analysisAllowed() { throw CancellationError() }
+                }
                 guard let index = segments.firstIndex(where: { sample.timestamp >= $0.start && sample.timestamp <= $0.end }) else { continue }
                 if let last = previous[index] {
                     let gap = sample.timestamp - last
@@ -447,6 +480,16 @@ final class RecordingLibraryModel {
     private(set) var practiceSetup: PracticeSetupModel?
     private var generation = UUID()
     private var libraryGeneration = UUID()
+    var ownerAnalysisAvailable: Bool { practiceSetup?.allowsOwnerAnalysis == true }
+    private func invalidateOwnerAnalysis() {
+        exportURL = nil; practiceExportPreview = nil
+        if let practice = selectedPractice {
+            generation = UUID(); loading = false
+            selected = selected?.withoutOwnerAnalysis
+            selectedPractice = OwnerPracticeReview(snapshot: practice.snapshot,
+                recordings: practice.recordings.map(\.withoutOwnerAnalysis), recoveryByRecordingID: [:])
+        }
+    }
 
     init(paths: RecordingPaths? = nil, activateConnectivity: Bool = true, injectedConnectivity: RecordingConnectivity? = nil) {
         do {
@@ -477,6 +520,7 @@ final class RecordingLibraryModel {
             let setup = PracticeSetupModel(base: resolved.rawRoot.deletingLastPathComponent().deletingLastPathComponent(),
                 connectivity: connection)
             practiceSetup = setup
+            setup.onOwnerAnalysisInvalidated = { [weak self] in self?.invalidateOwnerAnalysis() }
             connection?.onOwnerPracticePublication = { [weak setup] prepared in
                 guard let setup else { throw OwnerPracticeBundleError.closed }
                 return try await setup.publishVerifiedPractice(scope: prepared.scope, preparedPublication: prepared)
@@ -523,12 +567,20 @@ final class RecordingLibraryModel {
         do {
             await practiceSetup?.load()
             let owner = practiceSetup?.channel?.authority
-            let (value, practice) = try await repository.selection(id, owner: owner)
+            let admission = practiceSetup?.ownerAnalysisAdmission()
+            let (value, practice) = try await repository.selection(id, owner: owner, analysisAllowed: admission)
             #if DEBUG
             await detailReviewDidComplete?(id)
             #endif
             guard practiceSetup?.channel?.authority == owner, generation == request, !Task.isCancelled else { return }
-            selected = value; selectedPractice = practice
+            if let practice, !ownerAnalysisAvailable {
+                selected = value.withoutOwnerAnalysis
+                selectedPractice = OwnerPracticeReview(snapshot: practice.snapshot,
+                    recordings: practice.recordings.map(\.withoutOwnerAnalysis), recoveryByRecordingID: [:])
+            } else {
+                guard practice == nil || admission?() == true else { return }
+                selected = value; selectedPractice = practice
+            }
         } catch is CancellationError { } catch {
             if generation == request { self.error = error.localizedDescription }
         }
@@ -543,7 +595,7 @@ final class RecordingLibraryModel {
         defer { busy = false }
         do {
             if let practice = selectedPractice {
-                guard RecordingLibraryRepository.matches(practice.snapshot, owner: practiceSetup?.channel?.authority),
+                guard ownerAnalysisAvailable, RecordingLibraryRepository.matches(practice.snapshot, owner: practiceSetup?.channel?.authority),
                       let practiceSetup else { throw OwnerPracticeBundleError.unavailable }
                 let complete = try await repository.preparePracticeLabel(recordingID, draft: draft, expected: practice.snapshot.receipt)
                 defer { complete.publication.cancel() }
@@ -568,11 +620,11 @@ final class RecordingLibraryModel {
         let request = generation
         exportURL = nil; practiceExportPreview = nil; error = nil
         do {
-            guard let snapshot = try await repository.ownerPractice(id),
-                  RecordingLibraryRepository.matches(snapshot, owner: practiceSetup?.channel?.authority) else {
+            guard ownerAnalysisAvailable, let snapshot = try await repository.ownerPractice(id),
+                  ownerAnalysisAvailable, RecordingLibraryRepository.matches(snapshot, owner: practiceSetup?.channel?.authority) else {
                 throw OwnerPracticeBundleError.unavailable
             }
-            if generation == request, selected?.id == id { practiceExportPreview = snapshot }
+            if generation == request, selected?.id == id, ownerAnalysisAvailable { practiceExportPreview = snapshot }
         } catch { if generation == request { self.error = error.localizedDescription } }
     }
     func cancelPracticeExportPreview() { practiceExportPreview = nil; exportURL = nil }
@@ -585,7 +637,7 @@ final class RecordingLibraryModel {
         do {
             let url: URL
             if let snapshot = try await repository.ownerPractice(id) {
-                guard RecordingLibraryRepository.matches(snapshot, owner: practiceSetup?.channel?.authority) else {
+                guard ownerAnalysisAvailable, RecordingLibraryRepository.matches(snapshot, owner: practiceSetup?.channel?.authority) else {
                     throw OwnerPracticeBundleError.unavailable
                 }
             }
