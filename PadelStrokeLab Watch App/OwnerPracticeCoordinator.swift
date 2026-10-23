@@ -472,7 +472,7 @@ nonisolated private final class OwnerPracticeTelemetryWorker: @unchecked Sendabl
             if let endInstant, at.monotonicSeconds - endInstant.monotonicSeconds >= 5 { timedOut = true }
             return
         }
-        if at.monotonicSeconds - header.clock.monotonicAnchorSeconds >= 1800 {
+        if at.monotonicSeconds >= header.clock.monotonicAnchorSeconds + 1800 {
             absenceReasons.insert(.durationLimit); end(interrupted: true)
         } else if let recoveryStart, at.monotonicSeconds - recoveryStart >= 130, state == .recovery {
             self.recoveryStart = nil; pause()
@@ -515,7 +515,7 @@ nonisolated private final class OwnerPracticeTelemetryWorker: @unchecked Sendabl
     }
     private func end(interrupted: Bool, retireLocally: Bool = false) {
         guard !endRequested, !finalized else { return }
-        if let header, let at = try? clock(), at.monotonicSeconds - header.clock.monotonicAnchorSeconds >= 1800 {
+        if let header, let at = try? clock(), at.monotonicSeconds >= header.clock.monotonicAnchorSeconds + 1800 {
             absenceReasons.insert(.durationLimit)
         }
         let shouldInterrupt = interrupted || absenceReasons.contains(.durationLimit)
@@ -539,7 +539,7 @@ nonisolated private final class OwnerPracticeTelemetryWorker: @unchecked Sendabl
         heartRate?.stop(); onStopSet?(shouldInterrupt ? "Practice was interrupted." : nil)
         endInstant = try? clock()
         // Raw stopping can cross the limit; finalization must use this same actual End pair.
-        if let header, let endInstant, endInstant.monotonicSeconds - header.clock.monotonicAnchorSeconds >= 1800 {
+        if let header, let endInstant, endInstant.monotonicSeconds >= header.clock.monotonicAnchorSeconds + 1800 {
             absenceReasons.insert(.durationLimit); timedOut = true
         }
         closeObservation(timedOut ? .interrupted : .ended, at: endInstant); workout?.end()

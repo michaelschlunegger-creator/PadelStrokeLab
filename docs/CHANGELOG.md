@@ -1,3 +1,7 @@
+# 23 October2026 — corrected practice deadline and build7
+
+Use the canonical30-minute endpoint consistently; add strict adjacent-boundary/durable-finalization regressions. Isolate one phone test reader without changing production observers or locks. Core390, phone app-host74/125, both Release and signing checks pass. Full exact-head CI/device gates remain. [Evidence](testing/261023_Practice_Deadline_Correction_v1.0.md).
+
 # 23 October2026 — post-test diagnostics
 
 Move optional inventory after mandatory suites; retain bounded30-second failure/UNKNOWN evidence without blocking test execution. Strict boot, suites and final gate unchanged. [Verification](testing/261023_CI_Platform_Isolation_v1.0.md).

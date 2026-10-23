@@ -1,4 +1,4 @@
-Current bounded post-test diagnostics and retained phone inventory failure are documented in [verification](testing/261023_CI_Platform_Isolation_v1.0.md). New exact-head CI/final review and separate installations remain pending. Earlier checkpoints below are historical.
+Current deadline correction and phone fixture isolation are verified locally and source-reviewed in [build7 evidence](testing/261023_Practice_Deadline_Correction_v1.0.md). Full exact-head CI/committed review and separate installations remain pending. Earlier checkpoints below are historical.
 
 Current CI-only execution mitigation and retained cancellation evidence are documented in [verification](testing/261023_CI_Worker_Diagnostics_v1.0.md). Exact-head CI, final review and device gates remain pending their actual outcomes.
 
@@ -6,14 +6,14 @@ Current UI-driver-only correction and measured CI budget are documented in [veri
 
 # Development installation and release gates
 
-The three software findings on the original published `7d5dc2a` candidate are addressed by the [bounded privacy corrections](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md). The current 115-input portable manifest SHA256 is `ee7cea314f88624d4e59a87f99730af26b6b39d790696f4e6d8d0ea81fc49f1b`. Live exact-commit CI, independent review and separate installation observations belong in [PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and its linked evidence; a locally passing suite does not establish those later gates. This keeps observations attached to the tested source without changing it merely to record subsequent device outcomes.
+The three software findings on the original published `7d5dc2a` candidate are addressed by the [bounded privacy corrections](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md). The current 115-input portable manifest SHA256 is `913511f978b91aaccedc8e98c088df545ead81b8fdd9f4ad71d413ea47aa17ec`. Live exact-commit CI, independent review and separate installation observations belong in [PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and its linked evidence; a locally passing suite does not establish those later gates. This keeps observations attached to the tested source without changing it merely to record subsequent device outcomes.
 
 This is a development candidate for owner forehand/backhand recording, not a TestFlight or App Store release. The bundle identifiers and companion relationship remain unchanged; display name is Padel Master.
 
 ## Candidate
 
 - Branch: `feature/guided-padel-setup`, stacked on `feature/watch-recording-storage` (`bc5e73d473dfbcd33fbb8196c1cafc5436ed9f3e`).
-- iPhone and embedded Watch products: version 1.0, build 6. Exact portable inputs are in the [manifest](testing/261022_Owner_First_Final_Code_State.sha256); private evidence also records signed executable hashes.
+- iPhone and embedded Watch products: version1.0, build7. Both Release and fresh signed products/signatures/profile coverage pass; see [current verification](testing/261023_Practice_Deadline_Correction_v1.0.md). Portable inputs remain in the [manifest](testing/261022_Owner_First_Final_Code_State.sha256).
 - [Local verification](testing/261022_Owner_First_Final_Local_Verification_v1.0.md) and [independent local source review](reviews/261022_Owner_First_Final_Local_Review_v1.0.md) distinguish source acceptance from physical evidence.
 - Signed generic-device build, deep/strict signature verification, current provisioning and coverage of the baseline devices are verified locally. Provisioning identifiers and personal device details are retained privately.
 

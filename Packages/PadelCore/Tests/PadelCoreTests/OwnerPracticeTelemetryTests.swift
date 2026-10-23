@@ -31,9 +31,10 @@ func o6Authority(heartRate: Bool = true) throws -> OwnerPracticeIdentity {
         confirmedAtUnixSeconds: o6Wall, policyDigest: OwnerPracticePolicy.digest)
 }
 
-func o6Header(authority: OwnerPracticeIdentity? = nil, uncertainty: Double = 0) throws -> OwnerTelemetryHeader {
+func o6Header(authority: OwnerPracticeIdentity? = nil, uncertainty: Double = 0,
+              monotonicAnchor: Double = o6Mono) throws -> OwnerTelemetryHeader {
     try OwnerTelemetryHeader(authority: authority ?? o6Authority(), practiceID: o6Practice,
-        clock: RecordingClock(domainID: o6PracticeClock, monotonicAnchorSeconds: o6Mono,
+        clock: RecordingClock(domainID: o6PracticeClock, monotonicAnchorSeconds: monotonicAnchor,
             wallAnchorUnixSeconds: o6Wall),
         runtimeGeneration: o6Runtime, clockUncertaintySeconds: uncertainty)
 }
@@ -87,9 +88,10 @@ func o6Mapping(_ context: OwnerRecordingContext, header: OwnerTelemetryHeader? =
         calibration: o6Calibration(context, radius: radius))
 }
 
-func o6Telemetry(heartRate: Bool = true, uncertainty: Double = 0) throws -> OwnerPracticeTelemetry {
+func o6Telemetry(heartRate: Bool = true, uncertainty: Double = 0,
+                 monotonicAnchor: Double = o6Mono) throws -> OwnerPracticeTelemetry {
     let owner = try o6Authority(heartRate: heartRate)
-    return try OwnerPracticeTelemetry(header: o6Header(authority: owner, uncertainty: uncertainty),
+    return try OwnerPracticeTelemetry(header: o6Header(authority: owner, uncertainty: uncertainty, monotonicAnchor: monotonicAnchor),
         authority: owner, initialConsentSegmentID: o6Consent,
         initialQueryGeneration: heartRate ? o6Query : nil)
 }
@@ -541,6 +543,61 @@ func o6RewriteEnvelope(_ bytes: Data, domain: String,
         #expect(telemetry.sampleRecords.count == 8_192)
         #expect(telemetry.conflictGroups.first { $0.sampleID == o6ID(10_000) }?.versions.count == 2)
         #expect(telemetry.incompleteReasons.contains(.sampleLimit))
+    }
+
+    @Test(arguments: [false, true])
+    func fractionalAnchorAcceptsCanonicalDeadlineAndPreviousInstant(justBefore: Bool) throws {
+        let anchor = 3234.779933041667
+        let deadline = anchor + 1800
+        // This observed CI anchor makes subtracting the exact deadline round above 1800.
+        #expect(deadline - anchor > 1800)
+        let end = try OwnerTelemetryInstant(wallUnixSeconds: o6Wall + 1800,
+            monotonicSeconds: justBefore ? deadline.nextDown : deadline)
+        var telemetry = try o6Telemetry(monotonicAnchor: anchor)
+        let start = try OwnerTelemetryInstant(wallUnixSeconds: o6Wall, monotonicSeconds: anchor)
+        let observation = try OwnerTelemetryObservation(id: o6ID(80_001), kind: .baseline,
+            recordingID: nil, consentSegmentID: o6Consent, queryGeneration: o6Query,
+            start: start, end: end, closure: .ended)
+        try telemetry.recordObservation(observation)
+        try telemetry.recordEvent(OwnerTelemetryEvent(id: o6ID(80_002), at: end, reason: .userEntered, count: 1))
+        try telemetry.finalize(status: .ended, at: end, absenceReasons: [.noAccessibleHeartRateData])
+        #expect(telemetry.observations == [observation])
+        #expect(telemetry.finalization?.endedAt == end)
+        #expect(telemetry.status == .ended)
+        #expect(try OwnerPracticeTelemetry.decode(telemetry.encoded()) == telemetry)
+    }
+
+    @Test func fractionalAnchorRejectsNextInstantAfterDeadlineWithoutLosingEvidence() throws {
+        let anchor = 3234.779933041667
+        let deadline = anchor + 1800
+        var telemetry = try o6Telemetry(monotonicAnchor: anchor)
+        let start = try OwnerTelemetryInstant(wallUnixSeconds: o6Wall, monotonicSeconds: anchor)
+        let retained = try OwnerTelemetryEvent(id: o6ID(80_003), at: start, reason: .userEntered, count: 1)
+        try telemetry.recordEvent(retained)
+        let before = telemetry
+        let outside = try OwnerTelemetryInstant(wallUnixSeconds: o6Wall + 1800, monotonicSeconds: deadline.nextUp)
+        #expect(throws: (any Error).self) {
+            try telemetry.recordObservation(OwnerTelemetryObservation(id: o6ID(80_004), kind: .baseline,
+                recordingID: nil, consentSegmentID: o6Consent, queryGeneration: o6Query,
+                start: start, end: outside, closure: .ended))
+        }
+        #expect(telemetry == before)
+        #expect(throws: (any Error).self) {
+            try telemetry.recordEvent(OwnerTelemetryEvent(id: o6ID(80_005), at: outside, reason: .userEntered, count: 1))
+        }
+        #expect(telemetry == before)
+        let tooEarly = try OwnerTelemetryInstant(wallUnixSeconds: o6Wall, monotonicSeconds: anchor.nextDown)
+        #expect(throws: (any Error).self) {
+            try telemetry.recordEvent(OwnerTelemetryEvent(id: o6ID(80_006), at: tooEarly, reason: .userEntered, count: 1))
+        }
+        #expect(telemetry == before)
+        #expect(throws: OwnerTelemetryError.capacity) {
+            try telemetry.finalize(status: .ended, at: outside, absenceReasons: [])
+        }
+        #expect(telemetry.finalization == nil && telemetry.status == .open)
+        #expect(telemetry.events == [retained] && telemetry.observations.isEmpty)
+        #expect(telemetry.incompleteReasons == [.durationLimit])
+        #expect(try OwnerPracticeTelemetry.decode(telemetry.encoded()) == telemetry)
     }
 
     @Test func twentySetsAcceptedTwentyFirstRefusedAndDurationHasExactBoundary() throws {

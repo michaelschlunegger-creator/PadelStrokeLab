@@ -309,7 +309,11 @@ public struct OwnerPracticeTelemetry: Equatable, Sendable {
     @discardableResult private func instant(_ at: OwnerTelemetryInstant) throws -> Double {
         try at.validate()
         let elapsed = at.monotonicSeconds - header.clock.monotonicAnchorSeconds
-        guard elapsed >= 0, elapsed <= 1800 else { throw OwnerTelemetryError.invalid("practice time") }
+        // Compare the canonical endpoint directly: subtracting it can round above 1800.
+        guard at.monotonicSeconds >= header.clock.monotonicAnchorSeconds,
+              at.monotonicSeconds <= header.clock.monotonicAnchorSeconds + 1800 else {
+            throw OwnerTelemetryError.invalid("practice time")
+        }
         return elapsed
     }
     private mutating func refuse(_ reason: OwnerTelemetryReason) throws -> Never {
@@ -568,7 +572,7 @@ public struct OwnerPracticeTelemetry: Equatable, Sendable {
             return
         }
         try mutable(); try at.validate()
-        guard at.monotonicSeconds - header.clock.monotonicAnchorSeconds <= 1800 else { try refuse(.durationLimit) }
+        guard at.monotonicSeconds <= header.clock.monotonicAnchorSeconds + 1800 else { try refuse(.durationLimit) }
         try instant(at)
         let projectedWall = header.clock.wallAnchorUnixSeconds + at.monotonicSeconds - header.clock.monotonicAnchorSeconds
         let interruptedClock = status == .interrupted && reasons.contains(.clockDiscontinuity)

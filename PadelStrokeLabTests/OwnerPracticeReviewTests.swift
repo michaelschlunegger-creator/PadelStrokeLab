@@ -189,6 +189,9 @@ import Testing
         try await o10Fixture { f, model in
             let source = try f.source(samples: mode != "absent")
             let (bundle, receipt) = try source.write(heartRate: mode == "excluded" ? .excludedByOwner : .asRecorded)
+            // This test inspects immutable revisions through a separate store. Suppress only automatic UI refresh,
+            // whose independent reader would contend for the retained telemetry lease.
+            f.connection.onChange = nil
             _ = try await f.receive(bundle, receipt)
             let store = try OwnerPracticeReceiptStore(base: f.phone)
             let original = try store.open(practiceID: receipt.practiceID, revision: 1)

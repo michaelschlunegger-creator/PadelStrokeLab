@@ -1,3 +1,5 @@
+Practice deadline validation and expiry use the same canonical absolute monotonic endpoint (`anchor + 1800`). This preserves the30-minute policy while avoiding subtraction-rounding rejection of the endpoint; finite/lower bounds and strict rejection beyond the endpoint remain. Schema/calculation versions and native resource-drain gates are unchanged. See [correction and regression evidence](testing/261023_Practice_Deadline_Correction_v1.0.md).
+
 # Architecture index
 
 ## Components

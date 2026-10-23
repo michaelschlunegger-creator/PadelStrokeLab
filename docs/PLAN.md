@@ -1,10 +1,10 @@
-# Current checkpoint — post-test CI diagnostics
+# Current checkpoint — corrected build7 candidate
 
-23 October2026. Branch `feature/guided-padel-setup`, amendment base `6fd968c60944deffdc8c494c50f487a1cca15f82`. CI39878224843 passed Core and both platforms' builds. Phone boot succeeded; an added diagnostic inventory timed out and prevented phone tests. Watch suite remained running at documentation cutoff. [Failure and correction](testing/261023_CI_Platform_Isolation_v1.0.md).
+23 October2026. Branch `feature/guided-padel-setup`, amendment base `e43eb7fb25dc2bcdafca7ab5ca060d3926a96d64`. CI39880508648 failed two Watch terminal-state tests and one phone independent-reader test; all27 phone UI executions passed. The proven clock-boundary production defect and separately verified fixture race are corrected and source-reviewed. [Deadline correction](testing/261023_Practice_Deadline_Correction_v1.0.md); [phone fixture](testing/261023_Phone_Review_Fixture_Isolation_v1.0.md).
 
-Reviewed workflow-only amendment runs diagnostics after mandatory suites, bounded30seconds, preserving raw output and UNKNOWN on failure. All preboot/boot/test/Core/matrix/final gates are unchanged. YAML/19Bash/5Python and four controlled diagnostic cases pass. Source9 manifest SHA256 `ee7cea314f88624d4e59a87f99730af26b6b39d790696f4e6d8d0ea81fc49f1b`; only workflow differs Source8. App/test/signed-product evidence retains input identity.
+Core390/29 and phone app-host74/125 pass, zero failures/skips. Watch test products compile; both Release and fresh signed phone/embeddedWatch version1.0/build7 pass identity/signature/profile checks. Local Watch execution is unavailable due duplicate27 runtime identifiers; full unchanged Watch runtime tests must pass on exact-head CI. No gate is waived. Source11 freezes115inputs, SHA256 `913511f978b91aaccedc8e98c088df545ead81b8fdd9f4ad71d413ea47aa17ec`; exactly six planned source/test/config paths differ from Source9. Old signed build6 is not correction proof.
 
-One next action: complete new exact-head CI/final review, then install and verify iPhone and Watch separately. No installation/physical pass or merge/release claimed. PR#3 carries live exact-commit outcomes; earlier checkpoints below are historical.
+One next action: publish and complete full exact-head Core/Phone/Watch/foundation plus committed review, then install/verify iPhone and Watch separately. No installation, physical pass, merge or release claimed. PR#3 records later exact-commit outcomes without changing tested HEAD; earlier checkpoints below are historical.
 
 ---
 # Current checkpoint — mounted runtime validation

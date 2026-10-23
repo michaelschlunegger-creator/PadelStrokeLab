@@ -446,6 +446,57 @@ struct OwnerHeartRateLifecycleTests {
         await f.close()
     }
 
+    @Test(arguments: [false, true])
+    func fractionalAnchorClosesDurablePracticeAtCanonicalDeadline(directEnd: Bool) async throws {
+        let anchor = 3234.779933041667
+        let start = try OwnerTelemetryInstant(wallUnixSeconds: 1_800_000_000, monotonicSeconds: anchor)
+        let f = try await OwnerLifecycleFixture(heartRate: true, baselineInstant: start)
+        try await f.beginAndRun()
+        let before = try await f.practice.telemetrySnapshot()
+        #expect(before.header.clock.monotonicAnchorSeconds == anchor)
+        let deadline = anchor + 1800
+        #expect(deadline - anchor > 1800)
+        let justBefore = try OwnerTelemetryInstant(wallUnixSeconds: start.wallUnixSeconds + 1800,
+            monotonicSeconds: deadline.nextDown)
+        f.clock.freeze(first: justBefore, then: justBefore)
+        f.practice.checkDeadlines()
+        #expect(f.session.endCount == 0 && f.practice.state == .baseline)
+        let endpoint = try OwnerTelemetryInstant(wallUnixSeconds: start.wallUnixSeconds + 1800,
+            monotonicSeconds: deadline)
+        f.clock.freeze(first: endpoint, then: endpoint)
+        if directEnd { f.practice.end() } else { f.practice.checkDeadlines() }
+        #expect(f.session.endCount == 1 && f.practice.state == .ending)
+        #expect(try await f.practice.telemetrySnapshot().finalization == nil,
+            "The exact deadline still requires actual native closure")
+        f.session.emit(.ended)
+        try await f.wait { f.practice.state == .interrupted }
+        let saved = try await f.practice.telemetrySnapshot()
+        let finalization = try #require(saved.finalization)
+        #expect(finalization.endedAt == endpoint && finalization.status == .interrupted)
+        #expect(finalization.absenceReasons.contains(.durationLimit))
+        #expect(saved.observations.contains { $0.end == endpoint && $0.closure == .interrupted })
+        #expect(saved.sets.isEmpty && f.motion.deviceMotionStarts == 0 && f.motion.accelerometerStarts == 0)
+        #expect(f.heartRate.pendingCallbacks == 0 && f.driver.isClosed)
+        #expect(f.practice.issue == nil)
+        #expect(try OwnerPracticeTelemetry.decode(saved.encoded()) == saved)
+        await f.close()
+    }
+
+    @Test func failedFinalizationPublicationRemainsVisiblyIncomplete() async throws {
+        let f = try await OwnerLifecycleFixture(beforeTelemetryPublication: { value in
+            if value.finalization != nil { throw OwnerTelemetryError.unavailable }
+        })
+        try await f.beginAndRun()
+        f.practice.end(); f.session.emit(.ended)
+        try await f.wait { f.practice.state == .interrupted }
+        let saved = try await f.practice.telemetrySnapshot()
+        #expect(saved.finalization == nil && saved.status == .open)
+        #expect(f.practice.issue?.hasPrefix("Practice evidence remains incomplete:") == true)
+        #expect(f.driver.isClosed && f.heartRate.pendingCallbacks == 0)
+        #expect(try OwnerPracticeTelemetry.decode(saved.encoded()) == saved)
+        await f.close()
+    }
+
     @Test func enteredHeartRateRejectionKeepsItsActualEntryTimeAcrossOverdueEnd() async throws {
         let f = try await OwnerLifecycleFixture(heartRate: true)
         try await f.beginAndRun(); try await f.settle()
@@ -471,6 +522,7 @@ struct OwnerHeartRateLifecycleTests {
                 "An entered callback must retain its genuine entry time; End cannot clamp or backdate its event")
         let finalization = try #require(saved.finalization)
         #expect(finalization.status == .interrupted && finalization.absenceReasons.contains(.durationLimit))
+        #expect(f.practice.issue == nil)
         await f.close()
     }
 
@@ -852,6 +904,7 @@ struct OwnerHeartRateLifecycleTests {
         #expect(telemetry.finalization?.status == .interrupted)
         #expect(telemetry.finalization?.absenceReasons.contains(.durationLimit) == true)
         #expect(telemetry.finalization?.absenceReasons.contains(.interrupted) == true)
+        #expect(f.practice.issue == nil)
         await f.close()
     }
 
@@ -1098,13 +1151,15 @@ final class OwnerLifecycleClock {
     var monotonic: Double { ProcessInfo.processInfo.systemUptime + offset }
     private var frozen: OwnerTelemetryInstant?
     private var queued: [OwnerTelemetryInstant] = []
+    // A fixed initial clock is only for baseline-only tests that never start raw capture.
+    init(baselineInstant: OwnerTelemetryInstant? = nil) { frozen = baselineInstant }
     var now: OwnerTelemetryInstant {
         get throws {
             if !queued.isEmpty { return queued.removeFirst() }
             return try frozen ?? .init(wallUnixSeconds: wall, monotonicSeconds: monotonic)
         }
     }
-    // Called only after the actual raw writer has stopped and drained.
+    // Used only for baseline-only practice or after the actual raw writer has stopped and drained.
     func freeze(first: OwnerTelemetryInstant, then last: OwnerTelemetryInstant) {
         queued = [first]; frozen = last
     }
@@ -1303,10 +1358,11 @@ final class OwnerLifecycleFixture {
          injectMotion: Bool = true, injectWorkout: Bool = true,
          afterPublication: (@MainActor (OwnerContextPublication) async -> Void)? = nil,
          beforeWriterDrain: (@MainActor () async -> Void)? = nil,
-         beforeTelemetryPublication: (@MainActor (OwnerPracticeTelemetry) async throws -> Void)? = nil) async throws {
+         beforeTelemetryPublication: (@MainActor (OwnerPracticeTelemetry) async throws -> Void)? = nil,
+         baselineInstant: OwnerTelemetryInstant? = nil) async throws {
         try requireOwnerLifecycleHost()
         let environment = try WatchRuntimeEnvironment.resolve(arguments: ["--owner-watch-fixture=\(UUID().uuidString)"], environment: [:])
-        let clock = OwnerLifecycleClock(), workout = OwnerLifecycleWorkoutBackend()
+        let clock = OwnerLifecycleClock(baselineInstant: baselineInstant), workout = OwnerLifecycleWorkoutBackend()
         let driver = WatchWorkoutDriver(backend: workout, allowsHardware: false)
         let heart = OwnerLifecycleHeartHardware()
         let heartRate = try OwnerHeartRateSource(hardware: heart, environment: environment)
