@@ -4,7 +4,7 @@ An iPhone and Apple Watch prototype investigating whether Watch signals can pred
 
 ## Current state
 
-**23 October 2026:** local owner forehand/backhand verification is complete. Remote Core passes; simulator-service operations then timed out before Watch boot. A reviewed CI-only correction separates phone and Watch workers, preserving every suite and deadline. Full exact-head CI/final review and both installations remain pending. See [platform isolation/evidence](docs/testing/261023_CI_Platform_Isolation_v1.0.md), [PR#3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and [Gate Card](GATE_CARD.md). Physical sensors/background/battery remain unverified.
+**23 October 2026:** local owner forehand/backhand verification is complete. Remote Core and both platforms' builds pass. Phone boot succeeded, but a later diagnostic timeout prevented phone tests. The reviewed correction moves bounded diagnostics after the required suites; every boot/test gate remains mandatory. New exact-head CI/final review and separate installations remain pending. See [platform isolation/evidence](docs/testing/261023_CI_Platform_Isolation_v1.0.md), [PR#3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and [Gate Card](GATE_CARD.md). Physical sensors/background/battery remain unverified.
 
 [Product/scope](docs/PRODUCT.md) · [Architecture](docs/ARCHITECTURE.md) · [App Specifications v1.1](docs/product/261016_App_Specifications_PSL-SPEC-001_v1.1.txt) · [Verification](docs/testing/261022_Owner_First_Final_Local_Verification_v1.0.md) · [Development release gates](docs/RELEASE.md) · [Physical runbook](docs/testing/261021_Owner_Forehand_Backhand_Physical_Runbook_v1.0.md)
 

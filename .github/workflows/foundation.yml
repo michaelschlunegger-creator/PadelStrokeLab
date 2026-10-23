@@ -407,8 +407,6 @@ jobs:
           selected = selection[os.environ['PLATFORM']]
           subprocess.run(['xcrun', 'simctl', 'boot', selected], check=True)
           subprocess.run(['xcrun', 'simctl', 'bootstatus', selected, '-b'], check=True)
-          (evidence / 'simulators-ready.json').write_text(
-              subprocess.check_output(['xcrun', 'simctl', 'list', '-j'], text=True, timeout=30))
           PY
 
       - name: Run full existing iPhone simulator suite
@@ -429,7 +427,38 @@ jobs:
         continue-on-error: true
         run: |
           set -euo pipefail
-          xcrun simctl list -j 2> "$EVIDENCE/simulators-final.stderr.log" | tee "$EVIDENCE/simulators-final.json"
+          python3 - <<'PY'
+          import json, os, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          evidence = Path(os.environ['EVIDENCE'])
+          command = ['xcrun', 'simctl', 'list', '-j']
+          status = {'command': command, 'startedUTC': datetime.now(timezone.utc).isoformat(),
+                    'timeoutSeconds': 30, 'returnCode': None, 'timedOut': False, 'stateEvidence': 'UNKNOWN'}
+          raw = evidence / 'simulators-final.stdout.log'
+          try:
+              with raw.open('wb') as output, (evidence / 'simulators-final.stderr.log').open('wb') as error:
+                  status['returnCode'] = subprocess.run(command, stdout=output, stderr=error, timeout=30).returncode
+              if status['returnCode'] != 0:
+                  raise ValueError(f"Inventory command exited {status['returnCode']}")
+              inventory = json.loads(raw.read_text())
+              if not isinstance(inventory, dict) or not isinstance(inventory.get('devices'), dict):
+                  raise ValueError('Missing device-state inventory')
+              if not all(isinstance(group, list) and all(isinstance(device, dict)
+                         and all(isinstance(device.get(key), str) and device[key] for key in ('udid', 'state'))
+                         for device in group) for group in inventory['devices'].values()):
+                  raise ValueError('Invalid device-state inventory')
+              (evidence / 'simulators-final.json').write_text(json.dumps(inventory, indent=2))
+              status['stateEvidence'] = 'AVAILABLE'
+          except subprocess.TimeoutExpired as failure:
+              status['timedOut'] = True
+              status['error'] = str(failure)
+          except (OSError, ValueError) as failure:
+              status['error'] = str(failure)
+          (evidence / 'simulators-final-status.json').write_text(json.dumps(status, indent=2))
+          print(json.dumps(status, indent=2), flush=True)
+          PY
 
       - name: Retain successful and failed evidence
         if: always()

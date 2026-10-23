@@ -1,3 +1,7 @@
+# 23 October2026 — post-test diagnostics
+
+Move optional inventory after mandatory suites; retain bounded30-second failure/UNKNOWN evidence without blocking test execution. Strict boot, suites and final gate unchanged. [Verification](testing/261023_CI_Platform_Isolation_v1.0.md).
+
 # 23 October2026 — independent platform CI
 
 Isolate full phone/Watch checks after pure Core; build before selected boot and require all jobs through final foundation. Preserve every suite/deadline and prior CI failure. [Verification](testing/261023_CI_Platform_Isolation_v1.0.md).

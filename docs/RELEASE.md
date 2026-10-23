@@ -1,4 +1,4 @@
-Current platform-isolation correction and retained service-timeout failure are documented in [verification](testing/261023_CI_Platform_Isolation_v1.0.md). Exact-head CI/final review and separate installations remain pending. Earlier checkpoints below are historical.
+Current bounded post-test diagnostics and retained phone inventory failure are documented in [verification](testing/261023_CI_Platform_Isolation_v1.0.md). New exact-head CI/final review and separate installations remain pending. Earlier checkpoints below are historical.
 
 Current CI-only execution mitigation and retained cancellation evidence are documented in [verification](testing/261023_CI_Worker_Diagnostics_v1.0.md). Exact-head CI, final review and device gates remain pending their actual outcomes.
 
@@ -6,7 +6,7 @@ Current UI-driver-only correction and measured CI budget are documented in [veri
 
 # Development installation and release gates
 
-The three software findings on the original published `7d5dc2a` candidate are addressed by the [bounded privacy corrections](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md). The current 115-input portable manifest SHA256 is `277c757c84a9d4164659a7c08af3d793f50af9a8e781bcf42c234f293600781f`. Live exact-commit CI, independent review and separate installation observations belong in [PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and its linked evidence; a locally passing suite does not establish those later gates. This keeps observations attached to the tested source without changing it merely to record subsequent device outcomes.
+The three software findings on the original published `7d5dc2a` candidate are addressed by the [bounded privacy corrections](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md). The current 115-input portable manifest SHA256 is `ee7cea314f88624d4e59a87f99730af26b6b39d790696f4e6d8d0ea81fc49f1b`. Live exact-commit CI, independent review and separate installation observations belong in [PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and its linked evidence; a locally passing suite does not establish those later gates. This keeps observations attached to the tested source without changing it merely to record subsequent device outcomes.
 
 This is a development candidate for owner forehand/backhand recording, not a TestFlight or App Store release. The bundle identifiers and companion relationship remain unchanged; display name is Padel Master.
 

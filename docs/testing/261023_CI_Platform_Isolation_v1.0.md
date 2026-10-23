@@ -1,5 +1,17 @@
 # CI platform isolation
 
+## Current checkpoint — post-test diagnostics
+
+CI39878224843 at `6fd968c60944deffdc8c494c50f487a1cca15f82` passed Core388tests/29suites in361.050seconds and both platforms' Release/Debug test builds. Watch boot passed and its full suite was still running at this documentation cutoff. Phone runtime/preboot checks and bootstatus passed (85seconds); the only phone-step failure was a subsequent global diagnostic inventory timing out after30seconds. Its phone suite was therefore skipped. Final optional inventory also timed out. Retained `CI6-Phone-artifacts/selected-simulator-boot.log` and job log preserve this failed outcome; neither boot failure nor corrupt assets is established.
+
+A separately ratified observability-only amendment removes the inventory query between successful bootstatus and required tests. All strict preboot checks, boot commands and full suites remain mandatory. Final inventory runs only after suites, is bounded to30seconds and retains raw stdout/stderr plus structured status. Timeout, nonzero exit or invalid JSON records UNKNOWN and never produces accepted state evidence. Successful valid inventory may record actual companion states; no one-VM claim follows from booting one selected device.
+
+Astra changed only32+/3− workflow lines. Independent source review found no blocker. YAML/19Bash/5Python bodies pass syntax checks; four exact-script diagnostic fixtures (success/timeout/invalid JSON/nonzero exit) pass. Parent verification confirms Core, all test/build/runtime-guard steps, matrix and final gate are unchanged. Earlier16aggregate/five monitor/four runtime fixtures remain applicable to unchanged code. These fixtures do not execute actual app suites.
+
+Current115-input Source9 manifest SHA256 `ee7cea314f88624d4e59a87f99730af26b6b39d790696f4e6d8d0ea81fc49f1b`. Source9 differs from Source8 only in workflow diagnostics; app/Core/test/build-setting/signed-product inputs retain identity. New exact-head full CI and final review remain required. The ongoing prior Watch job is preserved, not cancelled or treated as passing before completion. Live outcomes attach to PR#3 without altering tested HEAD.
+
+---
+
 23 October 2026. Branch `feature/guided-padel-setup`; amendment base `bd9ba51999c3cad5b4708bd702b9f06bec6bbd69`. CI orchestration only; app/Core/test/build-setting/signed-product inputs are unchanged.
 
 ## Preserved failure

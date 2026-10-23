@@ -1,10 +1,10 @@
-# Current checkpoint — independent platform CI
+# Current checkpoint — post-test CI diagnostics
 
-23 October2026. Branch `feature/guided-padel-setup`, amendment base `bd9ba51999c3cad5b4708bd702b9f06bec6bbd69`. CI39875729703 passed Core but global simulator-service operations timed out after phone boot, before Watch boot. Earlier runtime paths existed; cause remains unknown. [Failure and correction](docs/testing/261023_CI_Platform_Isolation_v1.0.md).
+23 October2026. Branch `feature/guided-padel-setup`, amendment base `6fd968c60944deffdc8c494c50f487a1cca15f82`. CI39878224843 passed Core and both platforms' builds. Phone boot succeeded; an added diagnostic inventory timed out and prevented phone tests. Watch suite remained running at documentation cutoff. [Failure and correction](docs/testing/261023_CI_Platform_Isolation_v1.0.md).
 
-Reviewed CI-only split uses pure Core then independent PHONE/WATCH workers, builds before selected boot and no global scan after boot. All suites/deadlines remain required; final foundation requires all jobs. Local syntax, four runtime fixtures,16 aggregate cases and five monitor cases pass. Source8 manifest SHA256 `277c757c84a9d4164659a7c08af3d793f50af9a8e781bcf42c234f293600781f`; only workflow differs Source7. App/test/signing evidence retains input identity.
+Reviewed workflow-only amendment runs diagnostics after mandatory suites, bounded30seconds, preserving raw output and UNKNOWN on failure. All preboot/boot/test/Core/matrix/final gates are unchanged. YAML/19Bash/5Python and four controlled diagnostic cases pass. Source9 manifest SHA256 `ee7cea314f88624d4e59a87f99730af26b6b39d790696f4e6d8d0ea81fc49f1b`; only workflow differs Source8. App/test/signed-product evidence retains input identity.
 
-One next action: publish and complete exact-head CI/final review, then install and verify iPhone and Watch separately. No install/physical pass or merge/release claimed. PR#3 records later exact-commit outcomes; earlier checkpoints are historical.
+One next action: complete new exact-head CI/final review, then install and verify iPhone and Watch separately. No installation/physical pass or merge/release claimed. PR#3 carries live exact-commit outcomes; earlier checkpoints below are historical.
 
 ---
 # Current checkpoint — mounted runtime validation

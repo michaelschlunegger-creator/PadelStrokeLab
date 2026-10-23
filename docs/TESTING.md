@@ -1,10 +1,10 @@
-# Current checkpoint — independent platform CI
+# Current checkpoint — post-test CI diagnostics
 
-23 October2026. Branch `feature/guided-padel-setup`, amendment base `bd9ba51999c3cad5b4708bd702b9f06bec6bbd69`. CI39875729703 passed Core but simulator-service operations timed out before Watch boot. A reviewed CI-only correction separates PHONE/WATCH workers, builds before first boot and requires all suites through the final foundation gate. [Failure, mitigation and verification](testing/261023_CI_Platform_Isolation_v1.0.md).
+23 October2026. Branch `feature/guided-padel-setup`, amendment base `6fd968c60944deffdc8c494c50f487a1cca15f82`. CI39878224843 passed Core and both platforms' builds. Phone boot succeeded; an added diagnostic inventory timed out and prevented phone tests. Watch suite remained running at documentation cutoff. [Failure and correction](testing/261023_CI_Platform_Isolation_v1.0.md).
 
-Local syntax, four runtime fixtures,16 aggregate cases and five monitor cases pass. Source8 manifest SHA256 `277c757c84a9d4164659a7c08af3d793f50af9a8e781bcf42c234f293600781f`; only workflow differs Source7, retaining app/test/signed-product input identity. Exact-head CI/final review and both installations remain pending. No installation or physical pass is claimed.
+Reviewed workflow-only amendment runs diagnostics after mandatory suites, bounded30seconds, preserving raw output and UNKNOWN on failure. All preboot/boot/test/Core/matrix/final gates are unchanged. YAML/19Bash/5Python and four controlled diagnostic cases pass. Source9 manifest SHA256 `ee7cea314f88624d4e59a87f99730af26b6b39d790696f4e6d8d0ea81fc49f1b`; only workflow differs Source8. App/test/signed-product evidence retains input identity.
 
-One next action: complete exact-head CI/review, then install and verify phone and Watch separately. PR#3 carries later exact-commit outcomes; earlier checkpoints below are historical.
+One next action: complete new exact-head CI/final review, then install and verify iPhone and Watch separately. No installation/physical pass or merge/release claimed. PR#3 carries live exact-commit outcomes; earlier checkpoints below are historical.
 
 ---
 # Current checkpoint — mounted runtime validation
