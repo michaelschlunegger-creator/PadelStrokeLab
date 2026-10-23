@@ -5,13 +5,17 @@ import PadelDesign
 struct PracticeSetupView: View {
     @Environment(\.colorScheme) private var scheme
     @Bindable var model: PracticeSetupModel
+    // Self-reports guide this screen only. They never acknowledge the Watch's physical checks.
+    @State private var racketHand: PlayingArm?
+    @State private var wornWrist: PlayingArm?
+    @State private var retainedUsualHand: PlayingArm?
+    @State private var suggestionsLoaded = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: PracticeTheme.Space.large) {
                 VStack(alignment: .leading, spacing: 12) {
-                    PracticeEyebrow("Your practice")
-                    Text("Review on iPhone.\nStart on Watch.")
+                    Text("Prepare your Watch")
                         .font(.largeTitle.bold()).fixedSize(horizontal: false, vertical: true)
                     Text("Manually choose one shot type for each short set. Watch must be on your playing arm.")
                         .foregroundStyle(PracticeTheme.secondaryInk(scheme))
@@ -40,7 +44,21 @@ struct PracticeSetupView: View {
         .tint(PracticeTheme.accent(scheme))
         .navigationTitle("Set up practice")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await model.load() }
+        .onAppear {
+            resetAnswers()
+            loadSuggestionsIfAvailable()
+        }
+        .onDisappear { resetAnswers() }
+        .task {
+            await model.load()
+            if !Task.isCancelled { loadSuggestionsIfAvailable() }
+        }
+        .onChange(of: model.stored) { _, _ in loadSuggestionsIfAvailable() }
+        .onChange(of: model.choices.currentRacketArm) { _, arm in
+            if let racketHand, racketHand != arm {
+                self.racketHand = nil; wornWrist = nil
+            }
+        }
     }
 
     private var consent: some View {
@@ -72,22 +90,44 @@ struct PracticeSetupView: View {
         VStack(alignment: .leading, spacing: 18) {
             Text("Your next set").font(.title3.bold()).accessibilityAddTraits(.isHeader)
             VStack(alignment: .leading, spacing: 8) {
-                Text("Racket arm for this practice").font(.headline).fixedSize(horizontal: false, vertical: true)
+                Text("Which hand holds your racket?").font(.headline).fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("setupRacketArmLabel")
-                Picker("Racket arm for this practice", selection: Binding(
-                    get: { model.choices.currentRacketArm }, set: { update(arm: $0) })) {
-                        Text("Left").tag(PlayingArm.left); Text("Right").tag(PlayingArm.right)
+                Picker("Which hand holds your racket?", selection: Binding(
+                    get: { racketHand }, set: { selectRacketHand($0) })) {
+                        Text("Choose").tag(PlayingArm?.none)
+                        Text("Left").tag(PlayingArm?.some(.left))
+                        Text("Right").tag(PlayingArm?.some(.right))
                     }.pickerStyle(.menu)
                     .accessibilityIdentifier("setupRacketArm")
             }
             VStack(alignment: .leading, spacing: 8) {
-                Text("Usual playing hand").font(.headline).fixedSize(horizontal: false, vertical: true)
-                    .accessibilityIdentifier("setupUsualHandLabel")
-                Picker("Usual playing hand", selection: Binding(
-                    get: { model.choices.usualHand }, set: { update(hand: $0) })) {
-                        Text("Left").tag(PlayingArm.left); Text("Right").tag(PlayingArm.right)
+                Text("Which wrist is your Watch on now?").font(.headline).fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("setupCurrentWristLabel")
+                Picker("Which wrist is your Watch on now?", selection: $wornWrist) {
+                        Text("Choose").tag(PlayingArm?.none)
+                        Text("Left").tag(PlayingArm?.some(.left))
+                        Text("Right").tag(PlayingArm?.some(.right))
                     }.pickerStyle(.menu)
-                    .accessibilityIdentifier("setupUsualHand")
+                    .disabled(racketHand == nil)
+                    .accessibilityIdentifier("setupCurrentWrist")
+                Text("Tell us where you are wearing it, even if its Watch settings say something different.")
+                    .font(.footnote).foregroundStyle(PracticeTheme.secondaryInk(scheme))
+            }
+            if let racketHand, let wornWrist {
+                watchGuidance(arm: racketHand, wrist: wornWrist)
+            }
+            if model.choices.usualHand != model.choices.currentRacketArm {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Saved usual playing hand").font(.headline).fixedSize(horizontal: false, vertical: true)
+                    Text("Your saved usual hand differs from this set's racket hand. Keep it if that is intentional, or correct it here. Changing the racket hand does not overwrite this saved detail.")
+                        .font(.footnote).foregroundStyle(PracticeTheme.secondaryInk(scheme))
+                    Picker("Saved usual playing hand", selection: Binding(
+                        get: { model.choices.usualHand },
+                        set: { retainedUsualHand = $0; update(hand: $0) })) {
+                            Text("Left").tag(PlayingArm.left); Text("Right").tag(PlayingArm.right)
+                        }.pickerStyle(.menu)
+                        .accessibilityIdentifier("setupSavedUsualHand")
+                }
             }
             ForEach([RecordingDrill.forehandGroundstroke, .backhandGroundstroke]) { drill in
                 Button { update(drill: drill) } label: {
@@ -105,6 +145,26 @@ struct PracticeSetupView: View {
                 .font(.footnote).foregroundStyle(PracticeTheme.secondaryInk(scheme))
         }
         .practiceCard()
+        .disabled(!suggestionsLoaded)
+    }
+
+    private func watchGuidance(arm: PlayingArm, wrist: PlayingArm) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(arm == wrist
+                 ? "Your Watch is already on your \(arm.rawValue) racket arm."
+                 : "Move your Watch to your \(arm.rawValue) wrist.")
+                .font(.headline).fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("watchPlacementGuidance")
+            Text("On iPhone, open the Watch app → My Watch → General → Watch Orientation. Choose \(arm.rawValue.capitalized) Wrist and the Digital Crown side that matches how you are wearing your Watch. These settings describe its configuration; they do not confirm where it is physically worn.")
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("phoneWatchOrientationGuidance")
+            Text("Adjust the band for a snug, comfortable fit so the Watch stays in place on your racket arm.")
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("phoneWatchFitGuidance")
+            Text("For every set, confirm placement, wrist and crown settings, and fit on your Watch. Then choose Start set there.")
+                .font(.footnote).foregroundStyle(PracticeTheme.secondaryInk(scheme))
+        }
+        .accessibilityElement(children: .contain)
     }
 
     private var progress: some View {
@@ -126,10 +186,13 @@ struct PracticeSetupView: View {
 
     private var actions: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Button { Task { await model.reviewAndPrepare() } } label: {
+            Button {
+                guard answersComplete else { return }
+                Task { await model.reviewAndPrepare() }
+            } label: {
                 Text(model.busy ? "Preparing…" : "Review choices and prepare").frame(maxWidth: .infinity)
             }
-            .buttonStyle(PracticeActionStyle()).disabled(!model.canPrepare)
+            .buttonStyle(PracticeActionStyle()).disabled(!model.canPrepare || !answersComplete)
             .accessibilityIdentifier("reviewAndPrepare")
             Button("Check Watch / retry pending request") { Task { await model.retryPending() } }
                 .accessibilityIdentifier("retryPracticeSetup")
@@ -148,6 +211,36 @@ struct PracticeSetupView: View {
             Text("End finishes this practice. Withdrawal also blocks collection. A disconnected Watch may continue until it receives the request; use its local stop control when needed.")
                 .font(.footnote).foregroundStyle(PracticeTheme.secondaryInk(scheme))
         }
+    }
+
+    private var answersComplete: Bool {
+        suggestionsLoaded && racketHand != nil && wornWrist != nil
+            && racketHand == model.choices.currentRacketArm
+    }
+
+    private func resetAnswers() {
+        racketHand = nil; wornWrist = nil
+        retainedUsualHand = nil; suggestionsLoaded = false
+    }
+
+    private func loadSuggestionsIfAvailable() {
+        guard !suggestionsLoaded, let saved = model.stored else { return }
+        // The loaded choices also include explicit edits whose async save may still be finishing.
+        // Do not restore an older persisted hand over those edits when the screen reopens.
+        retainedUsualHand = saved.preferences != nil || saved.latestDraft != nil ? model.choices.usualHand : nil
+        suggestionsLoaded = true
+    }
+
+    private func selectRacketHand(_ arm: PlayingArm?) {
+        guard suggestionsLoaded else { return }
+        if racketHand != arm { wornWrist = nil }
+        racketHand = arm
+        guard let arm else { return }
+        // Only a genuinely unsaved first choice initializes both metadata values.
+        // Existing preferences or draft handedness remain distinct until explicitly corrected.
+        let usual = retainedUsualHand ?? arm
+        retainedUsualHand = usual
+        update(arm: arm, hand: usual)
     }
 
     private func update(arm: PlayingArm? = nil, hand: PlayingArm? = nil, drill: RecordingDrill? = nil) {

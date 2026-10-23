@@ -4,6 +4,85 @@ import UIKit
 final class OwnerPracticeSetupUITests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
 
+    @MainActor func testEveryHandAndWristPairRequiresExplicitAnswersAndMirrorsGuidance() {
+        let app = openSetup()
+        let scroll = app.scrollViews["practiceSetupScreen"]
+        XCTAssertFalse(app.staticTexts["watchPlacementGuidance"].exists)
+        for identifier in ["ownerAttestation", "motionStudyConsent"] {
+            let toggle = app.switches[identifier]
+            let native = toggle.descendants(matching: .switch).firstMatch
+            XCTAssertTrue(native.waitForExistence(timeout: 5))
+            XCTAssertTrue(centerInteractiveControl(native, in: scroll, app: app))
+            native.tap()
+            XCTAssertEqual(toggle.value as? String, "1")
+        }
+        let prepare = app.buttons["reviewAndPrepare"]
+        reveal(prepare, in: scroll)
+        XCTAssertFalse(prepare.isEnabled, "Consent alone cannot complete unanswered local setup.")
+        for arm in ["Right", "Left"] {
+            choose("setupRacketArm", value: arm, app: app, scroll: scroll)
+            XCTAssertFalse(app.staticTexts["watchPlacementGuidance"].exists)
+            assertNativeChoice(app.buttons["setupCurrentWrist"], title: "Which wrist is your Watch on now?", choice: "Choose")
+            reveal(prepare, in: scroll)
+            XCTAssertFalse(prepare.isEnabled, "Changing the racket hand must invalidate the wrist answer.")
+            for wrist in ["Left", "Right"] {
+                choose("setupCurrentWrist", value: wrist, app: app, scroll: scroll)
+                let guidance = app.staticTexts["watchPlacementGuidance"]
+                reveal(guidance, in: scroll)
+                XCTAssertEqual(guidance.label, arm == wrist
+                    ? "Your Watch is already on your \(arm.lowercased()) racket arm."
+                    : "Move your Watch to your \(arm.lowercased()) wrist.")
+                let orientation = app.staticTexts["phoneWatchOrientationGuidance"]
+                reveal(orientation, in: scroll)
+                XCTAssertTrue(orientation.label.contains("Watch app"))
+                XCTAssertTrue(orientation.label.contains("\(arm) Wrist"))
+                XCTAssertTrue(orientation.label.contains("Digital Crown"))
+                let fit = app.staticTexts["phoneWatchFitGuidance"]
+                reveal(fit, in: scroll); XCTAssertTrue(fit.label.contains("snug"))
+                reveal(prepare, in: scroll)
+                XCTAssertTrue(prepare.isEnabled, "Both explicit answers complete only the local UI guidance.")
+            }
+        }
+    }
+
+    @MainActor func testReenteringSetupRequiresBothAnswersAgainAndKeepsNewLeftHand() {
+        let app = openSetup()
+        let scroll = app.scrollViews["practiceSetupScreen"]
+        choose("setupRacketArm", value: "Left", app: app, scroll: scroll)
+        choose("setupCurrentWrist", value: "Right", app: app, scroll: scroll)
+        XCTAssertFalse(app.buttons["setupSavedUsualHand"].exists)
+        reopenSetup(app)
+        assertUnanswered(app)
+        choose("setupRacketArm", value: "Left", app: app, scroll: scroll)
+        XCTAssertFalse(app.buttons["setupSavedUsualHand"].exists, "New left-handed setup must not inherit the old right-hand default.")
+        XCTAssertFalse(app.staticTexts["watchPlacementGuidance"].exists)
+    }
+
+    @MainActor func testSavedMismatchesArePreservedUntilExplicitlyCorrected() {
+        for arm in ["Left", "Right"] {
+            let usual = arm == "Left" ? "Right" : "Left"
+            // Exercise both durable preference and draft-only loading paths.
+            let app = openSetup(savedArm: arm, savedDraft: arm == "Right")
+            let scroll = app.scrollViews["practiceSetupScreen"]
+            assertUnanswered(app)
+            choose("setupRacketArm", value: arm, app: app, scroll: scroll)
+            let saved = app.buttons["setupSavedUsualHand"]
+            reveal(saved, in: scroll)
+            assertNativeChoice(saved, title: "Saved usual playing hand", choice: usual)
+            choose("setupCurrentWrist", value: usual, app: app, scroll: scroll)
+            reopenSetup(app)
+            assertUnanswered(app)
+            choose("setupRacketArm", value: arm, app: app, scroll: scroll)
+            reveal(saved, in: scroll)
+            assertNativeChoice(saved, title: "Saved usual playing hand", choice: usual)
+            choose("setupSavedUsualHand", value: arm, app: app, scroll: scroll)
+            reopenSetup(app)
+            choose("setupRacketArm", value: arm, app: app, scroll: scroll)
+            XCTAssertFalse(saved.exists, "Only the explicit correction may resolve the saved mismatch.")
+            app.terminate()
+        }
+    }
+
     @MainActor func testOwnerConsentIsExplicitAndOnlyManualForehandBackhandAreOffered() {
         let app = openSetup()
         let scroll = app.scrollViews["practiceSetupScreen"]
@@ -48,7 +127,7 @@ final class OwnerPracticeSetupUITests: XCTestCase {
             let enabled = native.isEnabled
             if !enabled { captureOfflineConsentState("\(identifier)-native-disabled", app: app) }
             XCTAssertTrue(enabled, "The native consent switch must be enabled before revealing it.")
-            guard centerOfflineConsent(native, in: scroll, app: app) else {
+            guard centerInteractiveControl(native, in: scroll, app: app) else {
                 captureOfflineConsentState("\(identifier)-not-centered", app: app)
                 XCTFail("The native consent switch must be centered before the diagnostic tap.")
                 return
@@ -87,8 +166,8 @@ final class OwnerPracticeSetupUITests: XCTestCase {
         capture("SYNTHETIC-owner-setup-offline", app: app)
     }
 
-    @MainActor private func centerOfflineConsent(_ native: XCUIElement, in scroll: XCUIElement,
-                                                app: XCUIApplication) -> Bool {
+    @MainActor private func centerInteractiveControl(_ native: XCUIElement, in scroll: XCUIElement,
+                                                    app: XCUIApplication) -> Bool {
         for _ in 0..<24 {
             let visible = usableViewport(in: scroll, app: app)
             guard visible.width > 0, visible.height > 0, native.exists else { return false }
@@ -132,17 +211,18 @@ final class OwnerPracticeSetupUITests: XCTestCase {
         hierarchy.name = name + "-consent-accessibility"; hierarchy.lifetime = .keepAlways; add(hierarchy)
     }
 
-    @MainActor func testLargestTextPortraitSetupControlsAndReturnHome() {
-        checkLargeText(orientation: .portrait)
+    @MainActor func testLargestTextPortraitSetupControlsAndReturnHome() throws {
+        try checkLargeText(orientation: .portrait)
     }
 
-    @MainActor func testLargestTextLandscapeSetupControlsAndReturnHome() {
-        checkLargeText(orientation: .landscapeLeft)
+    @MainActor func testLargestTextLandscapeSetupControlsAndReturnHome() throws {
+        try checkLargeText(orientation: .landscapeLeft)
     }
 
-    @MainActor private func checkLargeText(orientation: UIDeviceOrientation) {
+    @MainActor private func checkLargeText(orientation: UIDeviceOrientation) throws {
         defer { XCUIDevice.shared.orientation = .portrait }
         let app = openSetup(largeText: true, orientation: orientation)
+        try app.performAccessibilityAudit(for: [.contrast, .sufficientElementDescription, .hitRegion, .textClipped, .trait])
         let scroll = app.scrollViews["practiceSetupScreen"]
         checkLabeledChoices(app, in: scroll, orientation: orientation)
         for identifier in ["ownerAttestation", "motionStudyConsent", "optionalHeartRateConsent"] {
@@ -153,16 +233,23 @@ final class OwnerPracticeSetupUITests: XCTestCase {
             let button = app.buttons[identifier]
             reveal(button, in: scroll); XCTAssertTrue(button.exists)
         }
+        for identifier in ["watchPlacementGuidance", "phoneWatchOrientationGuidance", "phoneWatchFitGuidance"] {
+            let text = app.staticTexts[identifier]
+            reveal(text, in: scroll); assertHorizontallyContained(text, in: scroll, app: app)
+        }
         capture("SYNTHETIC-owner-setup-largest-text-\(orientation.rawValue)", app: app, orientation: orientation)
         app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(app.scrollViews["homeScreen"].waitForExistence(timeout: 5))
     }
 
-    @MainActor private func openSetup(largeText: Bool = false, orientation: UIDeviceOrientation = .portrait) -> XCUIApplication {
+    @MainActor private func openSetup(largeText: Bool = false, orientation: UIDeviceOrientation = .portrait,
+                                    savedArm: String? = nil, savedDraft: Bool = false) -> XCUIApplication {
         XCUIDevice.shared.orientation = orientation
         let app = XCUIApplication()
         // The DEBUG wizard fixture owns its temporary directory and disables real connectivity.
         app.launchArguments = ["--owner-setup-fixture=offline"]
+        if let savedArm { app.launchArguments += ["--owner-setup-saved-mismatch=\(savedArm.lowercased())"] }
+        if savedDraft { app.launchArguments += ["--owner-setup-saved-draft"] }
         if largeText {
             app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         }
@@ -195,8 +282,8 @@ final class OwnerPracticeSetupUITests: XCTestCase {
 
     @MainActor private func checkLabeledChoices(_ app: XCUIApplication, in scroll: XCUIElement,
                                                orientation: UIDeviceOrientation = .portrait) {
-        for (identifier, title) in [("setupRacketArm", "Racket arm for this practice"),
-                                    ("setupUsualHand", "Usual playing hand")] {
+        for (identifier, title) in [("setupRacketArm", "Which hand holds your racket?"),
+                                    ("setupCurrentWrist", "Which wrist is your Watch on now?")] {
             let label = app.staticTexts[identifier + "Label"]
             guard label.waitForExistence(timeout: 5) else {
                 capture("SYNTHETIC-owner-setup-missing-\(identifier)-label", app: app, orientation: orientation)
@@ -208,7 +295,7 @@ final class OwnerPracticeSetupUITests: XCTestCase {
             let menu = app.buttons[identifier]
             XCTAssertTrue(menu.waitForExistence(timeout: 5))
             reveal(menu, in: scroll)
-            assertNativeChoice(menu, title: title, choice: "Right")
+            assertNativeChoice(menu, title: title, choice: "Choose")
             assertHorizontallyContained(menu, in: scroll, app: app)
             for choice in ["Left", "Right"] {
                 menu.tap()
@@ -225,6 +312,67 @@ final class OwnerPracticeSetupUITests: XCTestCase {
             }
             capture("SYNTHETIC-owner-setup-\(identifier)-\(orientation.rawValue)", app: app, orientation: orientation)
         }
+    }
+
+    @MainActor private func choose(_ identifier: String, value: String, app: XCUIApplication, scroll: XCUIElement) {
+        let menu = app.buttons[identifier]
+        guard menu.waitForExistence(timeout: 5) else {
+            captureChoiceFailure("\(identifier)-missing", app: app)
+            XCTFail("Required choice menu \(identifier) is missing."); return
+        }
+        guard menu.isEnabled else {
+            captureChoiceFailure("\(identifier)-disabled", app: app)
+            XCTFail("Required choice menu \(identifier) must be enabled before selecting \(value)."); return
+        }
+        guard centerInteractiveControl(menu, in: scroll, app: app) else {
+            captureChoiceFailure("\(identifier)-not-centered", app: app)
+            XCTFail("Required choice menu \(identifier) must be fully visible and centered before selecting \(value)."); return
+        }
+        guard menu.isHittable else {
+            captureChoiceFailure("\(identifier)-not-hittable", app: app)
+            XCTFail("Required choice menu \(identifier) must be hittable before selecting \(value)."); return
+        }
+        menu.tap()
+        let option = app.buttons[value].firstMatch
+        guard option.waitForExistence(timeout: 5) else {
+            captureChoiceFailure("\(identifier)-missing-option-\(value)", app: app)
+            XCTFail("Native option \(value) did not appear for \(identifier) after one tap."); return
+        }
+        guard option.isEnabled, option.isHittable else {
+            captureChoiceFailure("\(identifier)-unavailable-option-\(value)", app: app)
+            XCTFail("Native option \(value) must be enabled and hittable for \(identifier)."); return
+        }
+        option.tap()
+    }
+
+    @MainActor private func captureChoiceFailure(_ reason: String, app: XCUIApplication) {
+        let name = "SYNTHETIC-owner-setup-choice-\(reason)"
+        capture(name, app: app)
+        let status = app.staticTexts["setupStatus"], error = app.staticTexts["setupError"]
+        let details = "status=\(status.exists ? status.label : "absent")\nerror=\(error.exists ? error.label : "absent")\n\n\(app.debugDescription)"
+        let hierarchy = XCTAttachment(string: details)
+        hierarchy.name = name + "-accessibility"; hierarchy.lifetime = .keepAlways; add(hierarchy)
+    }
+
+    @MainActor private func assertUnanswered(_ app: XCUIApplication) {
+        let scroll = app.scrollViews["practiceSetupScreen"]
+        for (identifier, title) in [("setupRacketArm", "Which hand holds your racket?"),
+                                    ("setupCurrentWrist", "Which wrist is your Watch on now?")] {
+            let menu = app.buttons[identifier]
+            reveal(menu, in: scroll); assertNativeChoice(menu, title: title, choice: "Choose")
+        }
+        XCTAssertFalse(app.staticTexts["watchPlacementGuidance"].exists)
+        let prepare = app.buttons["reviewAndPrepare"]
+        reveal(prepare, in: scroll); XCTAssertFalse(prepare.isEnabled)
+    }
+
+    @MainActor private func reopenSetup(_ app: XCUIApplication) {
+        app.navigationBars.buttons.firstMatch.tap()
+        let home = app.scrollViews["homeScreen"]
+        XCTAssertTrue(home.waitForExistence(timeout: 5))
+        let setup = app.buttons["practiceSetupLink"]
+        reveal(setup, in: home); setup.tap()
+        XCTAssertTrue(app.scrollViews["practiceSetupScreen"].waitForExistence(timeout: 5))
     }
 
     @MainActor private func assertNativeChoice(_ menu: XCUIElement, title: String, choice: String) {
@@ -249,14 +397,23 @@ final class OwnerPracticeSetupUITests: XCTestCase {
             let visible = usableViewport(in: scroll, app: app)
             guard visible.width > 0, visible.height > 0 else { XCTFail("No unobscured scroll viewport."); return }
             let frame = element.exists ? element.frame : nil
+            let oversizedText = frame.map { $0.height > visible.height && element.elementType == .staticText } ?? false
             if let frame, element.isHittable {
-                let contained = frame.height <= visible.height ? visible.contains(frame)
-                    : frame.minX >= visible.minX && frame.maxX <= visible.maxX
-                        && visible.contains(CGPoint(x: frame.midX, y: frame.midY))
+                // Long instructions can span several landscape viewports. A readable part
+                // must cross the viewport's center; interactive controls must fit completely.
+                let contained = oversizedText
+                    ? frame.minX >= visible.minX && frame.maxX <= visible.maxX
+                        && frame.intersection(visible).contains(CGPoint(x: frame.midX, y: visible.midY))
+                    : visible.contains(frame)
                 if contained { return }
             }
             let limit = visible.height * 0.55
-            let distance = frame.map { max(-limit, min(limit, visible.midY - $0.midY)) } ?? -limit
+            let distance = frame.map { frame in
+                let targetY = oversizedText
+                    ? max(frame.minY + visible.height / 2, min(visible.midY, frame.maxY - visible.height / 2))
+                    : frame.midY
+                return max(-limit, min(limit, visible.midY - targetY))
+            } ?? -limit
             let startY = visible.minY + visible.height * (distance < 0 ? 0.8 : 0.2)
             let start = scroll.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(
                 dx: visible.midX - scroll.frame.minX, dy: startY - scroll.frame.minY))
@@ -283,7 +440,8 @@ final class OwnerPracticeSetupUITests: XCTestCase {
         for (index, window) in app.windows.allElementsBoundByIndex.enumerated() { geometry.append("window[\(index)]=\(window.frame)") }
         for (index, bar) in app.navigationBars.allElementsBoundByIndex.enumerated() { geometry.append("navigationBar[\(index)]=\(bar.frame)") }
         if scroll.exists { geometry.append("usableViewport=\(usableViewport(in: scroll, app: app))") }
-        for identifier in ["setupRacketArmLabel", "setupUsualHandLabel", "setupRacketArm", "setupUsualHand",
+        for identifier in ["setupRacketArmLabel", "setupCurrentWristLabel", "setupRacketArm", "setupCurrentWrist",
+                           "setupSavedUsualHand", "watchPlacementGuidance", "phoneWatchOrientationGuidance", "phoneWatchFitGuidance",
                            "setupForehand", "setupBackhand", "reviewAndPrepare", "setupStatus"] {
             let element = app.descendants(matching: .any)[identifier].firstMatch
             if element.exists {

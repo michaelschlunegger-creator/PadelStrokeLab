@@ -500,8 +500,23 @@ final class RecordingLibraryModel {
                 supplied = fixture; shouldConnect = false
                 isSyntheticUIReview = true; transferMessage = "SYNTHETIC UI REVIEW"
             } else if supplied == nil, ProcessInfo.processInfo.arguments.contains("--owner-setup-fixture=offline") {
-                supplied = try RecordingPaths(base: FileManager.default.temporaryDirectory
+                let fixture = try RecordingPaths(base: FileManager.default.temporaryDirectory
                     .appendingPathComponent("OwnerSetupUI-" + UUID().uuidString, isDirectory: true))
+                supplied = fixture
+                let arguments = ProcessInfo.processInfo.arguments
+                if let arm = PlayingArm.allCases.first(where: { arguments.contains("--owner-setup-saved-mismatch=\($0.rawValue)") }) {
+                    let bootstrap = try OwnerPhoneBootstrap(base: fixture.rawRoot.deletingLastPathComponent().deletingLastPathComponent())
+                    let preferences = PracticeSetupPreferences(currentRacketArm: arm,
+                        usualHand: arm == .left ? .right : .left, intendedDrill: .forehandGroundstroke)
+                    try bootstrap.withStores { store, _ in
+                        if arguments.contains("--owner-setup-saved-draft") {
+                            try store.saveSuggestion(.init(originInstallationEpoch: store.checkedSnapshot().localInstallationEpoch,
+                                preparationID: UUID(), revision: 1, preferences: preferences))
+                        } else {
+                            try store.savePreferences(preferences)
+                        }
+                    }
+                }
                 shouldConnect = false; isSyntheticUIReview = true; transferMessage = "SYNTHETIC UI REVIEW"
             } else if supplied == nil, let fixture = try RecordingMotionUIFixture.make(arguments: ProcessInfo.processInfo.arguments) {
                 supplied = fixture; shouldConnect = false

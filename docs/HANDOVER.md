@@ -1,3 +1,32 @@
+# Current handover context — clearer phone-led Watch setup
+
+23 October 2026. On `feature/guided-padel-setup`, the owner explicitly approved a
+focused UX correction after the live walkthrough. The ordinary phone questions
+are racket hand and current physical Watch wrist, with no assumed answers; the
+phone then guides any move, system wrist/crown settings and snug fit. The in-app
+guide matches. Saved unusual handedness is preserved until explicitly corrected.
+Watch fresh checks/local Start, recording, Health, transport and data formats remain
+unchanged. See the [contract](design/261023_Playing_Arm_Setup_Correction_v1.0.md) and
+[verification record](testing/261023_Playing_Arm_Setup_UI_Verification_v1.0.md).
+
+The prior baseline `9fbb37673bebaf607f5f4862ec1909f5124f1fdd` passed all four CI gates,
+and its physical phone and Watch build 7 installations/launches are recorded on
+[PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3). This patch
+is first demonstrated in the phone simulator. Those installations do not prove
+this patch or physical motion, Health, background or transfer behavior. Commit/CI/
+independent-review updates belong on the same PR. No merge or release performed.
+
+Local gates now pass: Source E five affected methods, zero failures/skips; affected
+Release/test builds; source identity/diff checks. The two Source D native
+largest-text checks remain valid for unchanged production and native-test paths,
+as independently traced; see the reuse limits in the verification record. The
+phone simulator is on the corrected source and its home screen shows Let's Play.
+Next: publish and complete exact-commit CI/review on PR #3, resume the manual
+simulator walkthrough, then undertake separately gated physical replacement/dry
+run. Earlier checkpoints below are historical.
+
+---
+
 # Current checkpoint — corrected build7 candidate
 
 23 October2026. Branch `feature/guided-padel-setup`, amendment base `e43eb7fb25dc2bcdafca7ab5ca060d3926a96d64`. CI39880508648 failed two Watch terminal-state tests and one phone independent-reader test; all27 phone UI executions passed. The proven clock-boundary production defect and separately verified fixture race are corrected and source-reviewed. [Deadline correction](testing/261023_Practice_Deadline_Correction_v1.0.md); [phone fixture](testing/261023_Phone_Review_Fixture_Isolation_v1.0.md).

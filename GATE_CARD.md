@@ -1,3 +1,31 @@
+# Current checkpoint — owner-approved playing-arm UX correction
+
+23 October 2026. Branch `feature/guided-padel-setup`, baseline
+`9fbb37673bebaf607f5f4862ec1909f5124f1fdd`. The owner's simulator walkthrough found
+the phone's racket-arm/usual-hand questions confusing. He explicitly approved an
+immediate phone-led correction: ask racket hand and current Watch wrist, then guide
+any physical move plus wrist/crown/fit settings. No answer is assumed from the
+common right-racket/left-Watch case. The [ratified bounded contract](docs/design/261023_Playing_Arm_Setup_Correction_v1.0.md)
+controls tests-first UI work; Watch admission and capture semantics remain protected.
+
+Baseline exact-head CI/review and separate build-7 phone/Watch installation/launch
+are recorded on PR #3. They do not validate this new patch or physical capture.
+No new physical recording pass, merge or release is claimed. The revised simulator
+shows the new flow. Source D's two largest-text native checks pass; its remaining
+regressions passed four of five methods, with one missing menu after a near-header
+tap. Source E corrects test positioning only, retaining every scenario and audit.
+The affected Release and test builds pass; all five affected Source E checks pass
+with zero failures/skips in one invocation. All production and native-audit inputs
+remain Source D. The two Source D native checks retain scoped validity by
+independent call-graph review; they are not relabelled as a final-test-hash run. See the
+[retained evidence and reuse limits](docs/testing/261023_Playing_Arm_Setup_UI_Verification_v1.0.md).
+One next action: publish and independently review the exact commit with new CI
+before accepting the patch. PR #3 records the resulting commit and CI/review state.
+
+Earlier checkpoints remain historical.
+
+---
+
 # Current checkpoint — corrected build7 candidate
 
 23 October2026. Branch `feature/guided-padel-setup`, amendment base `e43eb7fb25dc2bcdafca7ab5ca060d3926a96d64`. CI39880508648 failed two Watch terminal-state tests and one phone independent-reader test; all27 phone UI executions passed. The proven clock-boundary production defect and separately verified fixture race are corrected and source-reviewed. [Deadline correction](docs/testing/261023_Practice_Deadline_Correction_v1.0.md); [phone fixture](docs/testing/261023_Phone_Review_Fixture_Isolation_v1.0.md).

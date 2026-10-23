@@ -8,7 +8,8 @@ The app is an iPhone-first padel companion with an Apple Watch worn on the racke
 
 ## Current workflow
 
-1. On iPhone, choose **Let's Play**, review owner participation and saved preferences, optionally allow owner heart-rate collection, and select manual forehand or backhand and racket arm. Prepare a new practice on the paired Watch.
+
+1. On iPhone, choose **Let's Play**, review owner/motion consent and optional heart rate, then explicitly answer **Which hand holds your racket?** and **Which wrist is your Watch on now?** Follow the conditional move-to-racket-wrist, system wrist/crown and fit guidance. Select manual forehand or backhand and prepare on the paired Watch. Neither side is an assumed confirmation; saved unusual handedness remains explicitly correctable.
 2. On Watch, begin the practice, then complete the brief placement/orientation/fit check before each set. Start recording explicitly on Watch. Confirm the actual watchOS wrist/crown settings and wear Watch on the playing arm.
 3. Record real wrist accelerometer and device-motion streams. Pause/resume within a set, stop and wait for durable saving. Each set permits up to 120 active seconds; a practice permits up to 20 sets within 30 minutes.
 4. Transfer retained data to iPhone using verified receipts. Review wrist-signal charts, coverage, interruptions, optional heart rate and observed recovery. Missing or excluded readings remain unavailable.

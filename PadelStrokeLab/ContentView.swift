@@ -193,7 +193,7 @@ private struct PracticeGuideView: View {
                               detail: "Confirm that you own the Watch and agree to this motion study. Heart rate is optional. Review saved choices explicitly whenever you reopen the app.")
                     Divider()
                     guideStep("02", title: "Choose forehand or backhand",
-                              detail: "Record one intended shot type per short set, up to 120 active seconds. Choose the racket arm and usual hand on iPhone. Changes during recording apply to the next set.",
+                              detail: "Record one intended shot type per short set, up to 120 active seconds. On iPhone, confirm which hand holds your racket and which wrist your Watch is on now. Follow the instructions for moving your Watch and checking its wrist and crown settings. Changes during recording apply to the next set.",
                               identifier: "trainingSetGuidance")
                     Divider()
                     guideStep("03", title: "Wear Watch on your racket arm",

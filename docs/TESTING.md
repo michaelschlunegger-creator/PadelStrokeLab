@@ -1,3 +1,25 @@
+# Current checkpoint — playing-arm setup UX correction
+
+23 October 2026. The owner approved replacing the duplicate ordinary hand questions
+with explicit racket hand/currently worn Watch wrist and conditional phone-led move,
+orientation and fit guidance. [Contract](design/261023_Playing_Arm_Setup_Correction_v1.0.md)
+and [retained verification](testing/261023_Playing_Arm_Setup_UI_Verification_v1.0.md)
+record source identities, all failures, corrections and coverage limits. Three phone
+production files and one focused UI test file change; Watch/Core/model/capture/Health/
+transport/project/workflow inputs remain unchanged. Current checks and exact-commit
+review/publication status are recorded on [PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3).
+Local checks pass: Source E five affected UI methods, zero failures/skips in one
+invocation, affected Release/test builds and all 115 current input checksums.
+The two Source D largest-text native checks retain scoped validity because the
+production/native-test paths are unchanged; the independent call-graph review
+and evidence limits are explicit in the verification record. Exact-commit full CI
+and review remain separate. No new physical sensor or court validation is
+established by this UI correction.
+
+Earlier checkpoints below are historical.
+
+---
+
 # Current checkpoint — corrected build7 candidate
 
 23 October2026. Branch `feature/guided-padel-setup`, amendment base `e43eb7fb25dc2bcdafca7ab5ca060d3926a96d64`. CI39880508648 failed two Watch terminal-state tests and one phone independent-reader test; all27 phone UI executions passed. The proven clock-boundary production defect and separately verified fixture race are corrected and source-reviewed. [Deadline correction](testing/261023_Practice_Deadline_Correction_v1.0.md); [phone fixture](testing/261023_Phone_Review_Fixture_Isolation_v1.0.md).

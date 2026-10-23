@@ -1,6 +1,19 @@
 # Product authority
 
-Updated 21 October 2026.
+Updated 23 October 2026.
+
+## Latest owner amendment — clear racket-hand and current-Watch-wrist setup, 23 October 2026
+
+During the simulator walkthrough the owner identified the ordinary racket-arm and
+usual-playing-hand questions as confusing and explicitly approved changing them
+immediately. First establish the racket hand and the wrist currently wearing the
+Watch, then guide any physical move to the racket arm and the wrist/crown/fit
+configuration. Right racket / left Watch is a common example, not a confirmed
+default. Keep the detailed guidance on iPhone and retain the brief fresh Watch
+checks and explicit local Start. Preserve saved unusual handedness accurately.
+The [bounded UX correction contract](design/261023_Playing_Arm_Setup_Correction_v1.0.md)
+defines the director-ratified scope, invariants and tests. This does not authorize
+changed capture/admission/Health/transport semantics or imply physical validation.
 
 ## Latest owner authorization — publish code/documentation and install, 22 October 2026
 

@@ -1,3 +1,15 @@
+# 23 October 2026 — clearer racket-hand and Watch-wrist setup
+
+Replace the ordinary duplicate hand questions with explicit racket hand and current
+Watch wrist. Show conditional move-to-racket-arm guidance and phone-led wrist/crown/
+fit instructions; keep fresh Watch checks and local Start. Preserve saved unusual
+handedness with an explicit correction control and initialize new left-handed
+preferences correctly. Align the in-app guide, isolate saved-setting test fixtures
+through the real bootstrap, and add focused left/right, re-entry and accessibility
+regressions. [Scope](design/261023_Playing_Arm_Setup_Correction_v1.0.md) and
+[evidence](testing/261023_Playing_Arm_Setup_UI_Verification_v1.0.md). This is a local
+UX increment, not a new physical sensor-validation or release claim.
+
 # 23 October2026 — corrected practice deadline and build7
 
 Use the canonical30-minute endpoint consistently; add strict adjacent-boundary/durable-finalization regressions. Isolate one phone test reader without changing production observers or locks. Core390, phone app-host74/125, both Release and signing checks pass. Full exact-head CI/device gates remain. [Evidence](testing/261023_Practice_Deadline_Correction_v1.0.md).
