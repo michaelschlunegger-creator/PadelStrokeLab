@@ -2,6 +2,15 @@
 
 Updated 23 October 2026.
 
+## Latest owner amendment — show only relevant setup instructions, 23 October 2026
+
+The owner directs a logical, simple player flow: after the two explicit answers,
+show only a brief placement confirmation when the Watch is already on the racket
+wrist. Show detailed move/configuration/fit guidance only for different sides.
+Do not repeat those instructions in the matching branch. Keep fresh Watch checks
+and local Start unchanged; reported placement is not physical verification.
+See the [bounded v1.1 amendment](design/261023_Playing_Arm_Setup_Simplification_v1.1.md).
+
 ## Latest owner amendment — clear racket-hand and current-Watch-wrist setup, 23 October 2026
 
 During the simulator walkthrough the owner identified the ordinary racket-arm and

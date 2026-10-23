@@ -1,4 +1,26 @@
-# Current handover context — clearer phone-led Watch setup
+# Current handover context — relevant setup guidance only
+
+23 October 2026. On `feature/guided-padel-setup`, amendment baseline
+`e38f84fa8aa8e65426b1e52317c2a40ea13c4c20`. The owner requests a logical, brief
+customer flow: matching racket hand/current wrist shows only its confirmation;
+different sides retain existing instructions. Two code files change; Watch checks
+and capture/admission semantics are unchanged. The phone simulator has been
+updated; physical devices retain the earlier baseline build. See the
+[v1.1 contract](design/261023_Playing_Arm_Setup_Simplification_v1.1.md) and
+[current verification](testing/261023_Relevant_Setup_UI_Verification_v1.0.md).
+Affected Debug and three focused UI methods pass with zero failures/skips; all
+115 input hashes verify. Largest-text portrait/landscape both ran again. The
+preceding-head Watch CI failed UI-runner launch on a missing CoreSimulator host
+service; it remains retained failed evidence, not a cleared gate. Affected Release
+also passes, signing disabled. Next: publish exact source and complete review/CI
+on PR #3; record the resulting commit there without changing its tested source.
+No physical replacement, merge or release is part of this increment.
+
+Earlier checkpoints remain historical.
+
+---
+
+# Previous handover context — clearer phone-led Watch setup
 
 23 October 2026. On `feature/guided-padel-setup`, the owner explicitly approved a
 focused UX correction after the live walkthrough. The ordinary phone questions

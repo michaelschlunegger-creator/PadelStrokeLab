@@ -33,12 +33,21 @@ final class OwnerPracticeSetupUITests: XCTestCase {
                     ? "Your Watch is already on your \(arm.lowercased()) racket arm."
                     : "Move your Watch to your \(arm.lowercased()) wrist.")
                 let orientation = app.staticTexts["phoneWatchOrientationGuidance"]
-                reveal(orientation, in: scroll)
-                XCTAssertTrue(orientation.label.contains("Watch app"))
-                XCTAssertTrue(orientation.label.contains("\(arm) Wrist"))
-                XCTAssertTrue(orientation.label.contains("Digital Crown"))
                 let fit = app.staticTexts["phoneWatchFitGuidance"]
-                reveal(fit, in: scroll); XCTAssertTrue(fit.label.contains("snug"))
+                let perSet = app.staticTexts["For every set, confirm placement, wrist and crown settings, and fit on your Watch. Then choose Start set there."]
+                if arm == wrist {
+                    XCTAssertFalse(orientation.exists)
+                    XCTAssertFalse(fit.exists)
+                    XCTAssertFalse(perSet.exists)
+                } else {
+                    reveal(orientation, in: scroll)
+                    XCTAssertTrue(orientation.label.contains("Watch app"))
+                    XCTAssertTrue(orientation.label.contains("\(arm) Wrist"))
+                    XCTAssertTrue(orientation.label.contains("Digital Crown"))
+                    reveal(fit, in: scroll); XCTAssertTrue(fit.label.contains("snug"))
+                    reveal(perSet, in: scroll); XCTAssertTrue(perSet.exists)
+                }
+                XCTAssertTrue(app.staticTexts["localWatchStartNotice"].exists)
                 reveal(prepare, in: scroll)
                 XCTAssertTrue(prepare.isEnabled, "Both explicit answers complete only the local UI guidance.")
             }
@@ -225,6 +234,8 @@ final class OwnerPracticeSetupUITests: XCTestCase {
         try app.performAccessibilityAudit(for: [.contrast, .sufficientElementDescription, .hitRegion, .textClipped, .trait])
         let scroll = app.scrollViews["practiceSetupScreen"]
         checkLabeledChoices(app, in: scroll, orientation: orientation)
+        // The choice checks end on Right/Right. Keep detailed guidance coverage at largest text.
+        choose("setupCurrentWrist", value: "Left", app: app, scroll: scroll)
         for identifier in ["ownerAttestation", "motionStudyConsent", "optionalHeartRateConsent"] {
             let toggle = app.switches[identifier]
             reveal(toggle, in: scroll); XCTAssertTrue(toggle.isHittable)

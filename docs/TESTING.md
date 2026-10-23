@@ -1,4 +1,21 @@
-# Current checkpoint — playing-arm setup UX correction
+# Current checkpoint — conditional setup guidance
+
+23 October 2026. The new matching-wrist simplification changes the phone view and
+existing focused UI tests only. Three affected methods cover all four side
+combinations plus largest-text portrait/landscape. Earlier native runs are
+historical; changed navigation paths require new evidence. See the
+[current test/evidence record](testing/261023_Relevant_Setup_UI_Verification_v1.0.md).
+The phone simulator is updated; no new physical-device evidence is established.
+Affected Debug build and all three focused UI methods pass with zero
+failures/skips in one invocation; the full native portrait/landscape checks ran
+again. All 115 input hashes verify. Exact-commit review/full CI remain separate;
+the previous commit's Watch UI-runner host-service failure remains failed evidence.
+The affected Release build also passes, signing disabled; no physical installation
+is implied.
+
+---
+
+# Previous checkpoint — playing-arm setup UX correction
 
 23 October 2026. The owner approved replacing the duplicate ordinary hand questions
 with explicit racket hand/currently worn Watch wrist and conditional phone-led move,

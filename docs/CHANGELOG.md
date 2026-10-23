@@ -1,3 +1,12 @@
+# 23 October 2026 — show setup instructions only when relevant
+
+When the reported Watch wrist matches the racket hand, show the short confirmation
+only. Keep detailed move/orientation/fit guidance for different sides and preserve
+all fresh Watch checks/local Start. The existing regression covers both branches
+for both hands; largest-text detail checks deliberately exercise a move case.
+[Contract](design/261023_Playing_Arm_Setup_Simplification_v1.1.md) and
+[verification](testing/261023_Relevant_Setup_UI_Verification_v1.0.md).
+
 # 23 October 2026 — clearer racket-hand and Watch-wrist setup
 
 Replace the ordinary duplicate hand questions with explicit racket hand and current

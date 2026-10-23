@@ -155,14 +155,16 @@ struct PracticeSetupView: View {
                  : "Move your Watch to your \(arm.rawValue) wrist.")
                 .font(.headline).fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("watchPlacementGuidance")
-            Text("On iPhone, open the Watch app → My Watch → General → Watch Orientation. Choose \(arm.rawValue.capitalized) Wrist and the Digital Crown side that matches how you are wearing your Watch. These settings describe its configuration; they do not confirm where it is physically worn.")
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("phoneWatchOrientationGuidance")
-            Text("Adjust the band for a snug, comfortable fit so the Watch stays in place on your racket arm.")
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("phoneWatchFitGuidance")
-            Text("For every set, confirm placement, wrist and crown settings, and fit on your Watch. Then choose Start set there.")
-                .font(.footnote).foregroundStyle(PracticeTheme.secondaryInk(scheme))
+            if arm != wrist {
+                Text("On iPhone, open the Watch app → My Watch → General → Watch Orientation. Choose \(arm.rawValue.capitalized) Wrist and the Digital Crown side that matches how you are wearing your Watch. These settings describe its configuration; they do not confirm where it is physically worn.")
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("phoneWatchOrientationGuidance")
+                Text("Adjust the band for a snug, comfortable fit so the Watch stays in place on your racket arm.")
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("phoneWatchFitGuidance")
+                Text("For every set, confirm placement, wrist and crown settings, and fit on your Watch. Then choose Start set there.")
+                    .font(.footnote).foregroundStyle(PracticeTheme.secondaryInk(scheme))
+            }
         }
         .accessibilityElement(children: .contain)
     }

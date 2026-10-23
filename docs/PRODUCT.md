@@ -9,7 +9,7 @@ The app is an iPhone-first padel companion with an Apple Watch worn on the racke
 ## Current workflow
 
 
-1. On iPhone, choose **Let's Play**, review owner/motion consent and optional heart rate, then explicitly answer **Which hand holds your racket?** and **Which wrist is your Watch on now?** Follow the conditional move-to-racket-wrist, system wrist/crown and fit guidance. Select manual forehand or backhand and prepare on the paired Watch. Neither side is an assumed confirmation; saved unusual handedness remains explicitly correctable.
+1. On iPhone, choose **Let's Play**, review owner/motion consent and optional heart rate, then explicitly answer **Which hand holds your racket?** and **Which wrist is your Watch on now?** Matching sides show only a short confirmation; different sides show the move-to-racket-wrist, system wrist/crown and fit guidance. Select manual forehand or backhand and prepare on the paired Watch. Neither side is an assumed confirmation; saved unusual handedness remains explicitly correctable.
 2. On Watch, begin the practice, then complete the brief placement/orientation/fit check before each set. Start recording explicitly on Watch. Confirm the actual watchOS wrist/crown settings and wear Watch on the playing arm.
 3. Record real wrist accelerometer and device-motion streams. Pause/resume within a set, stop and wait for durable saving. Each set permits up to 120 active seconds; a practice permits up to 20 sets within 30 minutes.
 4. Transfer retained data to iPhone using verified receipts. Review wrist-signal charts, coverage, interruptions, optional heart rate and observed recovery. Missing or excluded readings remain unavailable.
@@ -24,6 +24,11 @@ The development gate requires deterministic logic/storage/transport/deletion cov
 The initial experiment uses the experienced owner and repeated separate-session self labels; a paid coach is not mandatory. Guest/watch sharing, 5–10-player TestFlight collection, additional strokes, steps/distance/GPS, generalized classification, grounded Apple Intelligence explanations and social/community/ranking/chat/teaming/booking belong to later reviewed increments. Guest data must never be attributed to the owner's account. Apple Intelligence must explain validated evidence with a deterministic fallback, never manufacture measurements.
 
 Black, turquoise and white are the current presentation direction. iPhone owns detailed setup and statistics; Watch remains the sensor/logger and short-results terminal. No App Store/TestFlight release or merge is authorized by development installation.
+
+Customer-facing setup should be logical and brief: ask distinct necessary
+questions, show the next necessary action, and present detailed instructions only
+when the player's answers make them relevant. Keep essential safeguards concise;
+do not turn routine successful states into additional setup work.
 # Recording privacy corrections — 22 October 2026
 
 The approved first-build scope is unchanged. On Watch, **Delete retained data** confirms complete-practice deletion for verified owner records, including sibling sets, motion, heart-rate telemetry, notes and attributable transfer staging; paired cleanup remains pending until acknowledged. Truly context-free legacy recordings retain copy-only deletion. Damaged or conflicting owner evidence keeps data and reports incomplete deletion rather than guessing its scope.

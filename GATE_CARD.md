@@ -1,4 +1,26 @@
-# Current checkpoint — owner-approved playing-arm UX correction
+# Current checkpoint — relevant setup instructions only
+
+23 October 2026. Branch `feature/guided-padel-setup`, baseline
+`e38f84fa8aa8e65426b1e52317c2a40ea13c4c20`. The owner explicitly requests a short
+confirmation when the reported Watch wrist already matches the racket hand;
+retain detailed guidance only when a move is needed. No Watch check changes.
+The [v1.1 amendment](docs/design/261023_Playing_Arm_Setup_Simplification_v1.1.md)
+defines the two-code-file scope and tests-first four-pairing contract. Exact-head
+CI for the baseline is still running and cannot clear changed production inputs.
+The phone simulator is updated. The affected Debug build and all three focused
+UI methods pass with zero failures/skips, including largest-text portrait and
+landscape. All 115 current input hashes verify; exactly two code/test paths
+change. [Current evidence](docs/testing/261023_Relevant_Setup_UI_Verification_v1.0.md)
+retains the preceding-head Watch CI host-service launch failure; it is not waived.
+The affected Release build also passes, signing disabled. One next action:
+publish source/evidence and obtain exact-commit independent review/full CI before
+gate clearance. PR #3 records the resulting commit and later gate outcomes.
+
+Earlier checkpoints remain historical.
+
+---
+
+# Previous checkpoint — owner-approved playing-arm UX correction
 
 23 October 2026. Branch `feature/guided-padel-setup`, baseline
 `9fbb37673bebaf607f5f4862ec1909f5124f1fdd`. The owner's simulator walkthrough found
