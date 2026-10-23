@@ -1,8 +1,110 @@
 # Product authority
 
-Updated 16 October 2026.
+Updated 23 October 2026.
+
+## Latest owner amendment — show only relevant setup instructions, 23 October 2026
+
+The owner directs a logical, simple player flow: after the two explicit answers,
+show only a brief placement confirmation when the Watch is already on the racket
+wrist. Show detailed move/configuration/fit guidance only for different sides.
+Do not repeat those instructions in the matching branch. Keep fresh Watch checks
+and local Start unchanged; reported placement is not physical verification.
+See the [bounded v1.1 amendment](design/261023_Playing_Arm_Setup_Simplification_v1.1.md).
+
+## Latest owner amendment — clear racket-hand and current-Watch-wrist setup, 23 October 2026
+
+During the simulator walkthrough the owner identified the ordinary racket-arm and
+usual-playing-hand questions as confusing and explicitly approved changing them
+immediately. First establish the racket hand and the wrist currently wearing the
+Watch, then guide any physical move to the racket arm and the wrist/crown/fit
+configuration. Right racket / left Watch is a common example, not a confirmed
+default. Keep the detailed guidance on iPhone and retain the brief fresh Watch
+checks and explicit local Start. Preserve saved unusual handedness accurately.
+The [bounded UX correction contract](design/261023_Playing_Arm_Setup_Correction_v1.0.md)
+defines the director-ratified scope, invariants and tests. This does not authorize
+changed capture/admission/Health/transport semantics or imply physical validation.
+
+## Latest owner authorization — publish code/documentation and install, 22 October 2026
+
+The owner explicitly directs: “make sure you add everything on Github with all the requred documents and documentation”, after repeatedly requesting installation. This authorizes committing/pushing the approved implementation and required documentation on `feature/guided-padel-setup` and opening its stacked draft PR into `feature/watch-recording-storage`. It also authorizes development installation on the owner's phone/Watch after applicable software/device preflight. Keep exact-source CI/review and physical verification distinct. No merge, TestFlight/App Store release, new paid service or public sharing of real readings/device identifiers is authorized. Earlier package-specific publication holds below are historical and superseded for this approved candidate.
+
+## Latest owner amendment — model routing and usage economy
+
+The owner directs: use Astra for foundational/base coding and non-Astra models for all other work, conserving tokens. This supersedes earlier Astra-specific checking, documentation and independent-review assignments. Foundational production/test code remains with Astra; use a separate non-Astra reviewer and ordinary verification tools. Keep the approved product scope, independent review and evidence gates; do not weaken them or silently substitute another coding model when Astra is unavailable.
+
+## Latest owner approval — focused forehand and backhand first build, 21 October 2026
+
+The owner explicitly approved the narrowed four-step recommendation and instructed Codex to implement the first build with **both forehand and backhand**, then reaffirmed “go ahead as we discussed before.” This releases the planning hold for the bounded owner-first implementation: phone-led practice setup, fresh playing-arm/fit confirmation on Watch, real wrist-motion recording, owner heart rate and observed recovery, phone charts, verified transfer/export and complete app-local deletion. Keep both intended-shot choices and separate clean/mishit/uncertain reference labels; compare stroke families and contact labels across separate sessions. Manual intended-shot selection and self labels are not detected shots or validated contact quality. The existing120-active-second set limit remains until a separately reviewed duration increment.
+
+The approved sequence is: (1) implement and locally verify this focused first candidate; (2) verify physical capture, wrist-down/offline/interruption, retained-data/export integrity and battery; (3) owner-led forehand **and** backhand collection with separate-session evaluation; (4) expand to other strokes, steps/distance/optional GPS, matched-mode wife/guest evaluation, grounded AI and TestFlight only after their own gates. This supersedes the earlier “all metrics before shot testing” order. Guest acquisition, cohort consent/retention, additional Health-history channels, location and AI remain outside the first implementation release. Do not reopen the phone-primary role, playing-arm rule, saved preference cadence or black/turquoise/white design.
+
+Implement through an independently challenged [first-build contract](testing/261021_Owner_Forehand_Backhand_First_Build_Contract_v1.0.md), with bounded sequential packages and exact-source review/evidence. The director may ratify routine technical defaults within approved scope; architectural deferral of unused guest/enrollment machinery must be explicit and independently reviewed, preserving immutable owner provenance, raw compatibility and no guest admission. Use Astra Extra High for foundational architecture, implementation and separate review. This approval does not authorize new accounts, paid services, Health/GPS data sharing, Git publication/merge/release or unverified readiness claims. Publication and physical replacement remain subject to the repository's concrete gates.
+
+## Previous owner amendment — sensor planning and current Apple capabilities, 21 October 2026
+
+The owner requests a source-based audit and feasibility/implementation study with **Astra Extra High**, followed by a separate independent Codex review and owner review **before implementation**. The study must assess the latest Apple Watch hardware, iOS/watchOS 27 public APIs and Apple Intelligence, including actual availability, permissions, background constraints, battery cost and truthful measurement limits. This is a planning hold on new participant, setup, sensor, Health, location and AI code; it supersedes the earlier instruction to resume participant A immediately after theme acceptance. Existing approved architecture, participant isolation and package limits remain binding unless an explicit amendment is approved.
+
+Use the owner's last-verified iPhone 15 Pro/Watch Ultra 2 as the first physical baseline, and assess newer hardware through capability checks without assuming a purchase or availability of raw signals from Apple's built-in features. The iPhone remains the main setup/statistics terminal. Apple Intelligence may explain verified results and approved practice goals with a deterministic fallback; it must not generate measurement evidence or become a recording dependency. Watch-local models and network-dependent Private Cloud Compute require distinct API/eligibility checks. No paid service, managed entitlement, account enrollment, collection, publication, installation, merge or release is authorized by this planning request.
+
+The [sensor feasibility study](architecture/261021_Sensor_Feasibility_and_Implementation_Study_v1.0.md) and [independent planning review](reviews/261021_Sensor_Feasibility_Study_Codex_Review_v1.0.md) are the current deliverables for owner review. Their proposed defaults require approval before dependent source changes; planning review is not formal committed-HEAD G6 clearance.
+
+The final study is SHA-256 `3426b30195876cf628d8bcd79cc5728f2cec39a9397fafbe12aeb1fe8e9b7980`; the separate Astra Extra High review is SHA-256 `7f2bb0f9decd92c61d27de27df9dca9707db6725b454ca1c0892ac00dfa127af`, verdict **CLEARED FOR OWNER REVIEW; IMPLEMENTATION REMAINS ON HOLD**. Four planning findings were resolved. These are local, unpublished documentation deliverables. The five proposed choices in study §10 remain unapproved; source changes, collection and publication have not been released by this review.
+
+## Latest owner amendment — black, turquoise and white, 20 October 2026
+
+The owner supplied a visual reference and explicitly requests **black, turquoise and white throughout the app, including all menus and submenus**. This supersedes the earlier blue/yellow/white presentation direction. Apply a black canvas, restrained charcoal surfaces, turquoise interactive/chart accents, white primary text and readable neutral secondary text across iPhone and Watch. Match the reference's dark appearance while retaining native Liquid Glass where appropriate, clear navigation, Dynamic Type, VoiceOver and Reduce Transparency support. Bright turquoise filled controls need contrasting dark labels; warning/destructive meanings must remain understandable through labels and system semantics. This is a presentation amendment, not a change to recording, participant isolation, Health permissions, transport or readiness claims. Preserve historical design/test artifacts as evidence for their original palette.
+
+## Owner amendment — Padel Master name, 20 October 2026
+
+The owner chose **Padel Master**, superseding earlier Padel Trainer/PadelPro discussions. Its unpublished App Store Connect record is verified under the owner's account: app ID **6824907181**, bundle ID `com.michaelschlunegger.PadelStrokeLab`, SKU `PADELTRAINER-001`, primary language English (U.K.), iOS 1.0 **Prepare for Submission**. See [registration evidence](design/261020_Padel_Master_Registration_v1.0.md). Both app display names and visible branding were subsequently changed locally and verified in build6; current theme verification is a separate increment. Preserve technical identifiers, historical specifications and recording-data compatibility. This decision does not authorize an App Store submission, release, merge or physical replacement.
 
 ## Current authority and precedence
+
+### Latest owner amendment — phone-led setup, 20 October 2026
+
+The owner explicitly directed: “the majority of the setup is done on the phone, not on the watch. The watch is too small to run full setups”. This supersedes the earlier six-page Watch-led preparation UX as the final product direction. Detailed choices/instructions belong on iPhone; Watch should retain a short glanceable physical-placement/fit/orientation check and explicit local Start. Existing capture must remain independent of phone connectivity after starting. Preferences or message delivery alone must never start recording or fabricate readiness.
+
+The owner explicitly chose **phone setup once per practice, with brief wrist/fit confirmation and Start on Watch for every subsequent set**. Do not ask the cadence decision again. Remember profile/preferences; use first-time phone onboarding and a quick review of saved choices for later practices. Astra Extra High prepared the [v1.1 architecture/risk/test contract](architecture/261020_Phone_Led_Setup_Plan_v1.1.md), including the independent review's authority-retirement, draft/acceptance separation and asynchronous admission requirements. Separate independent review cleared the architecture and the [director ratification](architecture/261020_Phone_Led_Setup_Ratification_v1.0.md) authorizes ordered bounded local implementation. The owner's later explicit instruction requires **Astra Extra High for foundational coding**, superseding earlier Astra High author assignments for this new foundational work. Earlier presentation coding was Astra High; do not retroactively describe it as Extra High. Existing Watch-led wizard tests are interim baseline evidence, not acceptance of the corrected final UX.
+
+The owner further clarified that **iPhone is the main terminal** for all detailed setup, statistics, history and analysis. Watch remains the sensor/logger, minimal recording controls and brief results. Heart rate, steps and estimated court distance are not already implemented capabilities. The subsequent statistics expansion below requests their planning and integration through separate bounded measurement/permission work.
+
+The finished consumer app should recognise supported shot varieties and estimate validated contact quality automatically during normal play. Users should not configure or teach individual strokes. Current manual intended-shot selection and owner labels belong only to development reference-data collection; no recognition algorithm has yet been trained. The current recording prototype still has a 120-active-second set limit and is not a full-match automatic-analysis app. This clarification preserves the staged validation requirement and does not justify invented accuracy or performance claims.
+
+### Latest owner amendment — useful sport statistics and optional GPS, 20 October 2026
+
+The owner requests a richer iPhone statistics experience: heart rate, steps, metres travelled, pace/speed, start-stop activity, wrist acceleration, GPS coordinates and eventual counts by forehand/backhand/other shot varieties. The owner explicitly accepted **wrist acceleration instead of body acceleration**. Use relevant supported Watch sensors through public APIs; the broad request to use all sensors does not establish that every sensor is accessible, relevant, continuous or reliable for padel.
+
+This expands the earlier initial-prototype exclusions for health metrics and location as a requested product direction. A separate Astra Extra High read-only feasibility/architecture proposal must define API availability, permission choices, retention/sync, battery costs, accuracy/coverage and bounded implementation/test packages before high-risk source changes. The current phone-setup P1 scope remains unchanged. No health/location collection or permissions have been added or observed, and no performance/accuracy target has been approved.
+
+GPS coordinates are private optional session data, with explicit local permission and a useful no-location path. Indoor and small-court accuracy limitations must remain visible. Estimated Watch distance and GPS distance must be distinguished; do not add them together or present wrist motion as body travel. Automatic per-shot counts require a separately validated detector/classifier, with unknown/unclassified results; manual intended-shot metadata is not detected counts. Do not infer ball placement accuracy, ball speed or racket-head speed from these signals. Preserve historical raw recordings and schemas; any new telemetry needs its own versioned compatibility contract. No automatic upload, public route sharing or App Store release is authorized by this expansion.
+
+The owner also requests pulse recovery between sets and available VO₂ max context before personal shot collection. Distinguish observed heart-rate drops at stated elapsed times from return toward an observed pre-set baseline; neither is a medical recovery/normality claim. VO₂ max is a historical Apple Health estimate when available, not a live padel measurement; blood oxygen is a different optional historical measurement. Practice-level workout/recovery ownership, health permissions and missing-data behavior need the new architecture gate; current 120-active-second recordings end their workout and cannot already supply between-set recovery.
+
+### Owner proposal — rule-based recognition and separate-player test, 20 October 2026
+
+The owner proposes collecting his own stroke varieties to develop hard-coded wrist-motion rules, then testing those rules on his wife's shots. Use transparent deterministic event/feature rules as the initial baseline; machine learning is not required merely to classify. The proposal does not establish that varieties are separable or that accuracy is known. Build event detection before stroke classification; represent non-shot movement, unsupported varieties and ambiguous events explicitly rather than forcing a label.
+
+Development data, separate owner sessions and the wife's first unchanged-rule evaluation must remain distinct. Record actual playing arm, Watch wrist/crown, handedness, device and drill; account for coordinate/technique differences. Any later tuning on her examples invalidates their status as untouched evaluation data. Report detection errors and per-class confusion/coverage, not only favourable examples. Before any non-owner data collection, the existing participant consent and retention requirements still apply. No coach or large study is newly required, and no spouse data or permissions have been collected by this amendment.
+
+### Owner amendment — reference-player selector, 20 October 2026
+
+In **development reference-data Training mode only**, the owner requires phone options **Player 1, Player 2 and Player 3**, so another person can wear the owner's Watch and have recordings assigned to that participant. Normal consumer play must not expose this selector or require training individual strokes. Prefer stable local pseudonymous participant identifiers, not real names or a public account.
+
+Before capture, show the selected participant prominently and bind that identity to the exact accepted setup. Freeze it for the recording, owner/reference labels, analysis partition and verified export. Changing player during capture must not reassign existing samples, labels or summaries. Data from separate participants must not silently merge. Player identity and label author/source are different facts. Historical data cannot acquire an invented participant identity. New participant/capture provenance needs an approved versioned contract; P1's frozen source and raw schema are not silently expanded.
+
+A participant selection changes app metadata only; it does not change Apple Watch ownership, the Apple Health account or historical health-record subject. Non-owner use must not attribute the owner's historical Health context to another player or silently write another person's health/workout samples into the owner's Health store. The exact safe shared-Watch capture mode, consent/retention and health-data isolation remain under Astra Extra High architecture review before dependent code or collection. No non-owner recording, health read/write or participant consent has been observed. The selector alone is not proof that shared-Watch Health attribution is safe.
+
+The owner subsequently selected **investigate a separate motion-only guest mode**, explicitly acknowledging that sampling/background limits may differ and normal Watch health tracking can still occur. This rejects silently reusing the workout-based acquisition path for a guest. The app must not start a Health workout or import the owner's Health history in the proposed guest mode; public non-workout acquisition and its actual limitations require a separate bounded contract and physical verification. Do not promise zero operating-system Health collection, equivalent high-rate fidelity or ready guest capture before evidence. This choice authorizes investigation/design, not a proven implementation or non-owner data collection.
+
+The owner explicitly requires **all app readings to stay separate per guest**. Participant-scoped queries, dashboards, labels, exports and derived/model results must show only that subject's recordings. Switching player or renaming/reusing a local slot cannot reassign history or silently mix aggregates. Show only channels actually acquired for that participant; do not fill guest gaps with the account owner's Health history. Missing participant provenance remains unassigned, not automatically attributed to the currently selected player. This app-level separation does not promise control over watchOS's independent passive Health activity.
+
+The owner reinforced: **use his account/profile/Health context only when he is the person training**. Guest mode must not inherit an existing owner workout/recovery observer. A participant or acquisition-mode change ends the old participant's observation/recovery resources and retires preparation authority before the next participant can Start. Late callbacks stay bound to their original immutable context or are excluded; they cannot be assigned from the current UI selection. This is app-level subject policy, not a claim to switch the Watch's Apple account.
+
+### Owner amendment — small TestFlight reference cohort, 20 October 2026
+
+The owner requests a future **5–10-player TestFlight trial for Training/reference-data collection only**. The three local player slots are convenience selectors, not a three-participant cohort limit. Use stable pseudonymous participant and installation/device identities, versioned participant-authored reference labels, explicit consent/retention/export controls and player/session/capability-separated evaluation. TestFlight installation is not consent to research/model use. Prefer each participant's own paired iPhone/Watch for health attribution; shared-Watch safety remains separately unresolved.
+
+The architecture must distinguish reference-collection features from normal consumer play and support traceable collection across separate installations without assuming accounts or cloud upload. Private exports require explicit user action and must preserve provenance; no public repository, Drive upload or sharing of raw health/location data is implied. Current `.ownerSelf` label provenance cannot be falsely reused for volunteer self labels; new provenance/format compatibility needs its own approved contract. This is scope for preparation, not authorization to upload a build, invite testers, submit Beta App Review, collect third-party data or release. Applicable signing/privacy/security/physical/review gates remain required before TestFlight distribution.
 
 The current product authority is **App Specifications, PSL-SPEC-001 v1.1**, approved by the Product Owner on 16 October 2026. The owner subsequently instructed Codex to start implementation from this Scope of Works. The explicit existing **iOS 27 / watchOS 27** platform decision remains binding; D02's OS 26 suggestion in v1.1 was proposed, not an approved downgrade.
 
@@ -26,7 +128,7 @@ The [prior authority record](history/260824_Product_Authority_v1.0.md) and [prio
 
 Xcode 27.0 (27A266a), Swift 6.4 and iOS/watchOS 27 SDKs were verified at `/Applications/Xcode.app`. Every Swift/Xcode command must use `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`, because the global selection remains CommandLineTools. All six app/test targets now require OS 27.0.
 
-The owner confirms an iPhone 15 Pro and Apple Watch Ultra 2 on the latest OS, matching their LeftPhoneAlert devices. Exact physical OS/build, pairing, installation, permissions, orientation, sensor availability/rates and on-court usability have not been measured here. They block relevant physical claims, not bounded simulator foundation work.
+The owner’s iPhone 15 Pro (iOS 27.2) and Apple Watch Ultra 2 (watchOS 27.0.1) were verified for the separately installed version1.0/build4 logger on20October; queried installation/build and launch receipts are recorded in the [installation checkpoint](testing/261020_Build4_Installation_Checkpoint_v1.0.md). The owner confirmed both apps launched. Physical recording, permissions, actual wrist/fit, sensor continuity/rates, transfer/export and on-court usability remain unverified. The guided-setup build5 is a separate package and has not replaced those physical apps.
 
 The active checkout remains `/Users/mschlunegger/Documents/GitHub/PadelStrokeLab`. A verified pre-edit archive exists in the project Drive source-archive folder; this does not establish a Drive-hosted active Xcode working copy. Do not claim relocation/offline configuration is complete.
 
@@ -46,3 +148,10 @@ The owner requests blue, yellow and white, modern professional presentation and 
 After reviewing the proposed [broader first-training plan](architecture/261019_Broader_Training_Readiness_Plan_v1.1.md), the owner explicitly answered: “Yes, full training workflow and shot types”, and reinforced “Use astra for such essential stuff.” This approves expanding the first training logger beyond the original forehand-only drill, using selectable intended padel shot types and the complete setup/record/pause/resume/save/recover/transfer/review/label/export/delete workflow. It is not approval of automatic shot recognition, clean-hit scoring, long-duration match analysis, paid expertise, social features, merge or release.
 
 Use Astra Extra High for the bounded architecture/risk review, Astra High implementation, and a separate independent committed-HEAD review. Preserve the original specification snapshot and old recordings. New collections must carry truthful manual drill/protocol metadata and remain distinguishable from the original forehand protocol. One intended shot type per short controlled set is the initial collection method; other movements remain explicitly unclassified. Actual installation remains conditional on pre-install readiness for real training recordings, followed by observed physical dry-run/transfer/export before court contacts. Short-set capture limits, playing-arm placement, owner self labels and all physical/measurement caveats remain binding.
+
+
+## Owner amendment — mandatory guided preparation, 20 October 2026
+
+The owner approved the six-step Watch setup before every new recording set, including additional sets at the same visit, and explicitly requested a primary **Let’s Play** button with simple buttons/toggles. The Watch must guide current racket arm, actual placement (move if needed), configured wrist/crown, fit, intended shot and fresh final confirmation. Remembered preferences are suggestions; completed preparation never persists. System wrist/crown changes must be rechecked before Start. Actual placement and fit remain self-confirmed, not sensor-detected. Pause/Resume is within the existing set; active recording and recovery must not be reset by preparation.
+
+This authorizes bounded implementation and local verification under the Astra Extra High plan/Astra High author model. Capture/storage/schema/protocol/transport/export behavior and historical data are unchanged. New verification and the existing simulator-review requirement precede physical replacement. Commit/push/new-PR, merge and release permissions are not inferred. See the [current Gate Card](../GATE_CARD.md).

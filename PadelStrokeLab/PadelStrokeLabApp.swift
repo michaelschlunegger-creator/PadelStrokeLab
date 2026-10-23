@@ -14,6 +14,8 @@ struct PadelStrokeLabApp: App {
         WindowGroup {
             ContentView()
                 .environment(recordings)
+                .preferredColorScheme(.dark)
+                .task { await recordings.practiceSetup?.load() }
         }
     }
 }

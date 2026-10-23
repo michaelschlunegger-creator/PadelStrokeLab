@@ -1,0 +1,28 @@
+# Privacy readiness corrections — bounded execution contract
+
+22 October 2026. User authorizes finishing blockers, development installation and GitHub code/documentation. This corrects existing first-build requirements; it does not add features. Exact committed review of `7d5dc2a54f2157631254272131fbace60f6533f1` is BLOCKED for controlled physical collection by three concrete source defects. Preserve its passing tests and failed readiness verdict.
+
+## P1 — Watch retention and visible deletion
+
+Two existing integrity/deletion domains; maximum four production paths and1,200 added-plus-removed readable lines: `PadelStrokeLab Watch App/WatchRecordingServices.swift`, `WatchRecorderModel.swift`, `ContentView.swift`, and only if necessary `Packages/PadelCore/Sources/PadelCore/OwnerPracticeDeletion.swift`. Tests may amend existing Watch practice-transfer/deletion tests and add a focused production-route fixture. Keep validated namespace/locking/owner-attribution protections and raw compatibility. No new permissions, identities, protocols, cloud/Health sharing or lifecycle semantics.
+
+1. Initial complete practice bundles must be staged under a durable attributable namespace before checked publication. Failure, cancellation or process death before publication cannot leave a raw/heart-rate bundle outside complete-practice deletion. Reuse the approved attributable staging/readback contract when compatible. Incomplete or unknown producer debris must remain fail-closed; do not broaden deletion to unrelated UUID files or silently remove unknown data.
+2. The actual Watch retained-recording Delete action must identify owner context and use the existing complete-practice deletion service for owner records. Reserve per-copy legacy deletion for truly context-free legacy data. Confirmation and completion/pending messages must reflect complete-practice scope. Missing/corrupt/conflicting owner evidence must not fall through to destructive legacy deletion.
+
+Tests before production: reproduce both bundle-creation→prepareImport and prepared-bundle→denied-publication boundaries, a complete-but-unpublished bundle surviving failed publication and subsequent Delete, crash/reopen equivalent, correct retention of unrelated/unknown data; invoke the actual recorder deletion entry point and verify owner raw, context, telemetry/HR and receipt/bundle copies are removed or explicitly blocked/pending, including after withdrawal. Verify legacy copy-only behavior and protected originals. Use isolated fixtures and no real sensors/default personal stores. Run meaningful red, minimal implementation, focused/full affected Core/Watch-host checks and shipping Release build/signing preflight. UI scope text/routing must have production-path coverage; existing presentation/a11y assertions stay intact.
+
+## P2 — withdrawal closes phone analysis
+
+Sequential after P1 freeze; one consent/analysis domain. Maximum three phone production paths/600 readable lines: `PadelStrokeLab/RecordingLibraryModel.swift`, a narrow read-only analysis-admission predicate/notification in `PracticeSetupModel.swift` if necessary, and only one necessary existing detail/statistics view. Tests in phone owner-review/setup/deletion suites. Gate owner motion/recovery computation before it occurs and invalidate displayed/in-flight owner results when full consent is withdrawn. Keep records discoverable for deletion, retain immutable raw data until authorized deletion, and preserve legacy behavior as required by the approved contract. Do not make identity matching or delete authorization depend on active collection consent.
+
+Tests before production: visible and in-flight owner selection/statistics are unavailable immediately on local withdrawal intent, including offline/unacknowledged or persistence-failure states; clear existing exportURL/preview; export remains denied; deleting retained owner practice remains available; no reattribution/new consent fabrication; valid renewed consent follows existing policy and a normally consented relaunch remains usable. Do not derive admission from presentation strings or the UI motionConsent flag, which defaults false on reload. Run meaningful red, focused/full phone-host and relevant UI evidence, both affected Release/signature checks. No new generative analysis or sensor feature.
+
+## Execution and closure
+
+Astra High implements foundational corrections under the previously approved architecture; non-Astra independent review challenges plan, tests and exact final source. The reviewer is read-only. Keep packages sequential, source identities and all failed runs; no retries concealing an unchanged failure. Update the115-input manifest and required documents with actual evidence, commit/push to the same draft PR, and refresh exact-head review/CI. CI must explicitly use the documented serialized Core test command (`--no-parallel`); the60-minute aggregate cap budgets the measured39-minute phone suite plus full Watch/Core/build steps and does not alter per-test deadlines.
+
+Installation and physical recording remain held for software blockers. No merge or release is authorized. One next action: independently review this bounded correction contract and write regressions before production edits.
+
+## Director ratification
+
+Separate Sol review cleared P1 and the explicit P2 refinements above. Root ratifies this bounded execution of already approved requirements. Astra High may write P1 regressions now; minimal production follows meaningful red and test inspection. P2 stays sequential behind P1 freeze/review. No new user product decision or permission scope is introduced.

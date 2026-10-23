@@ -1,4 +1,104 @@
+# 23 October 2026 — show setup instructions only when relevant
+
+When the reported Watch wrist matches the racket hand, show the short confirmation
+only. Keep detailed move/orientation/fit guidance for different sides and preserve
+all fresh Watch checks/local Start. The existing regression covers both branches
+for both hands; largest-text detail checks deliberately exercise a move case.
+[Contract](design/261023_Playing_Arm_Setup_Simplification_v1.1.md) and
+[verification](testing/261023_Relevant_Setup_UI_Verification_v1.0.md).
+
+# 23 October 2026 — clearer racket-hand and Watch-wrist setup
+
+Replace the ordinary duplicate hand questions with explicit racket hand and current
+Watch wrist. Show conditional move-to-racket-arm guidance and phone-led wrist/crown/
+fit instructions; keep fresh Watch checks and local Start. Preserve saved unusual
+handedness with an explicit correction control and initialize new left-handed
+preferences correctly. Align the in-app guide, isolate saved-setting test fixtures
+through the real bootstrap, and add focused left/right, re-entry and accessibility
+regressions. [Scope](design/261023_Playing_Arm_Setup_Correction_v1.0.md) and
+[evidence](testing/261023_Playing_Arm_Setup_UI_Verification_v1.0.md). This is a local
+UX increment, not a new physical sensor-validation or release claim.
+
+# 23 October2026 — corrected practice deadline and build7
+
+Use the canonical30-minute endpoint consistently; add strict adjacent-boundary/durable-finalization regressions. Isolate one phone test reader without changing production observers or locks. Core390, phone app-host74/125, both Release and signing checks pass. Full exact-head CI/device gates remain. [Evidence](testing/261023_Practice_Deadline_Correction_v1.0.md).
+
+# 23 October2026 — post-test diagnostics
+
+Move optional inventory after mandatory suites; retain bounded30-second failure/UNKNOWN evidence without blocking test execution. Strict boot, suites and final gate unchanged. [Verification](testing/261023_CI_Platform_Isolation_v1.0.md).
+
+# 23 October2026 — independent platform CI
+
+Isolate full phone/Watch checks after pure Core; build before selected boot and require all jobs through final foundation. Preserve every suite/deadline and prior CI failure. [Verification](testing/261023_CI_Platform_Isolation_v1.0.md).
+
+# 23 October2026 — mounted runtime validation
+
+Validate freshOS27 runtime paths/identity before Core, after Core and before first Watch boot; preserve all app/test sources and gates. Four controlled guard cases pass. CI runtime-resolution failure remains retained evidence. [Verification](testing/261023_CI_Runtime_Validation_v1.0.md).
+
+# 23 October2026 — CI execution diagnostics
+
+Run unchanged shared-code tests before simulator creation; retain bounded resource diagnostics and a baseline before Core. Preserve all deadlines/assertions/coverage. Both unresponsive-worker attempts remain cancelled evidence with unknown cause. [Verification](testing/261023_CI_Worker_Diagnostics_v1.0.md).
+
+# 23 October2026 — largest-text scroll driver
+
+Test-only feedback compensates measured pan activation loss; full visibility,40attempts and assertions are preserved. All seven affected Motion UI methods pass across two scoped runs, zero failures/skips. Aggregate CI cap120 minutes budgets measured mandatory work, retaining all individual deadlines. See [evidence](testing/261023_UI_Scroll_Driver_Correction_v1.0.md).
+
+# 22 October 2026 — owner forehand/backhand candidate
+
+Implements phone-led owner preparation, fresh Watch checks, durable wrist streams, optional owner heart rate/recovery, verified whole-practice transfer/readback/deletion and phone charts/manual-label/export workflows. Consolidates product, architecture, release and test documentation. Corrects accessible results presentation and test navigation; retains all failed evidence. Physical behavior remains to be verified. See [final evidence](testing/261022_Owner_First_Final_Local_Verification_v1.0.md).
+
+---
+# Current changes — 22 October 2026, local candidate
+
+- O7 live-practice/HR and O8a portable bundle/receipt foundations accepted locally.
+- O8b adds durable complete-practice transfer, exact receipts/revision handling, source retention, native-file ownership, current authority publication gates, Watch retry and phone complete nested review/export.
+- Immutable owner snapshots honestly reject legacy label/single-copy deletion controls pending the proper owner-practice controls.
+- [O8b evidence](testing/261022_Owner_First_O8b_Local_Verification_v1.0.md) records exact source, passing full regression/app-host/Release checks and retained failures. O9 deletion/O10 results/O11 integration remain. No Git publication or physical installation.
+
+---
+
 # Changelog
+
+## 22 October 2026 — local O5 correction and O6 foundation
+
+- Correct retired-receipt generation/revision handling with actual codec/store/capture regressions; preserve native/writer shutdown gates.
+- Add owner-scoped telemetry values, checked exclusive storage and recovery calculations with canonical limits/conflicts, immutable clocks/consent segments and explicit missing/invalid results. Native HR integration is still pending.
+- Correct known-boundary pending results, interrupted backwards-clock finalization and staged-file substitution. [O6 verification](testing/261022_Owner_First_O6_Local_Verification_v1.0.md) records exact source, passing613fullCore executions, app-host/Release results and retained failures.
+- Require explicit serialized SwiftTesting scheduling for full Core runs; no timeout/assertion weakening. No new physical install, Git publication or readiness claim.
+
+## 21 October 2026 — O4q local blocker corrections
+
+- Reject aliases between local End request identity and exact-practice retirement commands/verified records before mutation; preserve healthy state on rejection. Added direct/replacement/reverse-order/persisted-state regressions.
+- Correct separately measured receipt/cancellation test scheduling fixtures with explicit workers and an explicit-release assertion; retain original timeouts, production paths and ordering/no-resurrection/drain checks.
+- Verify Core267/20, phone app-host29/4, preserved default data and both OS27 Release builds. Seal [v1.1 source/evidence](testing/261021_Owner_First_O4q_Local_Evidence_v1.1.md) and [independent local clearance](reviews/261021_Owner_First_O4q_Review_v1.1.md); preserve failed/historical evidence.
+- Local working-tree acceptance only. No publication, physical replacement or readiness claim; remaining app integration precedes physical shot testing.
+
+## 21 October 2026 — O4q lifecycle implementation, blocked checkpoint
+
+- Add a bounded phone lifecycle record in the existing setup journal, with120 changed production lines and451 test lines. Other80 accepted source inputs remain exact; [source82](testing/261021_Owner_First_O4q_Source_v1.0.sha256) is frozen.
+- Focused47/2 reports PASS; full core04 FAILED260/20 with1 unresolved receipt-wait timeout in an existing import/delete test. Independent non-Astra review found an End/wire UUID alias path that still needs an Astra fix; this change is not accepted or integrated into the app. [Evidence](testing/261021_Owner_First_O4q_Local_Evidence_v1.0.md) preserves failures and open gates.
+- Follow the owner's new routing: Astra for foundational coding only, non-Astra for verification/docs/review. Astra's worker reached its usage limit; no silent fallback for foundational changes, publication or physical installation occurred.
+
+## 21 October 2026 — local owner-first bootstrap checkpoint
+
+- Add checked phone bootstrap ownership and initialization witness (181 production lines), preserving all 80 predecessor inputs; app adoption follows a separate package.
+- Accept exact-source app-host checks and both Release builds after independent Astra Extra High review. Retain the original functional pass/failed isolation guard and the authorized isolated29-test pass as distinct evidence. See [O4a evidence](testing/261021_Owner_First_O4a_Local_Evidence_v1.0.md).
+- Continue the approved full build at the owner's request. Phone lifecycle design, Watch/HR/whole-practice delivery and integrated verification remain open; no publication or physical readiness follows from this checkpoint.
+
+## 21 October 2026 — local black/turquoise/white theme
+
+- Apply the dark shared palette to implemented iPhone/Watch views and native presentation; retain appropriate Liquid Glass and opaque accessibility fallbacks.
+- Correct field/error contrast and readable confirmation presentation while preserving guarded model deletion; improve the note editor's largest-text layout without changing saved-data behavior.
+- Verify local Release/targeted tests, actual ordinary/MAX/keyboard/landscape controls and restored settings/data with independent review. Preserve failed builds, visual checks and the zero-test selector run in [Theme A evidence](testing/261020_Black_Turquoise_White_A_Local_Evidence_v1.0.md).
+- Regenerate matching icons with15 palette-only source lines and four identical opaque1024sRGB outputs. Both Release builds and actual native launcher presentations pass; preserve the initial stale Watch icon and single-restart recovery in [Icon B evidence](testing/261021_Black_Turquoise_White_Icon_B_Local_Evidence_v1.0.md). No Git publication, physical replacement, validated shot recognition or new Health/GPS/guest feature is claimed.
+
+## 20 October 2026 — guided padel setup, locally verified and unpublished
+
+- Both complete platform UI suites, production-path model/core checks, Release builds and signed build 5/signatures pass locally. The reviewed CI filter supports the stacked PR base; all runtime bytes remain unchanged. Publication, committed-HEAD CI/review and physical evidence remain open.
+
+- Record successful CI/source review and separate physical installation/version/launch verification for baseline logger build 4; preserve all remaining physical-behavior limits.
+- Owner approved a mandatory **Let’s Play** wizard before each new recording set, covering racket arm, actual placement, wrist/crown settings, fit, intended shot and fresh final confirmation. Astra High implementation follows an Astra Extra High plan.
+- New source verification is pending. No merge, release or validated hit-quality claim.
 
 ## 19 October2026 — complete-training expansion, verification in progress
 
@@ -67,3 +167,11 @@ Added a bounded physical-test runbook and GitHub foundation verification workflo
 - Added synchronous single-caller storage with exclusive immutable chunks, checked synchronization, atomic/read-back manifests, retained-coverage finalization and non-destructive bounded recovery.
 - Added real filesystem/fault/recovery/process-interruption tests; retained initial test harness failures and their root-cause corrections in the evidence.
 - No app UI, live sensor, workout, permissions, connectivity, scoring or AI changes. Code is local/uncommitted; no publication, physical install, merge or release.
+# 22 October 2026 — development build 6 privacy corrections
+
+- Attribute initial Watch transfer staging before publication; complete-practice cleanup covers unpublished checked bundles.
+- Route the actual Watch retained-data deletion action through owner-wide cleanup, keep legacy copy deletion and fail closed for uncertain owner evidence.
+- Immediately remove owner analysis/export availability after full consent withdrawal while retaining metadata and whole-practice deletion, including after relaunch. Preserve legacy review synchronization.
+- Add production-entry regressions and preserve every failed run. Serialize Core CI tests explicitly as already required by the test policy.
+
+See the [verification record](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md) for exact evidence and remaining gates. No merge or distribution release is authorized.

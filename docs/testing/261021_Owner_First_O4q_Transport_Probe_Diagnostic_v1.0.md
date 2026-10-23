@@ -1,0 +1,9 @@
+# Transport cancellation probe diagnostic
+
+21 October 2026. Corrected full run04 passed both original blocker cases, but failed267/20 on one different assertion: `concurrentCancellationWaitsUntilSynchronousCommitFinishes`, negative100ms cancellation probe. Preserve that failure; do not retry unchanged.
+
+Read-only Sol review found a five-second commit-gate fallback with ignored outcome, a global-queue cancellation worker and a probe timeout scheduled by global asyncAfter. Production commit holds its lock across the closure and cancellation acquires that same lock; no bypass was identified. The test elapsed5.279s, but absent phase evidence the failure is not yet classified as harmless or attributed conclusively.
+
+Root releases one test-only diagnostic to Astra: existing `Packages/PadelCore/Tests/PadelCoreTests/OwnerPreparationTransportTests.swift`, ≤120 added diagnostic lines. Keep all corrected C inputs frozen except this file. Instrument only the failing test and an optional nil-default trace callback in the existing TransportValues wait helper. Record commit enter/wait outcome/exit, cancel submit/start/return, probe registration/planned timeout, actual asyncAfter firing, probe return and main explicit release. The timer callback must remain observable even if it fires after test scope completes. Use thread-safe monotonic synthetic traces; retain all original waits, assertions, production calls, ordering and cleanup. No production edit, timeout increase, assertion weakening or queue change is authorized by this diagnostic.
+
+Root runs one otherwise identical full suite and Sol independently interprets the trace. Then release the minimum cause-based correction as a separate step. No new app adoption, Git publication, device installation or readiness claim follows. All failures remain retained.

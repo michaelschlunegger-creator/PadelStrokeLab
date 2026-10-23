@@ -9,16 +9,41 @@ struct RecordingDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var labelEditor: LabelEditorSelection?
     @State private var showDelete = false
+    @State private var showExport = false
+    @State private var deletingPracticeID: UUID?
+    @State private var deletionInFlight = false
+    @State private var confirmedDeletionID: UUID?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 if let review = model.selected, review.id == recordingID {
+                    #if DEBUG
+                    if model.isSyntheticUIReview {
+                        Text("SYNTHETIC UI REVIEW").font(.headline).accessibilityIdentifier("syntheticReviewNotice")
+                    }
+                    #endif
                     summary(review)
+                    if let practice = model.selectedPractice {
+                        if model.ownerAnalysisAvailable {
+                            OwnerPracticeStatisticsView(review: practice, recordingID: recordingID)
+                        } else {
+                            Text(RecordingReview.ownerAnalysisUnavailable).fixedSize(horizontal: false, vertical: true)
+                                .practiceCard().accessibilityIdentifier("ownerAnalysisUnavailable")
+                        }
+                    } else {
+                        Text("Legacy recording — owner evidence unassigned. Heart rate and owner practice recovery are unavailable.")
+                            .fixedSize(horizontal: false, vertical: true).practiceCard()
+                            .accessibilityIdentifier("legacyOwnerEvidenceNotice")
+                    }
                     coverage(review)
                     labels(review)
                     metadata(review)
                     exportAndDelete(review)
+                    RecordingStatisticsView(statistics: review.motionStatistics,
+                        unavailableReason: review.motionStatisticsUnavailableReason,
+                        isInterrupted: review.report.status == .interrupted ||
+                            (review.report.status == .finalized && review.report.finalization?.reason != .userStopped))
                 } else if model.loading {
                     ProgressView("Checking retained data…")
                 }
@@ -41,19 +66,96 @@ struct RecordingDetailView: View {
                 RecordingLabelEditor(review: review, existing: selection.label)
             }
         }
-        .confirmationDialog("Delete this iPhone copy?", isPresented: $showDelete, titleVisibility: .visible) {
-            Button("Delete iPhone copy", role: .destructive) {
-                Task { if await model.confirmDeletion(recordingID) { dismiss() } }
+        .sheet(isPresented: $showExport, onDismiss: {
+            if model.exportURL == nil { model.cancelPracticeExportPreview() }
+        }) {
+            if let snapshot = model.practiceExportPreview {
+                OwnerPracticeExportPreview(snapshot: snapshot, confirm: {
+                    Task { await model.prepareExport(recordingID); showExport = false }
+                }, cancel: { model.cancelPracticeExportPreview(); showExport = false })
+                .presentationDetents([.large]).interactiveDismissDisabled(model.busy)
             }
-            Button("Cancel", role: .cancel) { model.cancelDeletion() }
-        } message: {
-            Text("This removes this iPhone's raw recording and owner labels. The Watch original stays on your Watch. Exported or shared copies remain outside this deletion.")
+        }
+        .sheet(isPresented: $showDelete, onDismiss: deletionSheetDismissed) {
+            deletionConfirmation
+        }
+    }
+
+    private var deletionConfirmation: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                Text(deletingPracticeID == nil ? "Delete this iPhone copy?" : "Delete entire practice?")
+                    .font(.title2.bold())
+                    .foregroundStyle(PracticeTheme.ink(scheme))
+                    .accessibilityAddTraits(.isHeader)
+                Text(deletingPracticeID == nil
+                    ? "This removes this iPhone's raw recording and owner labels. The Watch original stays on your Watch. Exported or shared copies remain outside this deletion."
+                    : "Delete the entire practice, including both forehand and backhand sets, all revisions, app-local heart rate and local exports. Watch cleanup remains pending until acknowledged. Shared exports and Apple Health originals are not deleted.")
+                    .foregroundStyle(PracticeTheme.ink(scheme))
+                    .accessibilityIdentifier("deleteConfirmationWarning")
+                Button(role: .destructive) {
+                    guard showDelete, !deletionInFlight, !model.busy else { return }
+                    confirmedDeletionID = recordingID
+                    deletionInFlight = true
+                    showDelete = false
+                } label: {
+                    Text(deletingPracticeID == nil ? "Delete iPhone copy" : "Delete entire practice")
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(PracticeTheme.surface(scheme), in: RoundedRectangle(cornerRadius: 16))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier(deletingPracticeID == nil ? "confirmPhoneDeletion" : "confirmPracticeDeletion")
+                Button(role: .cancel) {
+                    guard showDelete, !deletionInFlight else { return }
+                    showDelete = false
+                } label: {
+                    Text("Cancel")
+                        .foregroundStyle(PracticeTheme.ink(scheme))
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(PracticeTheme.surface(scheme), in: RoundedRectangle(cornerRadius: 16))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier(deletingPracticeID == nil ? "cancelPhoneDeletion" : "cancelPracticeDeletion")
+            }
+            .disabled(deletionInFlight)
+            .padding(24)
+            .frame(maxWidth: 600)
+            .frame(maxWidth: .infinity)
+        }
+        .background(PracticeTheme.canvas(scheme))
+        .presentationBackground(PracticeTheme.canvas(scheme))
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+        .interactiveDismissDisabled(deletionInFlight)
+        .accessibilityIdentifier("deleteConfirmationSheet")
+    }
+
+    private func deletionSheetDismissed() {
+        guard let confirmedID = confirmedDeletionID else {
+            if !deletionInFlight { model.cancelDeletion() }
+            return
+        }
+        // Consume once, after native dismissal, before the model can remove the navigation row.
+        confirmedDeletionID = nil
+        Task {
+            if let practiceID = deletingPracticeID {
+                await model.deletePractice(practiceID).value
+                deletionInFlight = false; dismiss()
+            } else {
+                let deleted = await model.confirmDeletion(confirmedID)
+                deletionInFlight = false
+                if deleted { dismiss() }
+            }
         }
     }
 
     private func summary(_ review: RecordingReview) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            PracticeEyebrow("Retained recording")
+            Text("Retained recording").font(.caption.bold())
+                .accessibilityAddTraits(.isHeader)
             Text(review.status).font(.largeTitle.bold())
             Text(review.receiptVerified ? "Verified receipt on this iPhone" : "No verified receipt is recorded on this iPhone")
             if let first = review.first, let last = review.last {
@@ -75,7 +177,7 @@ struct RecordingDetailView: View {
         .foregroundStyle(.white)
         .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PracticeTheme.hero, in: .rect(cornerRadius: 28))
+        .background(PracticeTheme.surface(scheme), in: .rect(cornerRadius: 28))
     }
 
     private func coverage(_ review: RecordingReview) -> some View {
@@ -117,6 +219,7 @@ struct RecordingDetailView: View {
                 .font(.footnote).foregroundStyle(PracticeTheme.secondaryInk(scheme))
             ForEach(review.latestLabels, id: \.attemptID) { label in
                 Button {
+                    guard !showDelete, !deletionInFlight else { return }
                     labelEditor = .init(label: label)
                 } label: {
                     VStack(alignment: .leading, spacing: 6) {
@@ -128,12 +231,16 @@ struct RecordingDetailView: View {
                     }.frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.plain)
+                .disabled(showDelete || deletionInFlight)
                 .accessibilityHint("Edit this attempt. Earlier revisions are retained.")
                 Divider()
             }
-            Button("Add attempt", systemImage: "plus") { labelEditor = .init(label: nil) }
+            Button("Add attempt", systemImage: "plus") {
+                guard !showDelete, !deletionInFlight else { return }
+                labelEditor = .init(label: nil)
+            }
                 .buttonStyle(PracticeActionStyle())
-                .disabled(model.busy || review.annotationWarning != nil || review.report.metadata == nil)
+                .disabled(model.busy || showDelete || deletionInFlight || review.annotationWarning != nil || review.report.metadata == nil)
                 .accessibilityIdentifier("addAttempt")
             Text("\(review.labels.count) revisions retained. No shot times are inferred from attempt numbers.")
                 .font(.footnote).foregroundStyle(PracticeTheme.secondaryInk(scheme))
@@ -151,6 +258,7 @@ struct RecordingDetailView: View {
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Intended shot type").font(.headline)
                     Text(RecordingDrill.recordedTitle(for: metadata.drill))
+                        .font(.subheadline)
                         .accessibilityIdentifier("recordedIntendedShotType")
                     Text("Stored value: \(metadata.drill)").font(.caption.monospaced())
                         .textSelection(.enabled).accessibilityIdentifier("recordedDrillRawValue")
@@ -175,25 +283,36 @@ struct RecordingDetailView: View {
             Text("Export includes original samples, capture details, timing and every label revision. Choose who receives it in the share sheet.")
                 .font(.subheadline)
             Button("Prepare export", systemImage: "square.and.arrow.up") {
-                Task { await model.prepareExport(recordingID) }
+                guard !showDelete, !deletionInFlight, !model.busy else { return }
+                Task {
+                    guard !showDelete, !deletionInFlight, !model.busy else { return }
+                    if model.selectedPractice != nil {
+                        await model.previewPracticeExport(recordingID)
+                        showExport = model.practiceExportPreview != nil
+                    } else { await model.prepareExport(recordingID) }
+                }
             }
-            .buttonStyle(.glass)
-            .disabled(model.busy || review.timeline == nil || review.annotationWarning != nil)
+            .buttonStyle(PracticeActionStyle())
+            .disabled(model.busy || showDelete || deletionInFlight || review.timeline == nil || review.annotationWarning != nil || (model.selectedPractice != nil && !model.ownerAnalysisAvailable))
             .accessibilityIdentifier("prepareRecordingExport")
             if model.busy { ProgressView("Working with your recording…") }
             if let url = model.exportURL {
                 ShareLink(item: url) { Label("Share recording bundle", systemImage: "square.and.arrow.up") }
                     .buttonStyle(PracticeActionStyle())
+                    .disabled(model.busy || showDelete || deletionInFlight)
                     .accessibilityIdentifier("shareRecordingExport")
             }
             Text("Nothing is automatically uploaded to a public or shared folder.")
                 .font(.footnote).foregroundStyle(PracticeTheme.secondaryInk(scheme))
             Divider()
-            Button("Delete iPhone copy", role: .destructive) {
-                model.requestDeletion(recordingID); showDelete = true
+            Button(model.selectedPractice == nil ? "Delete iPhone copy" : "Delete entire practice", role: .destructive) {
+                guard !showDelete, !deletionInFlight, !model.busy, labelEditor == nil else { return }
+                deletingPracticeID = model.selectedPractice?.snapshot.receipt.practiceID
+                if deletingPracticeID == nil { model.requestDeletion(recordingID) }
+                showDelete = true
             }
-            .disabled(model.busy)
-            .accessibilityIdentifier("deletePhoneRecording")
+            .disabled(model.busy || showDelete || deletionInFlight)
+            .accessibilityIdentifier(model.selectedPractice == nil ? "deletePhoneRecording" : "deleteEntirePractice")
         }.practiceCard()
     }
 
@@ -229,13 +348,27 @@ private struct RecordingLabelEditor: View {
                         Text("Video").tag(RecordingLabelEvidence.video)
                         Text("Observer record").tag(RecordingLabelEvidence.observer)
                     }
-                    TextField("Optional note (up to 1,024 UTF-8 bytes)", text: $draft.note, axis: .vertical)
+                    VStack(alignment: .leading) {
+                        Text("Optional note (up to 1,024 UTF-8 bytes)")
+                            .foregroundStyle(PracticeTheme.secondaryInk(scheme))
+                            .fixedSize(horizontal: false, vertical: true)
+                        TextField("Optional note (up to 1,024 UTF-8 bytes)", text: $draft.note,
+                                  prompt: Text("Add a note")
+                                    .foregroundStyle(PracticeTheme.secondaryInk(scheme)), axis: .vertical)
+                            .lineLimit(1...)
+                            .accessibilityLabel("Optional note (up to 1,024 UTF-8 bytes)")
+                    }
                     Text("You remain the label author, including when consulting video or an observer's record.").font(.footnote)
                 }
+                .listRowBackground(PracticeTheme.surface(scheme))
                 Section("Optional time match") {
                     Text("Enter seconds from the original recording anchor only when you can establish the match. Leave both fields empty otherwise.").font(.footnote)
-                    TextField("Start seconds", text: $draft.relativeStart).keyboardType(.decimalPad)
-                    TextField("End seconds", text: $draft.relativeEnd).keyboardType(.decimalPad)
+                    TextField("Start seconds", text: $draft.relativeStart,
+                              prompt: Text("Start seconds").foregroundStyle(PracticeTheme.secondaryInk(scheme)))
+                        .keyboardType(.decimalPad)
+                    TextField("End seconds", text: $draft.relativeEnd,
+                              prompt: Text("End seconds").foregroundStyle(PracticeTheme.secondaryInk(scheme)))
+                        .keyboardType(.decimalPad)
                     if let clock = review.report.metadata?.clock {
                         ForEach(review.segments) { segment in
                             Text("Segment \(segment.id + 1): \(seconds(segment.start - clock.monotonicAnchorSeconds))–\(seconds(segment.end - clock.monotonicAnchorSeconds)) s")
@@ -249,7 +382,11 @@ private struct RecordingLabelEditor: View {
                     Text("An unmatched attempt keeps your contact category, but remains unmatched / uncertain for analysis. Attempt order does not establish timing.")
                         .font(.footnote)
                 }
-                if let error = model.error { Section { Text(error).foregroundStyle(.red) } }
+                .listRowBackground(PracticeTheme.surface(scheme))
+                if let error = model.error {
+                    Section { Text(error).foregroundStyle(.red) }
+                        .listRowBackground(PracticeTheme.surface(scheme))
+                }
             }
             .scrollContentBackground(.hidden)
             .background(PracticeTheme.canvas(scheme))

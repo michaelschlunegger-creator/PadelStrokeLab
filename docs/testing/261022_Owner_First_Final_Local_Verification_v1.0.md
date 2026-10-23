@@ -1,0 +1,32 @@
+# Owner forehand/backhand candidate — final local verification
+
+22 October 2026. Branch `feature/guided-padel-setup`, based on `bc5e73d473dfbcd33fbb8196c1cafc5436ed9f3e`. Exact portable115-input manifest SHA256 `a4c2b34db8238099167ddae896de873cbaefe7f4b43b22c7bb2d7eb40c815f94`. No personal device identifiers, real health readings or raw private logs are published here. Private artifacts remain under `~/Library/Developer/Xcode/DerivedData/PadelStrokeLab-OwnerFirst/PhysicalReadiness1`.
+
+## Verified source and local results
+
+- Xcode27.0 (27A266a), iOS/watchOS27 SDKs; commands explicitly select `/Applications/Xcode.app/Contents/Developer`.
+- Full iPhone suite `O11-17-phone-full.xcresult`: **PASS93 methods /145 expanded executions**, zero failures/skips/runtime warnings, 2343.878s command duration. Every enumerated phone method is included; isolated disposable destination, no method exclusions. Covers setup/consent/manual strokes, unavailable/legacy readings, labels/export/deletion and largest-text portrait/landscape accessibility/navigation.
+- Watch run10: all115 unit methods passed (185 expanded passes); eight UI methods failed stale initial navigation. Final corrected full Watch suite `O11-24-watch-final-full.xcresult`: **PASS123 methods /194 expanded executions**, zero failures/skips; 461.773s command duration. All123 original methods execute and the helper base contributes no test method. The retained QoS warning points to the deliberately coordinated deletion test harness. This is simulator evidence only.
+- The unchanged Core production/test inputs retain full `O10-29-final-pure-checks.json` evidence:388 methods/696 executions passed. Phone Release25 and Watch Release31 passed for their unchanged shipping inputs. The final phone/Watch Debug test builds11/18 passed; subsequent changes are CI/docs only.
+- Signed generic-device build03 passed. `O11-signed-products-validation.json` verifies both app signatures deep/strict and records executable hashes; `O11-profile-validation.json` verifies current profiles, signed bundle identity/profile-pattern compatibility and device coverage. An initial validation script incorrectly required an exact profile AppID rather than allowing the valid phone wildcard; that check was corrected without changing signing or products.
+- Inline portable CI fixture-isolation code passed a local exercise against actual generated phone2/Watch4-target runners (`O11-09-ci-runner-validation.json`). Workflow YAML parses; final manifest excludes ignored user state and includes portable workspace configuration.
+
+## Corrections and retained failures
+
+Source25 results presentation correction passed portrait plus landscape/three workflow regressions and separate source/runtime review; see [accessibility closure](261022_Results_Accessibility_Closure_v1.0.md). No audit category or original assertion was waived.
+
+Phone run08 was stopped after its concrete largest-landscape motion-navigation failure: two tests passed, one failed, the following test was canceled. The test-only causal correction preserves40 attempts and the full-visible-frame eligibility check; empty offscreen frames move forward and known frames use precise slow drags. Focused13 passed the original failed method, then complete phone17 passed. No shipping motion/recording code changed.
+
+Watch run10's initial CheckWatch assumption predated the added practice summary. Run16's five main UI methods passed, while two shot cases expected a later hardware warning instead of the earlier isolated-source denial, and generated launch checks jumped past virtualized controls. A reviewed shared14-attempt test driver now preserves every assertion, metric and configuration. Exact denial is asserted; these fixtures establish sensor-isolation refusal rather than a later native-hardware guard. Final enumeration20 preserved all123 executable method identifiers and added one zero-method helper-class entry. The original strict flat-entry equality guard stopped before runtime; no test/class was excluded to force equality. Run21 executed both complete Watch targets:115 unit methods and the other UI flows passed, while relaunch failed the added reverse-reveal constraint. Failure screenshot/tree show the correctly disabled CheckWatch and honest unprepared status;14 drags left a partially navigation-covered button at the same coordinates. The reviewed correction observes the control first through the established forward path, then verifies the same status predicate/10-second wait and absentStart assertion. No assertion was removed. Final runtime24 executes both complete Watch targets with that test-only read-order correction. Runtime24 passed all123 methods/194 executions with zero failures/skips; failure21 remains retained.
+
+Run10's test-only QoS inversion warning remains retained. Historical default-container incidents46/74 and their limited subsequent guards remain documented in the earlier package evidence; none is reclassified as untouched baseline data. All final app/default-path tests use the disposable phone/Watch pair; reserved original simulators are not erased or repaired.
+
+## Publication and physical limits
+
+The owner explicitly directed installation and publication of all code and required documentation. Publication uses a stacked draft PR, with no merge or release. The existing45-minute CI cap was raised to60 because the measured complete phone suite alone required39.06minutes; this budgets the full phone+Watch/Core/build job without changing any test assertion/deadline or adding retries.
+
+Exact-head hosted CI and a separate committed-source review remain required evidence. Actual device connection, install/launch, native permissions, sensor sampling, wrist-down/offline/interruption, verified retained-data readback and battery remain physical checks. No simulator or signed-build result establishes those behaviors. Follow the [physical runbook](261021_Owner_Forehand_Backhand_Physical_Runbook_v1.0.md); no automatic stroke/quality claim is made.
+
+## Non-blocking style observations
+
+Staged `git diff --check` reports nine extra blank-EOF lines in retained test/planning inputs. This check is not marked passed. Their original frozen content is preserved rather than silently rewriting versioned evidence or changing tested source for cosmetic cleanup. There are no staged private/build products; all115 staged source hashes match the final manifest.

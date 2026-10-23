@@ -25,6 +25,10 @@ struct RecordingLibraryView: View {
                     .font(.footnote)
                     .foregroundStyle(PracticeTheme.secondaryInk(scheme))
                     .accessibilityIdentifier("transferStatus")
+                if let message = model.practiceDeletionMessage {
+                    Text(message).fixedSize(horizontal: false, vertical: true).practiceCard()
+                        .accessibilityIdentifier("practiceDeletionStatus")
+                }
                 if model.loading && model.recordings.isEmpty { ProgressView("Inspecting recordings…") }
                 if let error = model.error {
                     Label(error, systemImage: "exclamationmark.triangle")

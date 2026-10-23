@@ -2,16 +2,16 @@ name: Foundation checks
 
 on:
   pull_request:
-    branches: [main, chore/project-governance]
+    branches: [main, chore/project-governance, feature/watch-recording-storage]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  foundation:
+  core:
     runs-on: xcode-27
-    timeout-minutes: 45
+    timeout-minutes: 120
     env:
       DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
     defaults:
@@ -37,7 +37,110 @@ jobs:
           exec > >(tee "$EVIDENCE/preflight.log") 2>&1
           git rev-parse HEAD
           git status --short
-          shasum -a 256 -c docs/testing/261019_Complete_Training_Screen_Capture_Code_State.sha256
+          shasum -a 256 -c docs/testing/261022_Owner_First_Final_Code_State.sha256
+          test -d "$DEVELOPER_DIR"
+          toolchain_version="$(xcodebuild -version)"
+          printf '%s\n' "$toolchain_version"
+          test "${toolchain_version%%$'\n'*}" = 'Xcode 27.0'
+          xcodebuild -showsdks
+          for sdk in iphoneos iphonesimulator watchos watchsimulator; do
+            version="$(xcrun --sdk "$sdk" --show-sdk-version)"
+            test "$version" = '27.0'
+          done
+          xcrun swift --version
+
+      - name: Record pre-Core worker baseline
+        timeout-minutes: 2
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          {
+            date -u '+%Y-%m-%dT%H:%M:%SZ'
+            git rev-parse HEAD || true
+            printf 'Run: %s; attempt: %s; Core worker; no simulator setup\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+            xcodebuild -version || true
+            sysctl hw.memsize hw.ncpu || true
+            vm_stat || true
+            df -h "$RUNNER_TEMP" || true
+            ps -axo pid,ppid,etime,state,%cpu,rss,comm | awk 'NR <= 80' || true
+          } 2>&1 | tee "$EVIDENCE/core-preflight.log" || true
+      - name: Retain pre-Core worker baseline
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: core-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE }}/core-preflight.log
+          if-no-files-found: error
+          retention-days: 14
+      - name: Verify shared metadata
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          (
+            core_sleep_pid=''
+            trap 'if [[ -n "$core_sleep_pid" ]]; then kill "$core_sleep_pid" 2>/dev/null || true; wait "$core_sleep_pid" 2>/dev/null || true; fi' EXIT
+            trap 'exit 0' INT TERM
+            for sample in {1..30}; do
+              {
+                date -u '+%Y-%m-%dT%H:%M:%SZ'
+                vm_stat || true
+                ps -axo pid,ppid,etime,state,%cpu,rss,comm | awk 'NR == 1 || /swift|xctest|Simulator/ { if (++count <= 40) print }' || true
+              } 2>&1 | tee -a "$EVIDENCE/core-resource-heartbeat.log" || true
+              sleep 30 &
+              core_sleep_pid=$!
+              wait "$core_sleep_pid" || break
+              core_sleep_pid=''
+            done
+          ) &
+          core_monitor_pid=$!
+          trap 'core_status=$?; trap - EXIT; kill "$core_monitor_pid" 2>/dev/null || true; wait "$core_monitor_pid" 2>/dev/null || true; exit "$core_status"' EXIT
+          xcrun swift test --package-path Packages/PadelCore --scratch-path "$RUNNER_TEMP/foundation-core" --no-parallel 2>&1 | tee "$EVIDENCE/core-tests.log"
+
+      - name: Retain successful and failed evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: foundation-core-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE }}
+          if-no-files-found: warn
+          retention-days: 14
+
+  platform:
+    needs: core
+    runs-on: xcode-27
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [PHONE, WATCH]
+    env:
+      PLATFORM: ${{ matrix.platform }}
+      DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Prepare evidence paths
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/foundation-evidence"
+          printf 'EVIDENCE=%s/foundation-evidence\nDERIVED_DATA=%s/foundation-derived-data\n' "$RUNNER_TEMP" "$RUNNER_TEMP" >> "$GITHUB_ENV"
+
+      - name: Check out exact submitted source
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Verify source and approved toolchain
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE"
+          exec > >(tee "$EVIDENCE/preflight.log") 2>&1
+          git rev-parse HEAD
+          git status --short
+          shasum -a 256 -c docs/testing/261022_Owner_First_Final_Code_State.sha256
           test -d "$DEVELOPER_DIR"
           toolchain_version="$(xcodebuild -version)"
           printf '%s\n' "$toolchain_version"
@@ -50,26 +153,132 @@ jobs:
           xcrun swift --version
           xcrun simctl list -j > "$EVIDENCE/simulators-before.json"
 
-      - name: Create an available OS 27 simulator pair
+      - name: Record platform worker baseline
+        timeout-minutes: 2
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          {
+            date -u '+%Y-%m-%dT%H:%M:%SZ'
+            git rev-parse HEAD || true
+            printf 'Run: %s; attempt: %s; before task-created simulator pair\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+            xcodebuild -version || true
+            sysctl hw.memsize hw.ncpu || true
+            vm_stat || true
+            df -h "$RUNNER_TEMP" || true
+            ps -axo pid,ppid,etime,state,%cpu,rss,comm | awk 'NR <= 80' || true
+            xcrun simctl list devices || true
+          } 2>&1 | tee "$EVIDENCE/platform-preflight.log" || true
+      - name: Retain platform worker baseline
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: platform-preflight-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE }}/platform-preflight.log
+          if-no-files-found: error
+          retention-days: 14
+      - name: Validate mounted OS 27 runtimes while quiescent
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/foundation-runtime-guard.py" <<'PY'
+          import json, os, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          def capture_runtime_inventory(stage, scan=False, platforms=('iOS', 'watchOS'), expected=None):
+              evidence = Path(os.environ['EVIDENCE'])
+              report = {'stage': stage, 'utc': datetime.now(timezone.utc).isoformat(),
+                        'commands': {}, 'runtimes': {}, 'errors': []}
+              def capture(label, arguments, timeout):
+                  suffix = 'log' if label == 'scan' else 'json'
+                  destination = evidence / f'runtime-{stage}-{label}.{suffix}'
+                  with destination.open('w') as output, (evidence / f'runtime-{stage}-{label}.stderr.log').open('w') as error:
+                      try:
+                          status = subprocess.run(['xcrun', 'simctl', *arguments], stdout=output,
+                                                  stderr=error, timeout=timeout).returncode
+                      except (subprocess.TimeoutExpired, OSError) as failure:
+                          status = str(failure)
+                          print(status, file=error)
+                  report['commands'][label] = status
+                  if status != 0:
+                      report['errors'].append(f'{label} failed: {status}')
+                  return destination
+              if scan:
+                  quiescent_path = capture('quiescent', ['list', '-j'], 30)
+                  try:
+                      quiescent = json.loads(quiescent_path.read_text())
+                      if not isinstance(quiescent.get('devices'), dict):
+                          raise ValueError('Missing pre-scan device state inventory')
+                      devices = [device for group in quiescent['devices'].values() for device in group]
+                      report['preScanDevices'] = [{key: device.get(key) for key in ('udid', 'state')} for device in devices]
+                      if any(device.get('state') != 'Shutdown' for device in devices):
+                          report['errors'].append('Runtime scan requires all simulator devices to be Shutdown')
+                  except (OSError, ValueError, AttributeError, TypeError) as failure:
+                      report['errors'].append(str(failure))
+                  if not report['errors']:
+                      capture('scan', ['runtime', 'scan-and-mount'], 60)
+              inventory_path = capture('inventory', ['list', '-j'], 30)
+              capture('images', ['runtime', 'list', '-j'], 30)
+              try:
+                  inventory = json.loads(inventory_path.read_text())
+                  if not isinstance(inventory, dict) or not isinstance(inventory.get('runtimes'), list):
+                      raise ValueError('Missing runtime inventory')
+              except (OSError, ValueError) as failure:
+                  report['errors'].append(str(failure))
+                  inventory = {'runtimes': []}
+              selected = {}
+              for platform in platforms:
+                  candidates = [r for r in inventory['runtimes'] if isinstance(r, dict)
+                                and r.get('platform') == platform and r.get('version') == '27.0']
+                  records = []
+                  for runtime in candidates:
+                      record = {key: runtime.get(key) for key in
+                                ('identifier', 'buildversion', 'isAvailable', 'bundlePath', 'runtimeRoot')}
+                      record['pathsExist'] = {key: isinstance(runtime.get(key), str)
+                                             and Path(runtime[key]).is_absolute() and Path(runtime[key]).is_dir()
+                                             for key in ('bundlePath', 'runtimeRoot')}
+                      records.append(record)
+                  report['runtimes'][platform] = records
+                  available = [(runtime, record) for runtime, record in zip(candidates, records)
+                               if runtime.get('isAvailable') is True]
+                  if len(available) != 1:
+                      report['errors'].append(f'Expected one available {platform} 27.0 runtime; found {len(available)}')
+                      continue
+                  runtime, record = available[0]
+                  selected[platform] = runtime
+                  if not all(isinstance(runtime.get(key), str) and runtime[key] for key in ('identifier', 'buildversion')):
+                      report['errors'].append(f'{platform} runtime identity is incomplete')
+                  if not all(record['pathsExist'].values()):
+                      report['errors'].append(f'{platform} runtime mounted paths are missing')
+                  previous = (expected or {}).get(platform)
+                  if previous is not None and any(runtime.get(key) != previous.get(key) for key in ('identifier', 'buildversion')):
+                      report['errors'].append(f'{platform} runtime identifier/build changed before boot')
+              (evidence / f'runtime-{stage}-status.json').write_text(json.dumps(report, indent=2))
+              print(json.dumps(report, indent=2), flush=True)
+              if report['errors']:
+                  raise SystemExit('Runtime preflight failed; see recorded inventory and path status')
+              return inventory, selected
+
+          if __name__ == '__main__':
+              capture_runtime_inventory('before-build', scan=True)
+          PY
+          python3 "$RUNNER_TEMP/foundation-runtime-guard.py" 2>&1 | tee "$EVIDENCE/runtime-before-build.log"
+
+      - name: Create a shutdown OS 27 simulator pair
         run: |
           set -euo pipefail
           python3 - <<'PY' 2>&1 | tee "$EVIDENCE/simulator-setup.log"
-          import json, os, subprocess
+          import json, os, runpy, subprocess
           from pathlib import Path
-
           evidence = Path(os.environ['EVIDENCE'])
-          inventory = json.loads((evidence / 'simulators-before.json').read_text())
-
-          def runtime(platform):
-              matches = [r for r in inventory['runtimes']
-                         if r.get('platform') == platform
-                         and r.get('version') == '27.0' and r.get('isAvailable')]
-              if len(matches) != 1:
-                  raise SystemExit(f'Expected one available {platform} 27.0 runtime; found {len(matches)}')
-              return matches[0]
+          capture_runtime_inventory = runpy.run_path(
+              str(Path(os.environ['RUNNER_TEMP']) / 'foundation-runtime-guard.py'))['capture_runtime_inventory']
+          inventory, selected_runtimes = capture_runtime_inventory('before-create')
 
           def create(platform, family, label):
-              selected_runtime = runtime(platform)
+              selected_runtime = selected_runtimes[platform]
               compatible = [d for d in selected_runtime.get('supportedDeviceTypes', [])
                             if d.get('productFamily') == family]
               installed = {d['identifier'] for d in inventory['devicetypes']}
@@ -90,47 +299,188 @@ jobs:
           watch = create('watchOS', 'Apple Watch', 'watch')
           pair = subprocess.check_output(['xcrun', 'simctl', 'pair', watch, phone], text=True).strip()
           print(f'Pair: {pair}', flush=True)
-          subprocess.run(['xcrun', 'simctl', 'boot', phone], check=True)
-          subprocess.run(['xcrun', 'simctl', 'bootstatus', phone, '-b'], check=True)
-          subprocess.run(['xcrun', 'simctl', 'boot', watch], check=True)
-          subprocess.run(['xcrun', 'simctl', 'bootstatus', watch, '-b'], check=True)
+          selection = {'PHONE': phone, 'WATCH': watch, 'runtimes': {
+              platform: {key: runtime[key] for key in ('identifier', 'buildversion')}
+              for platform, runtime in selected_runtimes.items()}}
+          (evidence / 'simulator-selection.json').write_text(json.dumps(selection, indent=2))
+          created = subprocess.check_output(['xcrun', 'simctl', 'list', '-j'], text=True, timeout=30)
+          (evidence / 'simulators-created.json').write_text(created)
+          states = {device['udid']: device.get('state') for group in json.loads(created)['devices'].values() for device in group}
+          if any(states.get(identifier) != 'Shutdown' for identifier in (phone, watch)):
+              raise SystemExit('Both newly paired simulator devices must remain Shutdown for builds')
           with open(os.environ['GITHUB_ENV'], 'a') as environment:
               environment.write(f'PHONE_ID={phone}\nWATCH_ID={watch}\n')
-          (evidence / 'simulators-ready.json').write_text(
-              subprocess.check_output(['xcrun', 'simctl', 'list', '-j'], text=True))
           PY
 
-      - name: Verify shared metadata
-        timeout-minutes: 15
-        run: |
-          set -euo pipefail
-          xcrun swift test --package-path Packages/PadelCore --scratch-path "$RUNNER_TEMP/foundation-core" 2>&1 | tee "$EVIDENCE/core-tests.log"
-
       - name: Build iPhone Release
+        if: matrix.platform == 'PHONE'
         run: |
           set -euo pipefail
           xcodebuild -project PadelStrokeLab.xcodeproj -scheme PadelStrokeLab -configuration Release -destination "platform=iOS Simulator,id=$PHONE_ID" -derivedDataPath "$DERIVED_DATA" CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$EVIDENCE/iphone-release.log"
 
       - name: Build Watch Release
+        if: matrix.platform == 'WATCH'
         run: |
           set -euo pipefail
           xcodebuild -project PadelStrokeLab.xcodeproj -scheme 'PadelStrokeLab Watch App' -configuration Release -destination "platform=watchOS Simulator,id=$WATCH_ID" -derivedDataPath "$DERIVED_DATA" CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$EVIDENCE/watch-release.log"
 
-      - name: Run full existing iPhone simulator suite
+      - name: Build current iPhone simulator test products
+        if: matrix.platform == 'PHONE'
         run: |
           set -euo pipefail
-          xcodebuild -project PadelStrokeLab.xcodeproj -scheme PadelStrokeLab -configuration Debug -destination "platform=iOS Simulator,id=$PHONE_ID" -derivedDataPath "$DERIVED_DATA" -resultBundlePath "$EVIDENCE/iphone-tests.xcresult" -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO test 2>&1 | tee "$EVIDENCE/iphone-tests.log"
+          xcodebuild -project PadelStrokeLab.xcodeproj -scheme PadelStrokeLab -configuration Debug -destination "platform=iOS Simulator,id=$PHONE_ID" -derivedDataPath "$DERIVED_DATA" CODE_SIGNING_ALLOWED=NO build-for-testing 2>&1 | tee "$EVIDENCE/iphone-test-build.log"
+
+      - name: Build current Watch simulator test products
+        if: matrix.platform == 'WATCH'
+        run: |
+          set -euo pipefail
+          xcodebuild -project PadelStrokeLab.xcodeproj -scheme 'PadelStrokeLab Watch App' -configuration Debug -destination "platform=watchOS Simulator,id=$WATCH_ID" -derivedDataPath "$DERIVED_DATA" CODE_SIGNING_ALLOWED=NO build-for-testing 2>&1 | tee "$EVIDENCE/watch-test-build.log"
+
+      - name: Isolate all test hosts before application launch
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, os, plistlib, uuid
+          from pathlib import Path
+
+          products = Path(os.environ['DERIVED_DATA']) / 'Build/Products'
+          evidence = Path(os.environ['EVIDENCE'])
+          phone_targets = {'PadelStrokeLabTests', 'PadelStrokeLabUITests'}
+          watch_targets = {'PadelStrokeLab Watch AppTests', 'PadelStrokeLab Watch AppUITests'}
+          for platform, pattern, expected in (
+              ('PHONE', 'PadelStrokeLab_PadelStrokeLab_*.xctestrun', phone_targets),
+              ('WATCH', 'PadelStrokeLab Watch App_*.xctestrun', phone_targets | watch_targets),
+          ):
+              if platform != os.environ['PLATFORM']:
+                  continue
+              sources = list(products.glob(pattern))
+              if len(sources) != 1:
+                  raise SystemExit(f'Expected one generated {platform} runner; found {len(sources)}')
+              runner = plistlib.loads(sources[0].read_bytes())
+              watch_identities = {name: str(uuid.uuid4()).upper() for name in sorted(watch_targets)}
+              configurations = runner.get('TestConfigurations', [])
+              if not configurations:
+                  raise SystemExit('Missing test configurations')
+              for configuration in configurations:
+                  targets = configuration.get('TestTargets', [])
+                  if len(targets) != len(expected) or {t.get('BlueprintName') for t in targets} != expected:
+                      raise SystemExit(f'Unexpected {platform} test target shape')
+                  for target in targets:
+                      name = target['BlueprintName']
+                      if target.get('SkipTestIdentifiers') or target.get('OnlyTestIdentifiers'):
+                          raise SystemExit(f'Unexpected test filtering in {name}')
+                      if name == 'PadelStrokeLabTests':
+                          args = ['--motion-statistics-fixture=unavailable']
+                      elif name == 'PadelStrokeLabUITests':
+                          args = ['--owner-setup-fixture=offline']
+                      else:
+                          args = ['--owner-watch-fixture=' + watch_identities[name]]
+                      target['CommandLineArguments'] = args
+              destination = products / f'{platform}-Isolated.xctestrun'
+              with destination.open('xb') as output:
+                  output.write(plistlib.dumps(runner))
+              report = {'runner': str(destination), 'sha256': hashlib.sha256(destination.read_bytes()).hexdigest(),
+                        'source_sha256': hashlib.sha256(sources[0].read_bytes()).hexdigest(),
+                        'watch_fixture_ids': watch_identities if platform == 'WATCH' else None}
+              (evidence / f'{platform}-runner.json').write_text(json.dumps(report, indent=2))
+              (evidence / destination.name).write_bytes(destination.read_bytes())
+              with open(os.environ['GITHUB_ENV'], 'a') as environment:
+                  environment.write(f'{platform}_RUNNER={destination}\n')
+          PY
+
+      - name: Validate and boot only the selected simulator once
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' 2>&1 | tee "$EVIDENCE/selected-simulator-boot.log"
+          import json, os, runpy, subprocess
+          from pathlib import Path
+          evidence = Path(os.environ['EVIDENCE'])
+          selection = json.loads((evidence / 'simulator-selection.json').read_text())
+          platform = {'PHONE': 'iOS', 'WATCH': 'watchOS'}[os.environ['PLATFORM']]
+          capture_runtime_inventory = runpy.run_path(
+              str(Path(os.environ['RUNNER_TEMP']) / 'foundation-runtime-guard.py'))['capture_runtime_inventory']
+          inventory, _ = capture_runtime_inventory('before-selected-boot', platforms=(platform,),
+                                                   expected={platform: selection['runtimes'][platform]})
+          states = {device['udid']: device.get('state') for group in inventory['devices'].values() for device in group}
+          if any(states.get(selection[key]) != 'Shutdown' for key in ('PHONE', 'WATCH')):
+              raise SystemExit('Selected and companion simulators must remain Shutdown until this first boot')
+          selected = selection[os.environ['PLATFORM']]
+          subprocess.run(['xcrun', 'simctl', 'boot', selected], check=True)
+          subprocess.run(['xcrun', 'simctl', 'bootstatus', selected, '-b'], check=True)
+          PY
+
+      - name: Run full existing iPhone simulator suite
+        if: matrix.platform == 'PHONE'
+        run: |
+          set -euo pipefail
+          xcodebuild test-without-building -xctestrun "$PHONE_RUNNER" -destination "platform=iOS Simulator,id=$PHONE_ID" -resultBundlePath "$EVIDENCE/iphone-tests.xcresult" -parallel-testing-enabled NO 2>&1 | tee "$EVIDENCE/iphone-tests.log"
 
       - name: Run full existing Watch simulator suite
+        if: matrix.platform == 'WATCH'
         run: |
           set -euo pipefail
-          xcodebuild -project PadelStrokeLab.xcodeproj -scheme 'PadelStrokeLab Watch App' -configuration Debug -destination "platform=watchOS Simulator,id=$WATCH_ID" -derivedDataPath "$DERIVED_DATA" -resultBundlePath "$EVIDENCE/watch-tests.xcresult" -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO test 2>&1 | tee "$EVIDENCE/watch-tests.log"
+          xcodebuild test-without-building -xctestrun "$WATCH_RUNNER" -destination "platform=watchOS Simulator,id=$WATCH_ID" '-only-testing:PadelStrokeLab Watch AppTests' '-only-testing:PadelStrokeLab Watch AppUITests' -resultBundlePath "$EVIDENCE/watch-tests.xcresult" -parallel-testing-enabled NO 2>&1 | tee "$EVIDENCE/watch-tests.log"
+
+      - name: Record final simulator states including companion
+        if: always()
+        timeout-minutes: 2
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          evidence = Path(os.environ['EVIDENCE'])
+          command = ['xcrun', 'simctl', 'list', '-j']
+          status = {'command': command, 'startedUTC': datetime.now(timezone.utc).isoformat(),
+                    'timeoutSeconds': 30, 'returnCode': None, 'timedOut': False, 'stateEvidence': 'UNKNOWN'}
+          raw = evidence / 'simulators-final.stdout.log'
+          try:
+              with raw.open('wb') as output, (evidence / 'simulators-final.stderr.log').open('wb') as error:
+                  status['returnCode'] = subprocess.run(command, stdout=output, stderr=error, timeout=30).returncode
+              if status['returnCode'] != 0:
+                  raise ValueError(f"Inventory command exited {status['returnCode']}")
+              inventory = json.loads(raw.read_text())
+              if not isinstance(inventory, dict) or not isinstance(inventory.get('devices'), dict):
+                  raise ValueError('Missing device-state inventory')
+              if not all(isinstance(group, list) and all(isinstance(device, dict)
+                         and all(isinstance(device.get(key), str) and device[key] for key in ('udid', 'state'))
+                         for device in group) for group in inventory['devices'].values()):
+                  raise ValueError('Invalid device-state inventory')
+              (evidence / 'simulators-final.json').write_text(json.dumps(inventory, indent=2))
+              status['stateEvidence'] = 'AVAILABLE'
+          except subprocess.TimeoutExpired as failure:
+              status['timedOut'] = True
+              status['error'] = str(failure)
+          except (OSError, ValueError) as failure:
+              status['error'] = str(failure)
+          (evidence / 'simulators-final-status.json').write_text(json.dumps(status, indent=2))
+          print(json.dumps(status, indent=2), flush=True)
+          PY
 
       - name: Retain successful and failed evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: foundation-${{ github.run_id }}-${{ github.run_attempt }}
+          name: foundation-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.EVIDENCE }}
           if-no-files-found: warn
           retention-days: 14
+
+  foundation:
+    needs: [core, platform]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require Core and the entire platform matrix to succeed
+        env:
+          CORE_RESULT: ${{ needs.core.result }}
+          PLATFORM_RESULT: ${{ needs.platform.result }}
+        run: |
+          set -euo pipefail
+          printf 'Core: %s; entire platform matrix: %s\n' "$CORE_RESULT" "$PLATFORM_RESULT"
+          test "$CORE_RESULT" = success
+          test "$PLATFORM_RESULT" = success

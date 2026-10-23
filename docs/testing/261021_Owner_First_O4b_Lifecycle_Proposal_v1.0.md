@@ -1,0 +1,34 @@
+# O4b lifecycle prerequisite and phone design
+
+21 October 2026. GPT-6 Astra / Extra High. **Proposal only: independent review and director ratification required before source changes.** O4a closure is independent of this design.
+
+## Concrete missing durable fact
+
+The frozen APIs cannot preserve an independently identified practice plus an End request while the sole authority intent is occupied. P1 stores preferences/draft/high-water, not a companion `practiceID`. O3b `request` (lines195–219) retains one intent; a second `retirePractice` has no privacy restriction, so `intentOutstanding` saves neither its practice ID nor its End request. With pending enrollment and nil authority, retirement cannot even resolve against current authority. A UI flag would disappear on relaunch. Aliasing P1's `preparationID`, converting End into withdrawal, or accepting Watch status as authority would violate the approved contract.
+
+## Proposed O4q prerequisite
+
+Change only existing `Packages/PadelCore/Sources/PadelCore/PracticeSetupChannel.swift` and its existing matching test file. Proposed cap: **200 changed production lines**, persistence and authority ordering. No new file, lock owner, witness, wire message, P1 field or app adoption. Explicitly reallocate O4b's cap from1440 to1240; O4p10 + O4a250 + O4q200 + O4b1240 retains the original1700 budget. This requires a new ratification, not implicit budget pooling.
+
+Add one bounded optional **phone lifecycle record** to the existing canonical channel journal: independently created `practiceID` and `preparationID`, exact owner/phone/Watch scope, and optional stable `endRequestID`. It is local bookkeeping/denial, never consent, acceptance or a second dispatched command. Expose its checked value in `OwnerChannelSnapshot`.
+
+- `beginPhonePractice(practiceID:preparationID:…)` validates the exact current owner or exact retained enrollment proposal, then durably records the distinct IDs before any preparation is sent. It grants nothing and refuses replacement of an unresolved practice. P1 continues to own preference/draft bytes and global revision high-water.
+- `requestPhoneEnd(practiceID:requestID:)` durably latches End even with another intent present/dispatched. Exact duplicates are idempotent; conflicting practice/request IDs fail closed. It immediately blocks preparation/admission without changing motion/HR consent or rewriting the existing intent. The model raises its presentation fence before the executor hop; a persistence failure remains visibly blocked but is not described as saved.
+- `queueRequestedEnd()` uses the retained IDs to create the existing `retirePractice` mutation only when the one intent slot is free and exact current authority is reconciled. It does not clear, cancel or reinterpret an occupied/dispatched intent. The original explicit enrollment/HR intent follows existing resolution rules; status/timeouts cannot bypass it. The same End request ID is retained through queuing, dispatch, lost replies and relaunch.
+- Clear the local lifecycle only after the checked O2 practice replay guard and reconciled chain prove that exact practice retired. An unrelated grant/ACK, consent withdrawal, timeout or cancellation cannot clear End. Keep the record if an old command becomes obsolete or needs explicit resolution. No new practice can start while this fact is unresolved.
+
+Use an optional bounded field whose absence preserves canonical encoding of existing v2 journals; old valid bytes remain readable without a rewrite/migration. New non-nil values must be strictly validated and included in canonical integrity/capacity checks. Old readers must reject the expanded representation rather than silently drop End. No namespace/version renaming or automatic repair is proposed. Review must confirm the exact compatibility behavior and single-record byte bound before coding.
+
+Tests first: independent IDs; old-journal byte compatibility; owner/epoch/role mismatch; duplicate/conflicting requests; End during pending **and dispatched enrollment and HR changes**; crash/reopen after latch, prior-intent mirror, retirement queue/dispatch and exact retirement application; lost reply/idempotent retry; unrelated grant/withdrawal cannot clear End; stale authority; byte/revision/I/O failure with no false saved/applied claim. Use real journal durability hooks and stores. Freeze, full core, affected existing bootstrap app-host regressions with the ratified isolation guard, both Release builds, independent review and director acceptance precede O4b.
+
+## O4b behavior after prerequisite acceptance
+
+Keep the same five production paths: new `PracticeSetupModel.swift`, `PracticeSetupView.swift`; existing `ContentView.swift`, `PadelStrokeLabApp.swift`, `RecordingLibraryModel.swift`. No Core/Watch/config changes inside O4b. Share the sole connectivity instance and register its handler before activation. Keep private bootstrap/channel ownership on one non-main serial executor; await counted reply work through final synchronous `work.commit`.
+
+Fresh practice review creates two independent UUIDs and persists their mapping. Same-practice forehand/backhand or arm edits keep those IDs and advance the globally monotonic draft revision. During a running Watch set, the current accepted stroke remains immutable and edits are labelled next-set pending/accepted; no automatic promotion or remote Start. A later practice after proven End gets two new independent IDs.
+
+UI states distinguish draft, saved/pending/offline, accepted-current, accepted-next, End-pending and failure. Acceptance requires the exact request, owner/epochs, authority digest, setup identity and observed runtime/preparation generations; delivery is not acceptance. Main-actor edits/End/withdrawal invalidate presentation immediately. Required older authority transitions still reconcile, preserving a newer fence.
+
+Relaunch loads the lifecycle and P1 suggestions as bookkeeping only. A mismatched/missing P1 draft requires review/reconstruction using the stored preparation ID and a fresh greater revision; it never manufactures acceptance. End-pending stays blocked and resumes exact resolution. Otherwise require current peer/generation observation plus explicit saved-choice review and a fresh preparation exchange before showing accepted setup. Status never imports grants. End remains distinct from withdrawal and does not claim the offline Watch has already stopped.
+
+O4b tests cover separate IDs across edits/relaunch/new practice, current-versus-next stroke, stale held replies after edit/End/withdrawal, every pending/accepted display, lost ACK reconciliation, and the new End-collision/relaunch path through the real channel. Required phone app-host/UI regressions, both Release builds, exact freeze/review and director acceptance remain unchanged.

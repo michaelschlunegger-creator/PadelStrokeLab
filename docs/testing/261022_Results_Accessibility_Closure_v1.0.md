@@ -1,0 +1,9 @@
+# Results accessibility correction — local closure
+
+22 October 2026. Branch `feature/guided-padel-setup`, base HEAD `bc5e73d473dfbcd33fbb8196c1cafc5436ed9f3e`; intentional unpublished working tree.
+
+RecordingDetailView SHA256 `3952a92b3b3a8285c4f8763ebec4d52527fed53d243eb4294389b642e81c721b`; OwnerPracticeReviewUITests SHA256 `b963ed5326b6015af6ab25ec2249474d5ab6ecc2d7bb96fbe8c66068deec0a3e`. Solid summary background, readable retained-recording heading, intended-shot typography and existing primary action styling correct the bounded results presentation. Original five native accessibility categories run in the initial stable viewport; subsequent navigation, visibility, nonempty/width checks and rendered captures remain. Offscreen crop findings are retained as failed investigation evidence, not waived or relabelled passes. Full offscreen accessibility behavior is not exhaustively established by initial-viewport auditing.
+
+Private evidence root: `~/Library/Developer/Xcode/DerivedData/PadelStrokeLab-OwnerFirst/PhysicalReadiness1`. `ContrastFix-25-portrait.xcresult`: Passed 1, failed/skipped 0. `ContrastFix-25-regressions.xcresult`: Passed 4, failed/skipped 0; largest-text landscape, both manual strokes/export preview, excluded/absent/legacy heart-rate states and scoped whole-practice deletion/peer-pending. Logs `/tmp/ContrastFix-25-build.log` and `/tmp/ContrastFix-25-release.log`: TEST BUILD SUCCEEDED / BUILD SUCCEEDED. Portrait sampled-color evidence: `ContrastFix-25-portrait-colors.json`. Disposable iPhone simulator only; no physical result.
+
+Separate Sol reviewer independently matched current hashes, actual result summaries/test identities and build logs; verdict LOCAL RESULTS ACCESSIBILITY CORRECTION CLEAR / ACCEPTED. Review only, no reviewer edits. This closes this local correction, not formal committed-HEAD G6, CI, signing, installation, sensor validation or merge gates.
