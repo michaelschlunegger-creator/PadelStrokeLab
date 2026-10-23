@@ -4,7 +4,7 @@ An iPhone and Apple Watch prototype investigating whether Watch signals can pred
 
 ## Current state
 
-**23 October 2026:** local owner forehand/backhand verification is complete, including all seven affected Motion UI methods. Two remote workers stalled without usable test output; a reviewed CI-only correction runs Core before simulator creation and preserves diagnostic evidence. App/Core tests, assertions and signed products are unchanged. Full exact-head CI/review and separate installation remain pending. See [CI execution evidence](docs/testing/261023_CI_Worker_Diagnostics_v1.0.md), [PR#3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and [Gate Card](GATE_CARD.md). Physical sensors/background/battery remain unverified.
+**23 October 2026:** local owner forehand/backhand verification is complete. Remote Core passes388tests; Watch simulator preparation failed on runtime-bundle resolution. A reviewed CI-only correction adds fresh mounted-runtime validation, preserving all tests and deadlines. Full exact-head CI/review and both installations remain pending. See [runtime correction/evidence](docs/testing/261023_CI_Runtime_Validation_v1.0.md), [PR#3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and [Gate Card](GATE_CARD.md). Physical sensors/background/battery remain unverified.
 
 [Product/scope](docs/PRODUCT.md) · [Architecture](docs/ARCHITECTURE.md) · [App Specifications v1.1](docs/product/261016_App_Specifications_PSL-SPEC-001_v1.1.txt) · [Verification](docs/testing/261022_Owner_First_Final_Local_Verification_v1.0.md) · [Development release gates](docs/RELEASE.md) · [Physical runbook](docs/testing/261021_Owner_Forehand_Backhand_Physical_Runbook_v1.0.md)
 

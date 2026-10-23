@@ -75,6 +75,82 @@ jobs:
           path: ${{ env.EVIDENCE }}/core-preflight.log
           if-no-files-found: error
           retention-days: 14
+      - name: Validate mounted OS 27 runtimes before Core
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/foundation-runtime-guard.py" <<'PY'
+          import json, os, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          def capture_runtime_inventory(stage, scan=False, platforms=('iOS', 'watchOS'), expected=None):
+              evidence = Path(os.environ['EVIDENCE'])
+              report = {'stage': stage, 'utc': datetime.now(timezone.utc).isoformat(),
+                        'commands': {}, 'runtimes': {}, 'errors': []}
+              def capture(label, arguments, timeout):
+                  suffix = 'log' if label == 'scan' else 'json'
+                  destination = evidence / f'runtime-{stage}-{label}.{suffix}'
+                  with destination.open('w') as output, (evidence / f'runtime-{stage}-{label}.stderr.log').open('w') as error:
+                      try:
+                          status = subprocess.run(['xcrun', 'simctl', *arguments], stdout=output,
+                                                  stderr=error, timeout=timeout).returncode
+                      except (subprocess.TimeoutExpired, OSError) as failure:
+                          status = str(failure)
+                          print(status, file=error)
+                  report['commands'][label] = status
+                  if status != 0:
+                      report['errors'].append(f'{label} failed: {status}')
+                  return destination
+              if scan:
+                  capture('scan', ['runtime', 'scan-and-mount'], 60)
+              inventory_path = capture('inventory', ['list', '-j'], 30)
+              capture('images', ['runtime', 'list', '-j'], 30)
+              try:
+                  inventory = json.loads(inventory_path.read_text())
+                  if not isinstance(inventory, dict) or not isinstance(inventory.get('runtimes'), list):
+                      raise ValueError('Missing runtime inventory')
+              except (OSError, ValueError) as failure:
+                  report['errors'].append(str(failure))
+                  inventory = {'runtimes': []}
+              selected = {}
+              for platform in platforms:
+                  candidates = [r for r in inventory['runtimes'] if isinstance(r, dict)
+                                and r.get('platform') == platform and r.get('version') == '27.0']
+                  records = []
+                  for runtime in candidates:
+                      record = {key: runtime.get(key) for key in
+                                ('identifier', 'buildversion', 'isAvailable', 'bundlePath', 'runtimeRoot')}
+                      record['pathsExist'] = {key: isinstance(runtime.get(key), str)
+                                             and Path(runtime[key]).is_absolute() and Path(runtime[key]).is_dir()
+                                             for key in ('bundlePath', 'runtimeRoot')}
+                      records.append(record)
+                  report['runtimes'][platform] = records
+                  available = [(runtime, record) for runtime, record in zip(candidates, records)
+                               if runtime.get('isAvailable') is True]
+                  if len(available) != 1:
+                      report['errors'].append(f'Expected one available {platform} 27.0 runtime; found {len(available)}')
+                      continue
+                  runtime, record = available[0]
+                  selected[platform] = runtime
+                  if not all(isinstance(runtime.get(key), str) and runtime[key] for key in ('identifier', 'buildversion')):
+                      report['errors'].append(f'{platform} runtime identity is incomplete')
+                  if not all(record['pathsExist'].values()):
+                      report['errors'].append(f'{platform} runtime mounted paths are missing')
+                  previous = (expected or {}).get(platform)
+                  if previous is not None and any(runtime.get(key) != previous.get(key) for key in ('identifier', 'buildversion')):
+                      report['errors'].append(f'{platform} runtime identifier/build changed before boot')
+              (evidence / f'runtime-{stage}-status.json').write_text(json.dumps(report, indent=2))
+              print(json.dumps(report, indent=2), flush=True)
+              if report['errors']:
+                  raise SystemExit('Runtime preflight failed; see recorded inventory and path status')
+              return inventory, selected
+
+          if __name__ == '__main__':
+              capture_runtime_inventory('pre-core', scan=True)
+          PY
+          python3 "$RUNNER_TEMP/foundation-runtime-guard.py" 2>&1 | tee "$EVIDENCE/runtime-pre-core.log"
+
       - name: Verify shared metadata
         timeout-minutes: 15
         run: |
@@ -103,22 +179,15 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY' 2>&1 | tee "$EVIDENCE/simulator-setup.log"
-          import json, os, subprocess
+          import json, os, runpy, subprocess
           from pathlib import Path
-
           evidence = Path(os.environ['EVIDENCE'])
-          inventory = json.loads((evidence / 'simulators-before.json').read_text())
-
-          def runtime(platform):
-              matches = [r for r in inventory['runtimes']
-                         if r.get('platform') == platform
-                         and r.get('version') == '27.0' and r.get('isAvailable')]
-              if len(matches) != 1:
-                  raise SystemExit(f'Expected one available {platform} 27.0 runtime; found {len(matches)}')
-              return matches[0]
+          capture_runtime_inventory = runpy.run_path(
+              str(Path(os.environ['RUNNER_TEMP']) / 'foundation-runtime-guard.py'))['capture_runtime_inventory']
+          inventory, selected_runtimes = capture_runtime_inventory('before-create')
 
           def create(platform, family, label):
-              selected_runtime = runtime(platform)
+              selected_runtime = selected_runtimes[platform]
               compatible = [d for d in selected_runtime.get('supportedDeviceTypes', [])
                             if d.get('productFamily') == family]
               installed = {d['identifier'] for d in inventory['devicetypes']}
@@ -141,6 +210,8 @@ jobs:
           print(f'Pair: {pair}', flush=True)
           subprocess.run(['xcrun', 'simctl', 'boot', phone], check=True)
           subprocess.run(['xcrun', 'simctl', 'bootstatus', phone, '-b'], check=True)
+          capture_runtime_inventory('before-watch-boot', scan=True, platforms=('watchOS',),
+                                    expected={'watchOS': selected_runtimes['watchOS']})
           subprocess.run(['xcrun', 'simctl', 'boot', watch], check=True)
           subprocess.run(['xcrun', 'simctl', 'bootstatus', watch, '-b'], check=True)
           with open(os.environ['GITHUB_ENV'], 'a') as environment:

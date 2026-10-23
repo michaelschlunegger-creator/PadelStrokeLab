@@ -1,10 +1,12 @@
+Current mounted-runtime validation and retained CI outcome are documented in [verification](testing/261023_CI_Runtime_Validation_v1.0.md). Actual runtime boots, exact-head CI/review and device gates remain pending.
+
 Current CI-only execution mitigation and retained cancellation evidence are documented in [verification](testing/261023_CI_Worker_Diagnostics_v1.0.md). Exact-head CI, final review and device gates remain pending their actual outcomes.
 
 Current UI-driver-only correction and measured CI budget are documented in [verification](testing/261023_UI_Scroll_Driver_Correction_v1.0.md). Exact-head CI, final review and both installations remain pending.
 
 # Development installation and release gates
 
-The three software findings on the original published `7d5dc2a` candidate are addressed by the [bounded privacy corrections](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md). The current 115-input portable manifest SHA256 is `445fd7684ec752b681b28fdd551d6cda0ad214339ed44cf82ff1c4ebb285b94c`. Live exact-commit CI, independent review and separate installation observations belong in [PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and its linked evidence; a locally passing suite does not establish those later gates. This keeps observations attached to the tested source without changing it merely to record subsequent device outcomes.
+The three software findings on the original published `7d5dc2a` candidate are addressed by the [bounded privacy corrections](testing/261022_Privacy_Readiness_Corrections_Verification_v1.0.md). The current 115-input portable manifest SHA256 is `eb8a533ebba9de0749676717a8b9cc81865a7905f274cd8772f8891658dfcc8c`. Live exact-commit CI, independent review and separate installation observations belong in [PR #3](https://github.com/michaelschlunegger-creator/PadelStrokeLab/pull/3) and its linked evidence; a locally passing suite does not establish those later gates. This keeps observations attached to the tested source without changing it merely to record subsequent device outcomes.
 
 This is a development candidate for owner forehand/backhand recording, not a TestFlight or App Store release. The bundle identifiers and companion relationship remain unchanged; display name is Padel Master.
 

@@ -1,3 +1,13 @@
+# Current checkpoint — mounted runtime validation
+
+23 October2026. Branch `feature/guided-padel-setup`, amendment base `c8cbb67efb35be3be539b1d6bf2392179c29615a`. CI39872894389 passed fullCore388tests but failed first Watch boot on missing runtime-bundle resolution; later builds/app suites were skipped. [Retained outcome and correction](docs/testing/261023_CI_Runtime_Validation_v1.0.md) separate app evidence from runtime preparation failure; its cause remains unproven.
+
+The workflow now validates current mountedOS27 runtime paths/identity before Core, uses fresh inventory after Core and revalidates Watch immediately before first boot. All tests/coverage/assertions/deadlines remain intact; no runtime deletion/download/fallback or boot retry. YAML/Bash/Python and four controlled runtime-guard cases pass; independent source review clears the correction. Source7 manifest SHA256 `eb8a533ebba9de0749676717a8b9cc81865a7905f274cd8772f8891658dfcc8c`; only workflow differs from Source6. App/Core/test/signing evidence retains input identity. Actual remote boot/suite success remains required; no installation or physical pass.
+
+One next action: publish this bounded correction and complete exact-head runtime preparation/CI/review, then install and verify both available devices. PR#3 carries live observations; earlier checkpoints are historical.
+
+---
+
 # Current checkpoint — CI execution mitigation
 
 23 October2026. Branch `feature/guided-padel-setup`, amendment base `cbd6c4fc17ae4456cc106bbfb3abe074d7a0d71e`. Two verified different workers stalled shared-code verification beyond its15-minute limit; both run39864792158 attempts were cancelled and yielded no logs/artifacts. Cause remains UNKNOWN; no app failure is inferred. See [execution evidence and mitigation](docs/testing/261023_CI_Worker_Diagnostics_v1.0.md).

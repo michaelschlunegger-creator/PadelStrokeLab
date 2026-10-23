@@ -1,3 +1,7 @@
+# 23 October2026 — mounted runtime validation
+
+Validate freshOS27 runtime paths/identity before Core, after Core and before first Watch boot; preserve all app/test sources and gates. Four controlled guard cases pass. CI runtime-resolution failure remains retained evidence. [Verification](testing/261023_CI_Runtime_Validation_v1.0.md).
+
 # 23 October2026 — CI execution diagnostics
 
 Run unchanged shared-code tests before simulator creation; retain bounded resource diagnostics and a baseline before Core. Preserve all deadlines/assertions/coverage. Both unresponsive-worker attempts remain cancelled evidence with unknown cause. [Verification](testing/261023_CI_Worker_Diagnostics_v1.0.md).
