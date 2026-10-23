@@ -1,3 +1,7 @@
+# 23 October2026 — independent platform CI
+
+Isolate full phone/Watch checks after pure Core; build before selected boot and require all jobs through final foundation. Preserve every suite/deadline and prior CI failure. [Verification](testing/261023_CI_Platform_Isolation_v1.0.md).
+
 # 23 October2026 — mounted runtime validation
 
 Validate freshOS27 runtime paths/identity before Core, after Core and before first Watch boot; preserve all app/test sources and gates. Four controlled guard cases pass. CI runtime-resolution failure remains retained evidence. [Verification](testing/261023_CI_Runtime_Validation_v1.0.md).
