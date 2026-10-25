@@ -208,6 +208,29 @@ nonisolated deinit. Astra changed only `isolated deinit`; native check3 is
 running with a fresh result path. No native pass or capture exposure is claimed.
 F is read-only planning/test-contract preparation until its dependencies pass.
 
+C native check3: **10tests in1suite PASS**, exit0,0.026seconds. Native paths remain
+blocked under simulator/tests; actual buffers/clocks plus isolated hardware test
+production lifecycle. The C manifest/evidence preserve both compile failures.
+Three production paths/944total lines including tests, no navigation exposure.
+
+## Active package D — playable media persistence
+
+Allowed production paths: new `PadelStrokeLab/PhoneVideoWriter.swift`, Core
+`VideoMotionMedia.swift`, existing Core `VideoMotionStore.swift` and phone
+`PhoneVideoCapture.swift`. Maximum four production paths/2,500total changed lines,
+two domains: media persistence/integrity and source/media timing. No UI/Watch
+orchestration, raw codec, Health, owner identity, signing or OS changes.
+
+Tests first: generated real video/audio samples through production AVAssetWriter;
+short independently playable segments, source PTS/track-range verification,
+rollover/gaps/backpressure, append/finalize failure, interrupted tails, bounded
+active/finalizing segments and storage, symlink/tombstone rejection. Astra writes
+the contract before production; root records expected RED and verifies frozen
+implementation. No real acquisition is exposed until F/G pass.
+
+One next action: D author freezes tests for RED; F author proposes bounded
+orchestration split and test contract read-only. Native source use remains UNKNOWN.
+
 Earlier checkpoints remain historical.
 
 ---

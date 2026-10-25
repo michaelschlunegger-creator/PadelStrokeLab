@@ -200,8 +200,22 @@ nonisolated deinitializer. Astra applied the compiler-recommended `isolated
 deinit` modifier; cleanup and tests are unchanged. Native check3 uses a new
 result path and remains pending at this checkpoint. Neither failure is hidden.
 
+## C — foreground acquisition lifecycle verified locally
+
+After the isolated-deinitializer correction, root ran Xcode27 `xcodebuild test`,
+scheme `PadelStrokeLab`, iPhone15Pro/iOS27 simulator, camera tests only, signing
+and parallel testing disabled. **PASS, exit0,10tests in1suite,0.026seconds**;
+`/tmp/padel-video-motion-c-green-3.log` and matching `.xcresult`.
+Native acquisition stays disabled for simulator/test/fixture launches; tests
+exercise production lifecycle with hardware isolation and actual CoreMedia
+buffers/clocks. This is not physical camera/microphone, writer or video evidence.
+Production scope is602-line acquisition model,75-line preview and four usage
+description lines; with263test lines the package is944lines. Manifest:
+`261025_Video_Motion_C_Source_v1.0.sha256`. No navigation exposes capture yet.
+
 ## Current implementation limits
 
-No native camera capture, synchronisation, transport, replay, export/deletion or
-physical behavior for this feature has passed yet. The existing baseline CI is
+No physical camera capture, cross-device synchronisation/transport, playable
+recording/replay or export/deletion for this feature has passed yet. Local camera
+lifecycle tests passed; acquisition is not persisted media. The baseline CI is
 not feature evidence. Do not call this branch court-ready or merge-ready.
