@@ -62,6 +62,41 @@ physical sync proof, full-suite CI or independent committed-HEAD clearance.
 
 ## Current limits
 
+## A — local sidecar/annotation storage
+
+Tests-first checkpoint contained only two new test files and no A production
+paths. Root ran the same explicit toolchain/package/scratch-path with
+`--no-parallel --filter 'VideoMotion(Store|Annotation)Tests'`.
+Expected RED: compilation exit1 for missing `VideoMotionBinding` and
+`VideoMotionStoreStage`; output `/tmp/padel-video-motion-a-red.log`.
+Original test SHA-256 values:
+
+- Store: `fba93acdb82cc938512969ebf9cec7500347af7fdb224c2557b35febc57526e4`.
+- Annotations: `d6c701c6d26a3c0ca32e356dbfc2d72d3c6a6d0922bfd365c5ff0dbaaeff35b6`.
+
+Astra implemented three allowed production files. One genuine fixture error was
+corrected: independent bindings used the same fixed reserved recording ID, making
+unrelated sessions collide. The helper now supplies distinct UUIDs; an explicit
+duplicate-recording-ID rejection assertion was added. This strengthens the
+reservation rule. The initial source passed **25 tests/3suites**, exit0,
+0.304seconds, including A0, in `/tmp/padel-video-motion-a-green.log`.
+
+Before source freeze, self-review identified a link/unlink publication crash
+window that could leave a strict-reader-rejected hard link. Root authorized only
+the same-file atomic exclusive-rename correction and one competing-revision
+regression. No existing raw/filesystem helper was changed. Final source budget:
+879lines across three production and two test files, one risk domain.
+
+Root reran because those source/test inputs changed, using
+`--no-parallel --filter 'VideoMotion(Store|Annotation|Admission)Tests'`.
+Final result: **PASS, exit0, 26 tests in3suites, 0.326seconds**; output
+`/tmp/padel-video-motion-a-final-green.log`. Root reviewed the session/store source,
+including the existing sorted/no-follow file helpers. The retained first pass is
+not substituted for this changed-source result. Source manifest:
+`261025_Video_Motion_A_Source_v1.0.sha256`.
+
+## Current feature limits
+
 No native camera capture, synchronisation, transport, replay, export/deletion or
 physical behavior for this feature has passed yet. The existing baseline CI is
 not feature evidence. Do not call this branch court-ready or merge-ready.

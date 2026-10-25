@@ -72,9 +72,33 @@ recovery after interrupted writes, default unclassified/unsure attempts and
 immutable label histories/conflicts. Store capabilities must support later
 partial-media/tombstone integration without bypassing owner publication policy.
 
-One next action: Astra writes A's tests-first contract and bounded implementation;
-root verifies it before B. New runtime evidence remains UNKNOWN; no court or
-merge readiness is claimed.
+A local final result: **26 tests in3suites PASS**, exit0, 0.326seconds, including
+A0. Three production files and two tests total879lines. Expected RED, the genuine
+fixture-ID correction, initial25-test pass, atomic-publication correction and
+final26-test pass are retained separately in the implementation evidence.
+No native capture or camera/Watch control is exposed.
+
+## Active package B — timing and deterministic coordination
+
+Allowed production paths: new `VideoMotionTiming.swift`, `VideoMotionProtocol.swift`
+and the existing `VideoMotionSession.swift` in Core. Maximum three production
+paths/2,500total changed lines; split before the cap. Risk domains: timing/evidence
+integrity and device-control protocol. Pure models/reducer only; no native
+WatchConnectivity, camera, owner-authority mutation, raw writer or UI changes.
+
+Tests first: `VideoMotionTimingTests` covers four-time offset intervals, nonfinite
+and reversed times, epoch mismatches, RTT/coverage, drift/uncertainty and manual
+correction revisions without raw modification. `VideoMotionProtocolTests` covers
+strict bounded/versioned envelopes and owner/session/preparation binding,
+idempotent/conflicting duplicates, stale/reordered operations, actual-start facts
+before Go, terminal no-restart, Start/Stop deadlines and local continuation with
+unknown peer on link loss. Durable journal/sidecar integration must preserve A's
+immutable revisions and byte compatibility; a reducer result never proves native
+media or motion acquisition.
+
+One next action: Astra writes B's tests-first contract, then bounded implementation
+after root records expected RED; root verifies before native packages. New runtime
+evidence remains UNKNOWN; no court or merge readiness is claimed.
 
 Earlier checkpoints remain historical.
 
