@@ -94,26 +94,28 @@ public struct VideoMotionSession: Codable, Equatable, Sendable {
     public let retention: VideoMotionRetention
     public let interruptionReason: String?
     public let annotations: [VideoMotionAnnotation]
+    public let evidence: VideoMotionEvidence?
 
     public init(binding: VideoMotionBinding) throws {
         schemaVersion = 1; self.binding = binding; revision = 1; previousDigest = nil
-        retention = .reserved; interruptionReason = nil; annotations = []
+        retention = .reserved; interruptionReason = nil; annotations = []; evidence = nil
         try validate()
     }
 
     private init(binding: VideoMotionBinding, revision: Int, previousDigest: String,
                  retention: VideoMotionRetention, interruptionReason: String?,
-                 annotations: [VideoMotionAnnotation]) throws {
+                annotations: [VideoMotionAnnotation], evidence: VideoMotionEvidence?) throws {
         schemaVersion = 1; self.binding = binding; self.revision = revision; self.previousDigest = previousDigest
         self.retention = retention; self.interruptionReason = interruptionReason; self.annotations = annotations
+        self.evidence = evidence
         try validate()
     }
 
     public func next(retention: VideoMotionRetention? = nil, interruptionReason: String? = nil,
-                     annotations: [VideoMotionAnnotation]? = nil) throws -> Self {
+                     annotations: [VideoMotionAnnotation]? = nil, evidence: VideoMotionEvidence? = nil) throws -> Self {
         let value = try Self(binding: binding, revision: revision + 1, previousDigest: digest,
             retention: retention ?? self.retention, interruptionReason: interruptionReason ?? self.interruptionReason,
-            annotations: annotations ?? self.annotations)
+                             annotations: annotations ?? self.annotations, evidence: evidence ?? self.evidence)
         try value.requireSuccessor(of: self)
         return value
     }
@@ -136,7 +138,12 @@ public struct VideoMotionSession: Codable, Equatable, Sendable {
               retention != .partial || interruptionReason != nil,
               retention != .reserved || interruptionReason == nil else { throw VideoMotionError.invalid("session snapshot") }
         if revision == 1 {
-            guard annotations.isEmpty, retention == .reserved else { throw VideoMotionError.invalid("initial session") }
+            guard annotations.isEmpty, evidence == nil, retention == .reserved else { throw VideoMotionError.invalid("initial session") }
+        }
+        if let evidence {
+            try evidence.validate()
+            guard evidence.scope.binding == binding else { throw VideoMotionError.integrity }
+            _ = try evidence.encoded()
         }
         let expected = try binding.digest
         var latest: [UUID: VideoMotionAnnotation] = [:]
@@ -162,6 +169,10 @@ public struct VideoMotionSession: Codable, Equatable, Sendable {
               previous.interruptionReason == nil || interruptionReason == previous.interruptionReason,
               previous.retention != .closed || retention == .closed,
               previous.retention != .partial || retention != .reserved else { throw VideoMotionError.conflict }
+        if let oldEvidence = previous.evidence {
+            guard let evidence else { throw VideoMotionError.conflict }
+            try evidence.requireSuccessor(of: oldEvidence)
+        }
     }
 
     public func encoded() throws -> Data {

@@ -34,3 +34,21 @@ bootstrap recovery/cleanup remains a G prerequisite before hardware exposure.
 Root schedules A1 after E's pending test contract is implemented, because SwiftPM
 compiles all test files and the new E symbols are not present yet. C/E may proceed
 without exposing capture; A1 must pass before G/H and real collection.
+
+## Follow-up source checkpoint — camera and retained access
+
+Independent non-Astra review-only assessment of committed `ce9fde8` relative to
+`c3395e7`: **no scoped blocking findings**. The reviewer did not edit files or
+rerun builds. Scope: retained-access correction, foreground camera lifecycle,
+preview and four camera/microphone usage-description lines.
+
+The review checked exact-live versus retained permissions, normal End,
+withdrawal/deletion fences, source PTS and host-clock brackets, inactive preview
+microphone, serialized acquisition, background/interruption closure, native
+fixture guards and no automatic restart. Local evidence is Core77tests and
+camera10tests; simulator hardware isolation does not establish physical capture.
+
+Integration constraint for D/F: acquisition callbacks are not successful writer
+appends. Only actual accepted video/audio PTS may support phone startup evidence;
+bound writer buffering and drain/reject an old generation before finalization.
+This is an intermediate source review, not final G6 or court/merge clearance.

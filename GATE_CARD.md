@@ -231,6 +231,102 @@ implementation. No real acquisition is exposed until F/G pass.
 One next action: D author freezes tests for RED; F author proposes bounded
 orchestration split and test contract read-only. Native source use remains UNKNOWN.
 
+## F split — orchestration test preparation
+
+Director ratifies a bounded split to keep native orchestration reviewable:
+
+- F1 phone coordinator: new `PadelStrokeLab/PhoneVideoMotionCoordinator.swift`,
+  existing `PracticeSetupModel.swift` and `RecordingLibraryModel.swift`.
+- F2 Watch coordinator: new Watch `WatchVideoMotionCoordinator.swift`, existing
+  `WatchRecorderModel.swift`, `WatchRecordingServices.swift`,
+  `OwnerCaptureCoordinator.swift` and Watch `ContentView.swift`.
+- F3 presentation: phone `PracticeSetupView.swift`, `VideoCaptureView.swift`,
+  `ContentView.swift`.
+
+Each is independently capped at2,500total lines, at most the listed production
+paths and two high-risk domains. The two added seams only authorize serialized
+current-authority checks and durable readiness observations; they cannot weaken
+existing owner/Health/raw-engine behavior. F1 tests may be authored now; production
+depends on D's verified writer interface. No feature navigation exposure until
+G retention/deletion gates pass. F3 follows working F1/F2/G.
+
+F1 test contract: current accepted scope under owner publication fences; foreign,
+stale/withdrawn/deleted scope rejection; actual appended both-track evidence,
+not acquisition callbacks; correlated duplicate/late requests; arm expiry and
+foreground closure; independent finite local recording through peer loss;
+Stop/finalization generation safety; spaced clocks with startup/Stop coverage;
+no native camera or duplicated Store authority in fixtures. Test real stores
+with isolated capture/writer hardware. F2 adds completed per-stream motion chunks
+plus post-inspection engine barrier/current-generation proof before countdown,
+native failure after rename, no Pause, local cutoff/120-second limit and unchanged
+ordinary motion-only/Health regressions. F3 adds phone-primary mode/preview,
+truthful waiting/partial labels, Watch minimal controls and theme/accessibility.
+
+Independent source review at `ce9fde8` found no scoped C/A1 blockers. D must derive
+readiness from successful writer appends; acquisition callbacks are insufficient.
+Final exact-head G6 and real paired-device proof remain pending.
+
+## F0 — bounded evidence schema before native orchestration
+
+Director ratifies F0: new Core `VideoMotionEvidence.swift` (or equivalently named
+journal model) plus `VideoMotionSession.swift` only, maximum two production paths
+and2,500total lines. Domains: retained timing/evidence and control identity.
+No Store edits overlap D. Optional versioned evidence must preserve historical
+nil-evidence bytes and raw recordings, bound observations/receipts and canonical
+decoding, reject conflicting duplicate IDs and terminal revival, and retain
+explicit source/runtime epochs. Existing revision publication stores it; no
+unbounded opaque JSON or separate ad-hoc writer authority.
+
+Tests first: canonical/historical round-trip, bounds/nonfinite rejection,
+owner/session/preparation and run/source clock identities, duplicate/conflicting
+operations, terminal persistence across reconstruction, source-clock bridges,
+clock/Go/finalization evidence and immutable successor history. Native facts are
+recorded evidence, not proof supplied by the schema alone.
+
+Independent SDK inspection verified WatchOS27 `CMLogItem.h` explicitly documents
+Mach absolute timestamps. F2 must bracket a scaled `mach_absolute_time` read with
+runtime uptime reads and preserve the resulting offset interval, conversion
+rounding uncertainty and both epochs. Recheck around acquisition/cutoff and
+periodically; unknown/discontinuous coverage blocks linked-alignment claims.
+Do not assume numeric identity, zero offset or extrapolate unsupported coverage.
+
+D/F0 tests-first RED is recorded. D:8native tests/319lines, build-for-testing
+exit65 for missing writer/media APIs; F0:6Core tests/126lines, Swift compile
+exit1 for missing evidence/Session APIs. Original SHA-256 and logs retained in
+implementation evidence. D and F0 production are released within their disjoint
+allowlists. D owns Store/Media/Capture/Writer; F0 owns Evidence/Session. Authors
+do not run builds; root verifies frozen sources. No real acquisition exposure.
+
+F0 final local result: **87tests in10suites PASS**, exit0,6.310seconds, all
+VideoMotion plus connectivity/preparation regressions. Native-to-runtime interval
+conversion fixed the independently challenged nonzero-offset case; frozen old
+canonical bytes remain identical. Manifest/every failed checkpoint retained.
+Two production paths plus243test lines total approximately531changed lines.
+This records evidence only; no native camera/Watch control is exposed.
+
+## Active B1 — native bridge-aware live readiness
+
+Allowed production paths: Core `VideoMotionProtocol.swift` and
+`VideoMotionEvidence.swift` only, maximum two production paths/2,500total lines.
+Domains: source timing/evidence and control readiness. Add bounded optional
+source/runtime bridges to native phone/motion facts; nil preserves historical
+canonical bytes but cannot grant live countdown. Keep native timestamps intact.
+Reuse F0 interval validation for the reducer and history. Separately retained
+bridges remain valid historical evidence; conflicting supplied bridges fail.
+No raw codecs, transport implementation, Health, owner authority or UI changes.
+
+Tests first: nonzero-offset valid full intervals permit exactly one countdown;
+missing/foreign/wrong-epoch/invalid bridges fail; midpoint-only coverage fails
+when either interval endpoint is outside coverage; native values/legacy bytes
+round-trip unchanged; duplicate/stale/terminal/heartbeat/local-limit regressions.
+Old synthetic success fixtures must supply explicit bridges, preserving their
+assertions. E tests may verify bridge wire round-trip without E production edits.
+F1 continues as a draft until D/B1 are stable. D owns Media/Store/Writer/Capture;
+B1 owns Protocol/Evidence. Root builds only frozen shared Core sources.
+
+One next action: D finishes/freeze media storage; B1 freezes tests for RED before
+production. F1 follows verified D/B1.
+
 Earlier checkpoints remain historical.
 
 ---

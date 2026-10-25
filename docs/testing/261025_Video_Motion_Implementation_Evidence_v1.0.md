@@ -213,6 +213,95 @@ Production scope is602-line acquisition model,75-line preview and four usage
 description lines; with263test lines the package is944lines. Manifest:
 `261025_Video_Motion_C_Source_v1.0.sha256`. No navigation exposes capture yet.
 
+## D / F0 — tests-first compilation evidence
+
+D: new319-line `PhoneVideoWriterTests.swift`,8tests, SHA-256
+`0b822b5cb9c85b27dea7b9aa4173eb9c30d3e299c52612a42e8d893131eb6743`.
+Root Xcode27 `build-for-testing`, generic iOS Simulator, writer tests only,
+signing disabled: **expected RED,exit65**, missing
+`VideoMotionMediaConfiguration`/`PhoneVideoWriter`/`PhoneVideoWriterFaults`;
+`/tmp/padel-video-motion-d-red.log`. Actual pixel/PCM fixtures will exercise the
+real encoder/decoder without camera/microphone hardware after implementation.
+
+F0: new126-line `VideoMotionEvidenceTests.swift`,6tests, SHA-256
+`df8590c0dd28f6c0e927199bc1f78d67d887cd25444e3f1ac22e5a5d6c944de7`.
+Root Xcode27 Swift Core test command, `--no-parallel --filter
+VideoMotionEvidenceTests`: **expected RED,exit1**, missing evidence types and
+Session evidence APIs; `/tmp/padel-video-motion-f0-red.log`.
+No D/F0 production changes existed for those respective RED runs. Director
+releases disjoint bounded D/F0 production afterwards; native verification waits
+for both source freezes. These are compilation contracts, not test execution.
+
+## D / F0 — independent test-contract challenge
+
+Independent review required decoded frame/sample coverage against known fixture
+inputs, initial per-track append failure/missing-track cases, a positive Go path,
+invalid native bridge provenance and a frozen pre-evidence byte fixture.
+D tests were expanded to382lines/10tests without weakening prior assertions;
+SHA-256 `cf5f8bdf51718cede9899e7a423700550bfe862ab989e62f39e7ae4ceeca771b`.
+The original RED/SHA remains retained. No D production file existed then.
+
+A further native build-for-testing attempt failed **exit65** before reaching D
+tests because concurrently written, unfinished F0 `VideoMotionEvidence.swift`
+had a missing return in its clock-range getter. Log:
+`/tmp/padel-video-motion-d-red-2.log`. This is an unrelated failed compile, not
+D RED proof or a failed native test. Root will wait for both authors' explicit
+source freezes before further shared native verification. The expanded D test
+contract was defined before D implementation; the original missing-API RED is
+unchanged. No absence-only retry is required.
+
+## F0 — expanded contract and historical fixture
+
+F0 expanded to241lines/10tests, SHA-256
+`837c96b74de137695ecdea10e0aab909129c7e1949e0b3dea135fb6f999959b1`,
+before the related semantic correction. New cases include successful Go,
+nonzero source/runtime offsets, missing prerequisites, terminal protection and
+a byte fixture generated from committed `ce9fde847bf158e0df3af219edf442c0780b0d77`.
+The isolated old-source `HistoricalFixture` executable used Xcode27 Swift, its
+own `/tmp` archive/scratch, and exited0. Log:
+`/tmp/padel-video-motion-f0-historical-ce9fde8-build.log`. Old Session source SHA
+`152819b7909f67e9569b99b407bd37cdd28ee8c1e99193ebcbc824be40bebd08`;
+2216fixture bytes SHA `967a0c24892713490b39c551e3c1a40dbd88f8d4a4259bff8c508ab1ff752775`.
+The fixed bytes/provenance are embedded in the test; no owner recording is used.
+
+Root expanded F0 run2 exited1 at test compilation: throwing expressions combined
+inside SwiftTesting expectations require precomputed values/simple assertions.
+No semantic tests ran. Log `/tmp/padel-video-motion-f0-red-2.log` is retained.
+The unrelated initial getter compiler defect had been corrected without changing
+behavior. D Core media compiled in run2; root requested a test-only syntax fix
+before exercising the new positive/nonzero-offset paths.
+
+## F0 — semantic RED verified
+
+After test-only SwiftTesting syntax corrections,243-line test SHA-256 is
+`1a16fe94f7c22e68d294da832233b69829d1b8bdab3a89155c8f4953d5776351`.
+Root run3 compiled and executed: **10tests,9passed/1expected semantic failure,
+exit1,1.179seconds**, `/tmp/padel-video-motion-f0-red-3.log`.
+The failing positive test is
+`supportedGoConvertsMeasuredNonzeroSourceOffsetsBeforeMappingCoverage`:
+the first Evidence implementation checked native source timestamps directly
+against runtime mapping coverage instead of applying the retained source-clock
+bridge. The positive zero-offset/missing-fact tests, terminal/identity tests and
+frozen historical byte fixture passed. Director releases only the targeted
+bridge-consumption correction; assertions remain unchanged.
+
+## F0 — retained timing/control history verified
+
+Astra corrected only the evidence coverage gate: intersect same-domain source
+bridges and convert native times into outward-rounded runtime intervals; both
+interval endpoints require supported cross-device coverage. No midpoint or
+zero-offset substitution. Root repeated the VideoMotion/connectivity/preparation
+regression command: **PASS,exit0,87tests in10suites,6.310seconds**,
+`/tmp/padel-video-motion-f0-green.log`. Tests were unchanged after semantic RED.
+Two production paths plus243test lines total approximately531changed lines.
+Manifest: `261025_Video_Motion_F0_Source_v1.0.sha256`.
+
+Integration finding: the older B live reducer needs the same bridge-aware gate.
+Director ratifies separate B1 before orchestration/exposure, with optional
+backwards-compatible native-fact bridge fields, mandatory supported bridge
+evidence for live Go, and shared interval validation. F0 alone is not live
+combined-start proof. D Core storage is released after this frozen-source pass.
+
 ## Current implementation limits
 
 No physical camera capture, cross-device synchronisation/transport, playable
