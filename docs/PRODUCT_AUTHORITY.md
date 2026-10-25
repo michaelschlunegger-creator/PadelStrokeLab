@@ -1,6 +1,49 @@
 # Product authority
 
-Updated 23 October 2026.
+Updated 25 October 2026.
+
+## Latest owner authorization — video and motion recording with evidence review, 25 October 2026
+
+The owner approved the direction in [issue #4](https://github.com/michaelschlunegger-creator/PadelStrokeLab/issues/4)
+and explicitly instructed: “implement first that we can do the video and motion
+recording and analysis.” The first increment is optional iPhone camera/audio
+capture controlled by explicit Watch Start/Stop, retained wrist-motion data,
+truthful combined status and iPhone video/motion replay with editable reference
+labels. The player positions the unlocked, foreground camera before walking onto
+court. A successful message is not proof that either recorder actually started.
+
+The owner additionally confirmed: “yes, just keep recording to the device.”
+Video/audio stays on iPhone and motion stays on Watch until the existing verified
+paired-phone transfer. No automatic cloud upload is introduced. Once actually
+started, temporary link loss preserves each device's local capture within its
+limit; counterpart status becomes unknown and combined completion remains
+unverified until reconciliation. A lost link must never replay a stale Start.
+
+This authorizes preparation and implementation of that focused product scope
+through the architecture, risk, test and independent-review gates. Technical
+defaults within it may be ratified by the Project Director; any major unresolved
+product/privacy decision must return to the owner. Preserve ordinary motion-only
+recording, owner-only acquisition, historical raw data and the existing short-set
+limits. New capture/sync work starts only after the architecture and tests are
+defined and independently challenged. No merge/release, paid service, third-party
+recording upload or readiness claim is authorized by this amendment.
+
+Spoken clean/mishit/unsure observations are recorded in the original audio for
+review, not automatically trusted as contact times or quality truth. Mixed
+forehand/backhand examples require per-attempt type and contact annotations;
+current set-level intended-shot metadata must not be misrepresented as detected
+shots. Analysis initially means inspectable video and measured motion, with
+uncertainty and manual correction. Automatic transcription/assignment, technique
+scores, Apple Intelligence explanations, external AI and professional reference
+imports remain later bounded increments after reliable capture/replay and their
+own evidence/consent gates. Professional footage is visual reference only and
+requires rights appropriate to its use; uploading clips does not itself train a
+validated model.
+
+Use Astra Extra High for foundational architecture and production/test code, and
+non-Astra verification/documentation plus an independent review-only reviewer.
+The detailed implementation contract is being prepared at
+`docs/architecture/261025_Watch_Controlled_Video_Motion_Plan_v1.0.md`.
 
 ## Latest owner amendment — show only relevant setup instructions, 23 October 2026
 

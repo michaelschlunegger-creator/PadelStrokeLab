@@ -1,4 +1,63 @@
-# Current checkpoint — relevant setup instructions only
+# Current checkpoint — Watch-controlled video/motion architecture
+
+25 October 2026. The owner now explicitly authorizes implementing optional
+Watch-controlled iPhone video/audio plus wrist motion and phone evidence review.
+The checked clean baseline is `feature/guided-padel-setup` at
+`2e6e4df46040c48dd2aaae0e19c3bdfbbad7dde8`, matching its fetched upstream
+(ahead/behind 0/0). Draft PR #3 remains open against
+`feature/watch-recording-storage`; all four exact-head CI checks passed in run
+39938807875. `origin/main` remains the initial commit, so it is not the app-code
+baseline; no merge or source-history rewrite is implied. Prior physical installs
+are not evidence of this candidate's recording or any new video feature.
+
+Xcode 27.0 (27A266a) and both OS27 SDKs are verified with the explicit
+`DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`. An initial unqualified
+version probe failed because the global selection is CommandLineTools; it is
+retained as configuration evidence, not an app build failure or concealed retry.
+
+Scope: local owner-only short recordings, combined start/stop acknowledgements,
+clock/alignment evidence, retained partial assets, synchronised phone replay and
+editable forehand/backhand/contact labels. Non-goals: automatic quality grades,
+cloud upload, guests, professional imports, GPS and longer sets. Capture,
+connectivity, timing, storage and permissions require bounded sequential packages.
+
+The corrected [Astra plan](docs/architecture/261025_Watch_Controlled_Video_Motion_Plan_v1.0.md)
+has SHA-256 `ed74133294a6beee0ff1045e7bd9c6e9a37819bcc70a15a1819814e334394fad`.
+The separate non-Astra reviewer returned **CLEARED FOR DIRECTOR RATIFICATION**;
+both initial blockers (mixed admission and completed-writer proof) are resolved.
+The [review and director ratification](docs/reviews/261025_Video_Motion_Architecture_Review_v1.0.md)
+authorize sequential bounded implementation under the owner's explicit scope
+approval. Working branch: `feature/watch-video-motion`, intentionally stacked on
+the current app rather than initial-only `main`. No existing PR is merged.
+
+## Active package A0 — versioned mixed-mode admission
+
+Allowed production paths: `RecordingDrill.swift`, `PracticeSetupMessages.swift`,
+`OwnerPreparationMessages.swift`, `OwnerRecordingContext.swift` under
+`Packages/PadelCore/Sources/PadelCore/`, plus `PadelStrokeLab/PracticeSetupModel.swift`
+and `PracticeSetupView.swift`. Maximum six production files and 2,500 total new
+or changed lines for this package; split before exceeding either bound. Risk
+domains: owner preparation/admission and identity/schema compatibility. Existing
+motion/Health/transport/storage codecs, signing, OS versions and normal-mode
+forehand/backhand rules are forbidden changes. New capture is not exposed yet.
+
+Tests first: new `VideoMotionAdmissionTests` covers mixed-mode round-trip and
+acceptance, mixed metadata rejected under legacy preparation, mismatched protocol,
+unsupported versions, mode changes requiring fresh identity/acceptance, stale
+acceptance and retained historical canonical bytes/digests. Existing
+`OwnerRecordingContextTests`, `OwnerPreparationMessagesTests`, preparation transport
+and phone setup tests remain regressions. The author writes the failing contract
+before production changes; ordinary verification runs outside the Astra author.
+
+One next action: implement/test A0, then proceed to A only after its targeted
+verification passes. Runtime evidence for new capture remains UNKNOWN; no court
+or merge readiness is claimed.
+
+Earlier checkpoints remain historical.
+
+---
+
+# Previous checkpoint — relevant setup instructions only
 
 23 October 2026. Branch `feature/guided-padel-setup`, baseline
 `e38f84fa8aa8e65426b1e52317c2a40ea13c4c20`. The owner explicitly requests a short
