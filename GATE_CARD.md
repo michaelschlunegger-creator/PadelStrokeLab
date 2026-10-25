@@ -49,9 +49,32 @@ acceptance and retained historical canonical bytes/digests. Existing
 and phone setup tests remain regressions. The author writes the failing contract
 before production changes; ordinary verification runs outside the Astra author.
 
-One next action: implement/test A0, then proceed to A only after its targeted
-verification passes. Runtime evidence for new capture remains UNKNOWN; no court
-or merge readiness is claimed.
+A0 local result: four Core production files changed, 262 total added/deleted lines
+including tests. Expected tests-first compilation RED is retained. Root's targeted
+GREEN plus compatibility regressions passed **117 tests in7suites**, exit0,
+94.628seconds; new admission suite passed. No native capture/UI is exposed.
+See [implementation evidence](docs/testing/261025_Video_Motion_Implementation_Evidence_v1.0.md).
+This does not clear final CI, independent committed-source or physical gates.
+
+## Active package A — durable local sidecars and attempts
+
+Allowed production paths: new `VideoMotionSession.swift`, `VideoMotionStore.swift`
+and `VideoMotionAnnotations.swift` in `Packages/PadelCore/Sources/PadelCore/`.
+Maximum three production files and2,500total changed lines; split before exceeding
+the bound. Risk domain: persistence/data integrity. No native camera, transport,
+Health, raw codec or UI changes. Existing owner/practice/recording identities and
+later whole-practice deletion fences are binding; A alone does not permit capture.
+
+Tests first: `VideoMotionStoreTests` and `VideoMotionAnnotationTests` cover strict
+bounded schema/identity decoding, safe atomic compare/revision publication,
+historical compatibility, malformed/corrupt input, symlink/traversal rejection,
+recovery after interrupted writes, default unclassified/unsure attempts and
+immutable label histories/conflicts. Store capabilities must support later
+partial-media/tombstone integration without bypassing owner publication policy.
+
+One next action: Astra writes A's tests-first contract and bounded implementation;
+root verifies it before B. New runtime evidence remains UNKNOWN; no court or
+merge readiness is claimed.
 
 Earlier checkpoints remain historical.
 

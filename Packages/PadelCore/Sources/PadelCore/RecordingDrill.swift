@@ -1,3 +1,15 @@
+/// Explicit versioned acquisition intent. Absence preserves the original motion-only contract.
+/// This is preparation metadata, not permission to start either device or proof of video capture.
+public enum RecordingCaptureMode: String, Codable, Equatable, Sendable {
+    case videoMotionMixedReferenceV1
+
+    public var protocolVersion: String {
+        switch self {
+        case .videoMotionMixedReferenceV1: "owner-video-motion-mixed-reference-1"
+        }
+    }
+}
+
 /// Manual intent for new short training sets. This is not a detected stroke or contact label.
 /// Historical recording metadata remains free-form and is never migrated through this vocabulary.
 public enum RecordingDrill: String, CaseIterable, Identifiable, Sendable {
