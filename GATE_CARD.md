@@ -96,9 +96,60 @@ unknown peer on link loss. Durable journal/sidecar integration must preserve A's
 immutable revisions and byte compatibility; a reducer result never proves native
 media or motion acquisition.
 
-One next action: Astra writes B's tests-first contract, then bounded implementation
-after root records expected RED; root verifies before native packages. New runtime
-evidence remains UNKNOWN; no court or merge readiness is claimed.
+B final local result: **37 tests in5suites PASS**, exit0,0.349seconds, all current
+VideoMotion suites. Two production files/732total lines including unchanged tests;
+A canonical data stays unchanged. B is released for native adapters. Pure reducer
+facts are not native acquisition proof, and a capturing phase is not combined Go.
+The32-observation timing bound requires startup/stop reserves and spaced probes;
+2-second operational heartbeats are separate. Manual alignment revisions are H.
+
+## Active package C — native camera acquisition
+
+A separate Astra author prepares C so it can proceed alongside independent E
+after B passes. Allowed production scope remains new
+`PadelStrokeLab/PhoneVideoCapture.swift`, `VideoCaptureView.swift` and camera/mic
+usage-description keys only in `PadelStrokeLab.xcodeproj/project.pbxproj`.
+Maximum three production paths/2,500total changed lines; two risk domains:
+camera/microphone acquisition/permission and capture lifecycle/concurrency.
+C production is now released after B's37-test pass and C's expected tests-first
+native compilation RED (10tests; missing C APIs, exit65). See implementation
+evidence. C remains unreachable through application navigation until F/G.
+
+Tests first in `PadelStrokeLabTests/PhoneVideoCaptureTests.swift`: denied permissions
+never acquire; preview never adds a microphone; late permission replies after Close
+cannot restart; capture requires active foreground/preview/both permissions;
+background interruption does not auto-resume; finite local deadline; stale-generation
+samples rejected; actual CMSampleBuffer PTS and CoreMedia host-clock conversion;
+invalid/discontinuous clocks never confirm acquisition; exit restores idle timer.
+Hardware seams isolate native acquisition only; actual buffers/clock conversion
+are exercised without camera or microphone use during test/fixture launches.
+
+Director-ratified technical API: MainActor presentation model with one serial
+native session/sample worker, synchronous bounded sink (no Task per buffer),
+supported rear1080p30 format, camera-only preview, microphone input added only
+at explicit Start, and finite132-second phone bound including startup allowance.
+Capture facts remain distinct from D writer acceptance/durability. New view stays
+unreachable from app navigation until orchestration/deletion/export gates pass.
+
+## Active package E — independent sole-delegate video routing
+
+E may proceed alongside C because allowed paths do not overlap and both depend
+on verified B. Allowed production paths: Core `RecordingConnectivity.swift` and
+new `VideoMotionTransport.swift`, maximum two production paths/2,500total changed
+lines. Risk domains: WatchConnectivity and concurrency. Keep the sole WCSession
+delegate, existing owner/raw receipt/deletion routes, capacity/drain semantics
+and no queued/background Start. No native capture or owner-authority changes.
+
+Tests first: `VideoMotionTransportTests` verifies bounded distinct envelope routing,
+request/reply correlation and sender-role checks, full capacity, duplicate/late
+callbacks, timeout/cancel/reachability, stale operation/epoch rejection, counted
+background drains and no offline Start replay. Existing RecordingConnectivity,
+OwnerPreparationTransport and owner receipt/deletion transport tests remain
+regressions. Native hardware defaults stay inaccessible to synthetic fixtures.
+
+One next action: C author implements the released native package; separate Astra
+author defines E's tests, then implements after root records expected RED. Root
+verifies each frozen source separately before D/F. No court/merge readiness.
 
 Earlier checkpoints remain historical.
 

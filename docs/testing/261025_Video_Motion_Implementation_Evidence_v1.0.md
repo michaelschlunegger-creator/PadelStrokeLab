@@ -60,8 +60,6 @@ completed normally with exit0; no retry or repeated GREEN run occurred.
 These are pure Core/local compatibility results, not camera/Watch behavior,
 physical sync proof, full-suite CI or independent committed-HEAD clearance.
 
-## Current limits
-
 ## A — local sidecar/annotation storage
 
 Tests-first checkpoint contained only two new test files and no A production
@@ -95,7 +93,49 @@ including the existing sorted/no-follow file helpers. The retained first pass is
 not substituted for this changed-source result. Source manifest:
 `261025_Video_Motion_A_Source_v1.0.sha256`.
 
-## Current feature limits
+## B — timing and pure control protocol
+
+Before production, only new `VideoMotionTimingTests.swift` and
+`VideoMotionProtocolTests.swift` were present. Expected RED command used
+`--no-parallel --filter 'VideoMotion(Timing|Protocol)Tests'`; exit1 for missing
+`VideoMotionClockExchange`/`VideoMotionClockMapping`, retained in
+`/tmp/padel-video-motion-b-red.log`. Original test SHA-256:
+
+- Timing: `a807fcee390d1d730972c32d675fad5377b058d808dcdab68d13841cb5c8c688`.
+- Protocol: `be046d1c427106b6ebf35b3fcc2162dc290cc8df258e33ed20144e3883b9b301`.
+
+Astra added two production files, 732lines including unchanged tests; no A model
+or canonical bytes changed. Root ran the same toolchain/package/scratch-path with
+`--no-parallel --filter 'VideoMotion.*Tests'`: **PASS, exit0, 37 tests in5suites,
+0.349seconds**, `/tmp/padel-video-motion-b-green.log`. Root reviewed the timing
+and reducer source. Source manifest: `261025_Video_Motion_B_Source_v1.0.sha256`.
+
+The protocol is pure; native adapters still must validate current authority,
+persist receipts/facts and prove appended media/completed motion writes. Its
+capturing phase alone is not combined readiness. Clock observations are bounded
+to32; integration must reserve startup/stop observations and use a sufficiently
+spaced periodic probe cadence rather than the2-second status heartbeat cadence.
+Mapping requires3observations spanning at least5seconds and refuses extrapolation.
+Run epochs differ from raw/native clock domains and require explicit conversion.
+Manual alignment revisions remain H scope; no linked replay is implemented yet.
+
+## C — tests-first native camera checkpoint
+
+Only new `PadelStrokeLabTests/PhoneVideoCaptureTests.swift` was added for C;
+SHA-256 `dad255509647624c0f634ce0aac2717b2091d84d44a88965f506ac72b205d115`.
+It contains10tests. Root used Xcode27 `build-for-testing`, project
+`PadelStrokeLab.xcodeproj`, scheme `PadelStrokeLab`, generic iOS Simulator,
+DerivedData `/tmp/padel-video-motion-native`, only
+`PadelStrokeLabTests/PhoneVideoCaptureTests`, signing disabled.
+
+Result: **expected RED, exit65 at compilation** for missing
+`PhoneVideoIdleTimer`, `PhoneVideoCaptureHardware`, `PhoneVideoFormat` and
+`PhoneVideoSample`; output `/tmp/padel-video-motion-c-red.log`.
+This is not test execution, native acquisition evidence or a simulator failure.
+No C production changes existed at that checkpoint. B's shared library compiled
+for the native build; full platform verification remains required later.
+
+## Current implementation limits
 
 No native camera capture, synchronisation, transport, replay, export/deletion or
 physical behavior for this feature has passed yet. The existing baseline CI is
