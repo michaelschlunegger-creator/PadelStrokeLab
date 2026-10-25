@@ -54,6 +54,20 @@ public struct VideoMotionBinding: Codable, Equatable, Sendable {
               identity.watchEpoch == authority.watchInstallationEpoch else { throw VideoMotionError.integrity }
     }
 
+    /// Retained evidence remains editable after normal End or HR-only changes. A withdrawal
+    /// permanently separates older evidence from later reconsent; new capture uses requireCurrent.
+    func requireRetainedAccess(_ current: OwnerChannelSnapshot) throws {
+        guard let authority = current.authority, !current.motionAccessBlocked,
+              authority.isCollectionAllowed, authority.policyDigest == OwnerPracticePolicy.digest,
+              authority.policyDigest == preparation.authority.policyDigest,
+              authority.revision >= preparation.authority.revision,
+              authority.consentGeneration >= preparation.authority.consentGeneration,
+              authority.withdrawalBarrier == preparation.authority.withdrawalBarrier else {
+            throw OwnerPracticeError.staleAuthority
+        }
+        try requireSameOwner(authority)
+    }
+
     public func encoded() throws -> Data {
         try validate()
         return try OwnerCanonical.encode(self, domain: "PSLVideoMotionBinding1", limit: Self.maximumBytes)

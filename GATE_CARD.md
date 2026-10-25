@@ -196,6 +196,18 @@ C's native check has ended, so A1's two-path production correction is released.
 One next action: Astra implements A1, then root verifies frozen A1 Core and the
 corrected C native package. D must not edit Store until A1 freezes/passes.
 
+A1 local result: **77tests in9suites PASS**, exit0,5.141seconds, including all
+VideoMotion, RecordingConnectivity and OwnerPreparationTransport tests. Fresh
+retained permissions work after normal End without weakening live admission or
+withdrawal/deletion fences. Two production paths/172addedlines including tests;
+exact source manifest and evidence recorded. D may use this frozen Store after
+C native verification passes.
+
+C native check2 failed at compile (exit65): MainActor property access from
+nonisolated deinit. Astra changed only `isolated deinit`; native check3 is
+running with a fresh result path. No native pass or capture exposure is claimed.
+F is read-only planning/test-contract preparation until its dependencies pass.
+
 Earlier checkpoints remain historical.
 
 ---

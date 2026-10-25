@@ -180,6 +180,26 @@ expected compile **RED, exit1** for missing `readRetained`/`publishRetained` API
 that checkpoint. It preserves exact-live admission and adds separate retained
 permissions; full withdrawal/deletion remains blocking.
 
+## A1 — retained access verified
+
+Root ran Xcode27 Swift Core tests with `--no-parallel` and filter
+`VideoMotion.*Tests|RecordingConnectivityTests|OwnerPreparationTransportTests`:
+**PASS, exit0,77tests in9suites,5.141seconds**, local
+`/tmp/padel-video-motion-a1-green.log`. This includes five tests covering normal
+End/HR changes, withdrawal/reconsent, foreign/stale authority, CAS/deletion and
+real pending restrictions. Live admission stays exact-original; retained edits
+use a fresh channel snapshot. Two production paths and one test add172lines.
+Source manifest: `261025_Video_Motion_A1_Source_v1.0.sha256`.
+
+## C — second implementation build retained as failed evidence
+
+After the Observation correction, native camera check2 failed **exit65 at
+compilation**, `/tmp/padel-video-motion-c-green-2.log` and matching `.xcresult`.
+No tests executed. Swift27 rejected MainActor properties accessed from the
+nonisolated deinitializer. Astra applied the compiler-recommended `isolated
+deinit` modifier; cleanup and tests are unchanged. Native check3 uses a new
+result path and remains pending at this checkpoint. Neither failure is hidden.
+
 ## Current implementation limits
 
 No native camera capture, synchronisation, transport, replay, export/deletion or

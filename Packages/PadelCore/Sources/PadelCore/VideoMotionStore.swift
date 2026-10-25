@@ -131,6 +131,23 @@ public final class VideoMotionStore {
     public func publish(_ value: VideoMotionSession, expectedDigest: String,
                         authority: OwnerPracticeIdentity) throws {
         try value.binding.requireCurrent(authority)
+        try publishRevision(value, expectedDigest: expectedDigest)
+    }
+
+    /// The caller supplies a freshly read channel snapshot under its serialized owner/publication
+    /// fences. This retained-access check does not authorize native capture or restore preparation.
+    public func readRetained(_ binding: VideoMotionBinding, current: OwnerChannelSnapshot) throws -> VideoMotionSession {
+        try binding.requireRetainedAccess(current)
+        return try read(binding)
+    }
+
+    public func publishRetained(_ value: VideoMotionSession, expectedDigest: String,
+                                current: OwnerChannelSnapshot) throws {
+        try value.binding.requireRetainedAccess(current)
+        try publishRevision(value, expectedDigest: expectedDigest)
+    }
+
+    private func publishRevision(_ value: VideoMotionSession, expectedDigest: String) throws {
         let session = try openSession(value.binding)
         defer { Darwin.close(session) }
         let previous = try load(value.binding, directory: session)
