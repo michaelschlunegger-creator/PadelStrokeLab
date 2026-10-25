@@ -151,6 +151,51 @@ One next action: C author implements the released native package; separate Astra
 author defines E's tests, then implements after root records expected RED. Root
 verifies each frozen source separately before D/F. No court/merge readiness.
 
+E expected tests-first RED is recorded: Core compilation exit1 for missing
+VideoMotionTransportScope/Adapter/Request; test-file SHA-256
+`277f1a6e1129304d01bc5af08c2ab4650c6e9b2323f54c09bdaf015013e1203f`, local
+`/tmp/padel-video-motion-e-red.log`. E production is now released within its
+original two-file budget.
+
+E final local result: **72tests in8suites PASS**, exit0,5.014seconds, all current
+VideoMotion plus existing RecordingConnectivity/OwnerPreparationTransport coverage.
+Two production paths/753total lines including unchanged tests. Native transport
+and end-to-end capture remain UNKNOWN. Source is frozen for publication.
+
+C first native build failed at compile on three multi-binding Observation
+declarations, exit65; failed log/result/source manifest retained. Astra corrected
+only those declarations. C source/tests are frozen pending a new native check
+after A1 Core correction freezes; no camera test pass is claimed yet.
+
+## Active A1 — retained edits after ordinary practice End
+
+The [independent scoped source review](docs/reviews/261025_Video_Motion_Foundation_Source_Review_v1.0.md)
+found one retained-update permission defect at frozen `c2c7089`: exact capture
+revision checks incorrectly block completed-session edits after normal retirement.
+C/E may continue without capture exposure; A1 must pass before G/H. It follows E
+so its new tests can compile without E's currently absent planned APIs.
+
+Allowed production paths: Core `VideoMotionSession.swift`, `VideoMotionStore.swift`;
+new tests `VideoMotionRetainedAccessTests.swift`. Maximum two production files and
+2,500total changed lines; domains current owner permission and persistence integrity.
+Keep create/live publish exact-original. Separate retained access uses actual
+current channel snapshot, same owner/epochs/current policy, allowed collection,
+revision/consent-generation at least captured values, unchanged withdrawal barrier,
+no motion-access block, plus existing tombstone/CAS checks. It does not require HR
+permission or an active preparation. G/H still recheck fresh publication fences.
+
+Tests first with real retirePractice/advance/HR/withdraw/reconsent mutations:
+retained labels allowed after ordinary End and HR toggles; exact-live publish
+remains denied; withdrawal/regrant, pending restriction, foreign identity/epochs,
+invalid policy and deleted practice fail. Binding/raw data stay immutable.
+
+A1 tests-first RED recorded: five tests, missing readRetained/publishRetained,
+compile exit1, `/tmp/padel-video-motion-a1-red.log`; original SHA-256
+`9bb1b61a63615bc946dbbe9a81ecb4f0c5c3531ae14dc770b13dd872ed4a786d`.
+C's native check has ended, so A1's two-path production correction is released.
+One next action: Astra implements A1, then root verifies frozen A1 Core and the
+corrected C native package. D must not edit Store until A1 freezes/passes.
+
 Earlier checkpoints remain historical.
 
 ---

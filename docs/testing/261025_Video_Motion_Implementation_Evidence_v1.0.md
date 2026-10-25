@@ -135,6 +135,51 @@ This is not test execution, native acquisition evidence or a simulator failure.
 No C production changes existed at that checkpoint. B's shared library compiled
 for the native build; full platform verification remains required later.
 
+## E — sole-delegate control and clock routing
+
+Tests-first SHA-256: `277f1a6e1129304d01bc5af08c2ab4650c6e9b2323f54c09bdaf015013e1203f`.
+Root expected RED used `--no-parallel --filter VideoMotionTransportTests`:
+compile exit1, missing transport Scope/Adapter/Request; local
+`/tmp/padel-video-motion-e-red.log`. Astra then changed only new
+`VideoMotionTransport.swift` and the existing `RecordingConnectivity.swift`,
+753total changed lines including262unchanged test lines.
+
+With C/E source frozen, root used
+`--no-parallel --filter 'VideoMotion.*Tests|RecordingConnectivityTests|OwnerPreparationTransportTests'`:
+**PASS, exit0, 72 tests in8suites, 5.014seconds**,
+`/tmp/padel-video-motion-e-green.log`. Root inspected the distinct wire frames,
+scoped identities and limits. Manifest: `261025_Video_Motion_E_Source_v1.0.sha256`.
+This is Core routing/clock-boundary proof, not real Watch transport/camera proof.
+
+## C — first implementation build retained as failed evidence
+
+Root booted the existing iPhone15Pro simulator on iOS27 (both boot/status exit0),
+then ran `xcodebuild test`, scheme `PadelStrokeLab`, only
+`PadelStrokeLabTests/PhoneVideoCaptureTests`, signing disabled, parallel testing
+disabled. DerivedData `/tmp/padel-video-motion-native`; results
+`/tmp/padel-video-motion-c-green-1.xcresult`, log with the same stem.
+
+Result: **FAIL, exit65 during compilation**; no camera tests executed.
+Swift Observation requires a single mutable declaration per tracked property.
+Three multi-binding declarations produced `_sceneActive/_closed`,
+`_operation/_generation` and `_previousIdleTimer/_deadline` macro errors.
+Initial source is frozen in `261025_Video_Motion_C_Compile1_Source_v1.0.sha256`.
+Astra corrected only those three declarations into six individual lines, without
+test/behavior changes. A new native result bundle/run is required after current
+Core source edits quiesce; the failed run is not overwritten or relabelled.
+
+## A1 — retained access correction tests-first
+
+The independent foundation source review found normal authority advancement would
+block completed-session edits; see the separate source review/correction contract.
+Astra added only `VideoMotionRetainedAccessTests.swift`, five tests, SHA-256
+`9bb1b61a63615bc946dbbe9a81ecb4f0c5c3531ae14dc770b13dd872ed4a786d`.
+Root command `--no-parallel --filter VideoMotionRetainedAccessTests` produced
+expected compile **RED, exit1** for missing `readRetained`/`publishRetained` APIs,
+`/tmp/padel-video-motion-a1-red.log`. A1 production has not yet been changed at
+that checkpoint. It preserves exact-live admission and adds separate retained
+permissions; full withdrawal/deletion remains blocking.
+
 ## Current implementation limits
 
 No native camera capture, synchronisation, transport, replay, export/deletion or
