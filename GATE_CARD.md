@@ -324,8 +324,29 @@ assertions. E tests may verify bridge wire round-trip without E production edits
 F1 continues as a draft until D/B1 are stable. D owns Media/Store/Writer/Capture;
 B1 owns Protocol/Evidence. Root builds only frozen shared Core sources.
 
-One next action: D finishes/freeze media storage; B1 freezes tests for RED before
-production. F1 follows verified D/B1.
+Independent committed F0 review found a blocking conservative-interval defect:
+source-offset subtraction/uncertainty arithmetic needs outward rounding before
+intersection, not only after converting back to runtime. A bridge must enclose
+its own observed runtime bracket even with large source/runtime offsets.
+Director includes this focused regression/correction in B1's existing Evidence
+allowlist before Go exposure. The previous87-test pass remains evidence of its
+recorded source only; it does not clear this newly identified defect.
+
+B1 final local result: **95tests in11suites PASS**, exit0,6.756seconds. Both
+native-fact bridges/full-interval coverage now gate live countdown; shared
+Evidence logic outward-rounds intermediate offset arithmetic. Nonzero-offset,
+missing/foreign/endpoint/legacy-byte and cancellation regressions pass. Two
+production paths/283changedlines, manifest and all failure evidence retained.
+Physical alignment and the full native workflow remain UNKNOWN.
+
+D first native run failed compile-only on internal Core validators; author is
+using checked public Store APIs. Independent review additionally requires
+bounded cross-track startup/cuts and verification bound to the bytes published.
+Regressions precede those fixes; first-source gaps and partial earlier-segment
+recovery are also addressed within D. No native test pass has occurred for D.
+
+One next action: freeze strengthened D tests/source, verify the real writer;
+F1/F2 drafts prepare integration without exposing capture.
 
 Earlier checkpoints remain historical.
 

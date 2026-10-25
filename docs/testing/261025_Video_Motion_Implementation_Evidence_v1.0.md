@@ -302,6 +302,60 @@ backwards-compatible native-fact bridge fields, mandatory supported bridge
 evidence for live Go, and shared interval validation. F0 alone is not live
 combined-start proof. D Core storage is released after this frozen-source pass.
 
+## D — first native implementation compile and source review
+
+First frozen D source: Writer384lines, Media200lines, Store182addedlines,
+Capture22added/2removedlines and382tests:1172changedlines, four production paths.
+Hashes reviewed independently:
+
+- Writer `2443bac38a1a88f6705c1b8b48fa463ae957b7506b31134c79a6db6981bee3ba`.
+- Capture `470db3fc084fda216eb02e4f0dd55030688978f409c86da92945e67d152bf20f`.
+- Media `e07f74815a60e23ca9625214afb452458f2a3c95de2234c76952d34d1a1875ea`.
+- Store `dd03735e4a93323b97e65c99b94f4347540a02db2104af8a04e6ed0bf088855d`.
+
+Root Xcode27 native camera/writer check1: **FAIL,exit65 during compilation**, no
+tests executed. App writer called internal Core binding validators. Correct via
+narrow checked Store APIs within D's allowlist. Log/result:
+`/tmp/padel-video-motion-d-green-1.log` and matching `.xcresult`.
+
+Independent review-only challenge also found cross-track callback ordering must
+not imply global PTS order, and native verification must remain bound to the
+unchanged bytes later hashed/sealed. Director requires reversed delivery /
+staggered rollover and publication-time replacement regressions before semantic
+corrections. Author additionally identified explicit source-gap and earlier
+segment recovery cases. No native media pass is claimed at this checkpoint.
+
+## B1 — bridge-aware live gate tests-first
+
+New169-line/7-test `VideoMotionBridgeProtocolTests.swift` SHA
+`6dd5bfb338aa6c754bd41a8378b61342164e1394294e074b0fd0b36f7c6b420c`.
+Existing Protocol success fixtures now supply explicit measured synthetic bridges;
+Transport adds bridge wire round-trip. Existing assertions are preserved.
+Old control-byte fixtures came from the isolated committed `ce9fde8` source,
+build exit0, log `/tmp/padel-video-motion-b1-historical-ce9fde8-build.log`:
+phone2688bytes SHA `aef417ad6e112bce47c382d83a5450043ac3c0eb8282d0ab46271825e38ffd04`,
+Watch2749bytes SHA `305650d8355d69b56b12fc40748a13f0ac6507b3fe798ee3985656372aef8cf6`.
+Root selected B1/Protocol/Transport Core test command: **expected RED,exit1**,
+missing native-fact `clockBridge` API, `/tmp/padel-video-motion-b1-red.log`.
+B1 production is released afterwards; no source/run overlap is used as proof.
+
+## B1 — bridge-aware live evidence verified locally
+
+Astra changed only Protocol/Evidence: native facts retain optional explicit
+bridges; live readiness requires both, preserves source timestamps and reuses
+the retained evidence interval gate. It reconciles matching embedded/standalone
+bridges and checks entire mapped intervals. Offset subtraction and uncertainty
+operations now round outward before intersection, covering the independent F0
+review's cancellation regression. Nil legacy native-fact bytes remain exact.
+
+Root VideoMotion/connectivity/preparation regression command:
+**PASS,exit0,95tests in11suites,6.756seconds**,
+`/tmp/padel-video-motion-b1-green.log`. Frozen tests remained unchanged after RED.
+Two production paths/283total changedlines including new169-line test; source
+manifest `261025_Video_Motion_B1_Source_v1.0.sha256`.
+This clears local pure bridge/readiness tests, not physical alignment, native
+recording/control or final G6. D's identified blockers remain pending.
+
 ## Current implementation limits
 
 No physical camera capture, cross-device synchronisation/transport, playable

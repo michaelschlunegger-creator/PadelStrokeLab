@@ -24,16 +24,25 @@ public struct VideoMotionPhoneStart: Codable, Equatable, Sendable {
     public let firstVideoPTS: VideoMotionMediaTimestamp
     public let firstAudioPTS: VideoMotionMediaTimestamp
     public let firstHostTime: Double
+    public let clockBridge: VideoMotionClockBridge?
     public init(writerGeneration: UUID, clockDomainID: UUID, firstVideoPTS: VideoMotionMediaTimestamp,
-                firstAudioPTS: VideoMotionMediaTimestamp, firstHostTime: Double) throws {
+                firstAudioPTS: VideoMotionMediaTimestamp, firstHostTime: Double,
+                clockBridge: VideoMotionClockBridge? = nil) throws {
         self.writerGeneration = writerGeneration; self.clockDomainID = clockDomainID
         self.firstVideoPTS = firstVideoPTS; self.firstAudioPTS = firstAudioPTS; self.firstHostTime = firstHostTime
+        self.clockBridge = clockBridge
         try validate()
     }
     func validate() throws {
         try firstVideoPTS.validate(); try firstAudioPTS.validate()
         guard firstVideoPTS.epoch == firstAudioPTS.epoch, VideoMotionTime.valid(firstHostTime) else {
             throw VideoMotionError.invalid("native phone start")
+        }
+        if let clockBridge {
+            try clockBridge.validate()
+            guard clockBridge.device == .phone, clockBridge.sourceClockDomainID == clockDomainID else {
+                throw VideoMotionError.invalid("phone source bridge")
+            }
         }
     }
 }
@@ -50,13 +59,15 @@ public struct VideoMotionMotionReady: Codable, Equatable, Sendable {
     public let deviceMotionChunks: Int
     public let completedChunkCount: Int
     public let manifestDigest: String
+    public let clockBridge: VideoMotionClockBridge?
     public init(captureGeneration: UUID, clockDomainID: UUID, firstTimestamp: Double, lastTimestamp: Double,
                 accelerationChunks: Int, deviceMotionChunks: Int, completedChunkCount: Int,
-                manifestDigest: String) throws {
+                manifestDigest: String, clockBridge: VideoMotionClockBridge? = nil) throws {
         self.captureGeneration = captureGeneration; self.clockDomainID = clockDomainID
         self.firstTimestamp = firstTimestamp; self.lastTimestamp = lastTimestamp
         self.accelerationChunks = accelerationChunks; self.deviceMotionChunks = deviceMotionChunks
         self.completedChunkCount = completedChunkCount; self.manifestDigest = manifestDigest
+        self.clockBridge = clockBridge
         try validate()
     }
     func validate() throws {
@@ -65,6 +76,12 @@ public struct VideoMotionMotionReady: Codable, Equatable, Sendable {
               (1...1_024).contains(deviceMotionChunks), (2...4_096).contains(completedChunkCount),
               completedChunkCount >= accelerationChunks + deviceMotionChunks,
               VideoMotionValidation.digest(manifestDigest) else { throw VideoMotionError.invalid("durable motion readiness") }
+        if let clockBridge {
+            try clockBridge.validate()
+            guard clockBridge.device == .watch, clockBridge.sourceClockDomainID == clockDomainID else {
+                throw VideoMotionError.invalid("motion source bridge")
+            }
+        }
     }
 }
 
@@ -119,9 +136,11 @@ public struct VideoMotionControlEnvelope: Codable, Equatable, Sendable {
         case .phoneStarted(let fact):
             guard sender == .phone else { throw VideoMotionError.invalid("phone fact source") }
             try fact.validate()
+            guard fact.clockBridge.map({ $0.runtimeEpoch == phoneEpoch }) ?? true else { throw VideoMotionError.integrity }
         case .motionReady(let fact):
             guard sender == .watch else { throw VideoMotionError.invalid("motion fact source") }
             try fact.validate()
+            guard fact.clockBridge.map({ $0.runtimeEpoch == watchEpoch }) ?? true else { throw VideoMotionError.integrity }
         case .clockMapping(let mapping):
             try mapping.validate()
             guard sender == .phone, mapping.phoneEpoch == phoneEpoch, mapping.watchEpoch == watchEpoch else {
@@ -211,11 +230,12 @@ public struct VideoMotionProtocol: Sendable {
     }
     public var canCountdown: Bool {
         guard phase == .capturing, peerStatus == .recent, localFinalization == nil, peerFinalization == nil,
-              let phoneStart, let motionReady, let clockMapping, clockMapping.driftPPMRange != nil else { return false }
-        // Require supported coverage of both acquisition facts; no fabricated zero-drift fallback.
-        return (try? clockMapping.estimateWatch(atPhone: phoneStart.firstHostTime)) != nil
-            && (try? clockMapping.estimatePhone(atWatch: motionReady.firstTimestamp)) != nil
-            && (try? clockMapping.estimatePhone(atWatch: motionReady.lastTimestamp)) != nil
+              let phoneStart, let motionReady, let clockMapping, clockMapping.driftPPMRange != nil,
+              let phoneBridge = phoneStart.clockBridge, let watchBridge = motionReady.clockBridge else { return false }
+        // Legacy native facts remain decodable, but cannot authorize countdown without measured
+        // source-to-runtime bridges. Use the same full-interval gate as retained evidence.
+        return VideoMotionEvidence.supports(phoneStart: phoneStart, motionReady: motionReady,
+            mapping: clockMapping, bridges: [phoneBridge, watchBridge])
     }
 
     /// Invalid input is transactional: no sequence, receipt, timer or native effect is consumed.

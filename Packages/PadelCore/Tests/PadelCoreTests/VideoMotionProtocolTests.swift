@@ -17,15 +17,22 @@ import Testing
     }
 
     private func phoneFact() throws -> VideoMotionPhoneStart {
-        try VideoMotionPhoneStart(writerGeneration: UUID(), clockDomainID: UUID(),
+        let domain = UUID()
+        return try VideoMotionPhoneStart(writerGeneration: UUID(), clockDomainID: domain,
             firstVideoPTS: .init(value: 6_000, timescale: 1_000, epoch: 0),
-            firstAudioPTS: .init(value: 5_990, timescale: 1_000, epoch: 0), firstHostTime: 6)
+            firstAudioPTS: .init(value: 5_990, timescale: 1_000, epoch: 0), firstHostTime: 6,
+            clockBridge: VideoMotionClockBridge(device: .phone, sourceClockDomainID: domain, runtimeEpoch: videoTestPhoneRun,
+                source: .coreMediaHost, sourceBeforeSeconds: 0, sourceAfterSeconds: 0,
+                runtimeBeforeSeconds: 0, runtimeAfterSeconds: 0, roundingUncertaintySeconds: 0.000_000_001))
     }
 
     private func motionFact() throws -> VideoMotionMotionReady {
         try VideoMotionMotionReady(captureGeneration: UUID(), clockDomainID: recordingTestClockID,
             firstTimestamp: 6.3, lastTimestamp: 8.3, accelerationChunks: 1, deviceMotionChunks: 1,
-            completedChunkCount: 2, manifestDigest: String(repeating: "a", count: 64))
+            completedChunkCount: 2, manifestDigest: String(repeating: "a", count: 64),
+            clockBridge: VideoMotionClockBridge(device: .watch, sourceClockDomainID: recordingTestClockID, runtimeEpoch: videoTestWatchRun,
+                source: .machAbsolute(ticks: 0, numerator: 1, denominator: 1), sourceBeforeSeconds: 0, sourceAfterSeconds: 0,
+                runtimeBeforeSeconds: 0, runtimeAfterSeconds: 0, roundingUncertaintySeconds: 0.000_000_001))
     }
 
     @Test func exactEnvelopeRoundTripAndStrictVersionIdentityLimits() throws {

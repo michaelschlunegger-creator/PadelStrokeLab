@@ -28,7 +28,11 @@ public struct VideoMotionClockBridge: Codable, Equatable, Sendable {
         self.roundingUncertaintySeconds = roundingUncertaintySeconds; try validate()
     }
     public var offsetRange: ClosedRange<Double> {
-        return (runtimeBeforeSeconds - sourceAfterSeconds - roundingUncertaintySeconds)...(runtimeAfterSeconds - sourceBeforeSeconds + roundingUncertaintySeconds)
+        // Round each operation outward before any later intersection. Adding the reported
+        // uncertainty alone can disappear when large source times cancel small runtime times.
+        let lower = ((runtimeBeforeSeconds - sourceAfterSeconds).nextDown - roundingUncertaintySeconds).nextDown
+        let upper = ((runtimeAfterSeconds - sourceBeforeSeconds).nextUp + roundingUncertaintySeconds).nextUp
+        return lower...upper
     }
     func validate() throws {
         guard [sourceBeforeSeconds, sourceAfterSeconds, runtimeBeforeSeconds, runtimeAfterSeconds].allSatisfy(VideoMotionTime.valid),
@@ -160,8 +164,10 @@ public struct VideoMotionEvidence: Codable, Equatable, Sendable {
                 switch control.message {
                 case .phoneStarted(let value):
                     guard phoneStart == nil || phoneStart == value else { throw VideoMotionError.conflict }; phoneStart = value
+                    if let bridge = value.clockBridge { try retainBridge(bridge, in: &bridges) }
                 case .motionReady(let value):
                     guard motionReady == nil || motionReady == value else { throw VideoMotionError.conflict }; motionReady = value
+                    if let bridge = value.clockBridge { try retainBridge(bridge, in: &bridges) }
                 case .finalized: finalized.insert(control.sender)
                 default: break
                 }
@@ -182,19 +188,7 @@ public struct VideoMotionEvidence: Codable, Equatable, Sendable {
                       mapping.map({ value.exchanges.starts(with: $0.exchanges) }) ?? true else { throw VideoMotionError.integrity }
                 mapping = value
             case .clockBridge(let value):
-                try value.validate()
-                guard value.runtimeEpoch == (value.device == .phone ? scope.phoneEpoch : scope.watchEpoch) else {
-                    throw VideoMotionError.integrity
-                }
-                for previous in bridges where previous.device == value.device {
-                    guard previous.sourceClockDomainID == value.sourceClockDomainID,
-                          previous.offsetRange.overlaps(value.offsetRange) else { throw VideoMotionError.invalid("discontinuous clock bridge") }
-                    if case let .machAbsolute(_, oldNumerator, oldDenominator) = previous.source,
-                       case let .machAbsolute(_, numerator, denominator) = value.source {
-                        guard oldNumerator == numerator, oldDenominator == denominator else { throw VideoMotionError.integrity }
-                    }
-                }
-                bridges.append(value)
+                try retainBridge(value, in: &bridges)
             case .transition(let value):
                 try value.validate()
                 if value.kind == .countdown || value.kind == .go {
@@ -215,10 +209,29 @@ public struct VideoMotionEvidence: Codable, Equatable, Sendable {
             }
         }
     }
+    private func retainBridge(_ value: VideoMotionClockBridge, in bridges: inout [VideoMotionClockBridge]) throws {
+        try value.validate()
+        guard value.runtimeEpoch == (value.device == .phone ? scope.phoneEpoch : scope.watchEpoch) else {
+            throw VideoMotionError.integrity
+        }
+        if let previous = bridges.first(where: { $0.id == value.id }) {
+            guard previous == value else { throw VideoMotionError.conflict }
+            return
+        }
+        for previous in bridges where previous.device == value.device {
+            guard previous.sourceClockDomainID == value.sourceClockDomainID,
+                  previous.offsetRange.overlaps(value.offsetRange) else { throw VideoMotionError.invalid("discontinuous clock bridge") }
+            if case let .machAbsolute(_, oldNumerator, oldDenominator) = previous.source,
+               case let .machAbsolute(_, numerator, denominator) = value.source {
+                guard oldNumerator == numerator, oldDenominator == denominator else { throw VideoMotionError.integrity }
+            }
+        }
+        bridges.append(value)
+    }
     /// Coverage must include every endpoint of the measured source/runtime offset interval.
     /// Neither source times nor interval midpoints can stand in for runtime observations.
-    private static func supports(phoneStart: VideoMotionPhoneStart, motionReady: VideoMotionMotionReady,
-                                 mapping: VideoMotionClockMapping, bridges: [VideoMotionClockBridge]) -> Bool {
+    static func supports(phoneStart: VideoMotionPhoneStart, motionReady: VideoMotionMotionReady,
+                         mapping: VideoMotionClockMapping, bridges: [VideoMotionClockBridge]) -> Bool {
         guard let phone = runtimeRange(atSource: phoneStart.firstHostTime, device: .phone,
                                        domain: phoneStart.clockDomainID, bridges: bridges),
               let firstMotion = runtimeRange(atSource: motionReady.firstTimestamp, device: .watch,

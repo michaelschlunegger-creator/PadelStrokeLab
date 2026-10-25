@@ -94,6 +94,28 @@ private final class VMReachability: @unchecked Sendable {
         #expect(throws: (any Error).self) { try reply.requireReply(to: request, localDevice: .phone) }
     }
 
+    @Test func nativeClockBridgeSurvivesExactTransportRequestAndReceiptRoundTrip() throws {
+        let domain = UUID(), binding = try videoTestBinding()
+        let bridge = try VideoMotionClockBridge(device: .phone, sourceClockDomainID: domain, runtimeEpoch: videoTestPhoneRun,
+            source: .coreMediaHost, sourceBeforeSeconds: 100, sourceAfterSeconds: 100,
+            runtimeBeforeSeconds: 0, runtimeAfterSeconds: 0, roundingUncertaintySeconds: 0.000_000_001)
+        let fact = try VideoMotionPhoneStart(writerGeneration: UUID(), clockDomainID: domain,
+            firstVideoPTS: .init(value: 6_000, timescale: 1_000, epoch: 0),
+            firstAudioPTS: .init(value: 5_990, timescale: 1_000, epoch: 0), firstHostTime: 106, clockBridge: bridge)
+        let control = try VideoMotionControlEnvelope(operationID: UUID(), binding: binding, armGeneration: videoTestArm,
+            phoneEpoch: videoTestPhoneRun, watchEpoch: videoTestWatchRun, sender: .phone, sequence: 1, message: .phoneStarted(fact))
+        let request = try VideoMotionTransportRequest(control: control)
+        let decoded = try VideoMotionTransportRequest.decode(request.encoded())
+        #expect(decoded == request)
+        let returned = try #require(decoded.control)
+        guard case .phoneStarted(let retained) = returned.message else { Issue.record("Missing native fact"); return }
+        #expect(retained.clockBridge == bridge && retained.firstHostTime == 106)
+        let reply = try VideoMotionTransportReply(request: decoded, sender: .watch, receipt: receipt(decoded))
+        let decodedReply = try VideoMotionTransportReply.decode(reply.encoded())
+        try decodedReply.requireReply(to: request, localDevice: .phone)
+        #expect(decodedReply == reply)
+    }
+
     @Test func outboundExactReplyCompletesOnceAndWrongRoleCannotReachAdapter() async throws {
         let fixture = try RecordingDirectoryFixture(), paths = try RecordingPaths(base: fixture.root)
         let sent = VMTransportValues<Data>(), results = VMTransportValues<VideoMotionControlReceipt>()
