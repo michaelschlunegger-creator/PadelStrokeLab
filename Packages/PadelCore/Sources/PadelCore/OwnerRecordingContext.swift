@@ -42,6 +42,7 @@ public struct OwnerRecordingContext: Equatable, Sendable {
     public var acceptedSetup: PracticeSetupDraft { body.acceptedSetup }
     public var generations: PracticeSetupGenerations { body.generations }
     public var manualStroke: RecordingDrill { body.acceptedSetup.preferences.intendedDrill }
+    public var captureMode: RecordingCaptureMode? { body.captureMode }
 
     private init(body: OwnerContextBody, rawMetadataBytes: Data) throws {
         let metadata = try Self.canonicalMetadata(rawMetadataBytes)
@@ -56,7 +57,8 @@ public struct OwnerRecordingContext: Equatable, Sendable {
         guard authority.isCollectionAllowed else { throw OwnerPracticeError.consentRequired }
         let metadata = try canonicalMetadata(rawMetadataBytes)
         let authorityBytes = try authority.encoded()
-        let body = OwnerContextBody(schemaVersion: 1, ownerID: authority.ownerID,
+        let body = OwnerContextBody(schemaVersion: acceptedSetup.preferences.captureMode == nil ? 1 : 2,
+            ownerID: authority.ownerID,
             phoneEpoch: authority.phoneInstallationEpoch, watchEpoch: authority.watchInstallationEpoch,
             studyID: OwnerPracticePolicy.studyID, policyVersion: OwnerPracticePolicy.version,
             policyDigest: authority.policyDigest, authorityDigest: RecordingChunkCodec.digest(authorityBytes),
@@ -66,7 +68,8 @@ public struct OwnerRecordingContext: Equatable, Sendable {
             recordingID: metadata.recordingID, clockDomainID: metadata.clock.domainID,
             rawMetadataDigest: RecordingChunkCodec.digest(rawMetadataBytes), acquisitionMode: acquisitionMode,
             acceptedSetup: acceptedSetup, generations: generations, playingArm: metadata.playingArm,
-            watchWrist: metadata.watchWrist, watchOrientation: metadata.watchOrientation)
+            watchWrist: metadata.watchWrist, watchOrientation: metadata.watchOrientation,
+            captureMode: acceptedSetup.preferences.captureMode)
         let context = try Self(body: body, rawMetadataBytes: rawMetadataBytes)
         _ = try context.encoded()
         return OwnerContextBinding(context: context, rawMetadataBytes: rawMetadataBytes, authorityBytes: authorityBytes)
@@ -94,7 +97,9 @@ public struct OwnerRecordingContext: Equatable, Sendable {
                                   rawMetadataBytes: Data) throws {
         let preferences = body.acceptedSetup.preferences
         let reserve: Int64 = body.heartRateConsent ? 2 : 1
-        guard body.schemaVersion == 1, body.studyID == OwnerPracticePolicy.studyID,
+        guard body.schemaVersion == (preferences.captureMode == nil ? 1 : 2),
+              body.captureMode == preferences.captureMode,
+              body.studyID == OwnerPracticePolicy.studyID,
               body.policyVersion == OwnerPracticePolicy.version, body.policyDigest == OwnerPracticePolicy.digest,
               body.phoneEpoch != body.watchEpoch,
               body.acceptedSetup.identity.originInstallationEpoch == body.phoneEpoch,
@@ -106,9 +111,9 @@ public struct OwnerRecordingContext: Equatable, Sendable {
               (1...(Int64(OwnerPracticeIdentity.maximumConsentDecisions) - reserve)).contains(body.consentGeneration),
               body.authorityRevision >= body.consentGeneration,
               (0..<body.consentGeneration).contains(body.withdrawalBarrier),
-              preferences.intendedDrill == .forehandGroundstroke || preferences.intendedDrill == .backhandGroundstroke,
+              preferences.isValidOwnerCaptureIntent,
               metadata.drill == preferences.intendedDrill.rawValue,
-              metadata.protocolVersion == RecordingDrill.protocolVersion,
+              metadata.protocolVersion == preferences.recordingProtocolVersion,
               metadata.handedness == preferences.usualHand,
               metadata.playingArm == preferences.currentRacketArm, body.playingArm == metadata.playingArm,
               body.watchWrist == metadata.watchWrist, body.watchOrientation == metadata.watchOrientation,
@@ -153,4 +158,6 @@ private struct OwnerContextBody: Codable, Equatable, Sendable {
     let playingArm: PlayingArm
     let watchWrist: PlayingArm
     let watchOrientation: String
+    /// Absent in schema 1; required and matched to accepted preparation in schema 2.
+    let captureMode: RecordingCaptureMode?
 }

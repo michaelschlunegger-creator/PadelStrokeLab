@@ -10,27 +10,43 @@ public struct PracticeSetupPreferences: Equatable, Sendable, Codable {
     public let currentRacketArm: PlayingArm
     public let usualHand: PlayingArm
     public let intendedDrill: RecordingDrill
+    /// Nil is the historical motion-only mode and is omitted from canonical bytes.
+    public let captureMode: RecordingCaptureMode?
 
-    public init(currentRacketArm: PlayingArm, usualHand: PlayingArm, intendedDrill: RecordingDrill) {
+    public init(currentRacketArm: PlayingArm, usualHand: PlayingArm, intendedDrill: RecordingDrill,
+                captureMode: RecordingCaptureMode? = nil) {
         self.currentRacketArm = currentRacketArm
         self.usualHand = usualHand
         self.intendedDrill = intendedDrill
+        self.captureMode = captureMode
     }
 
-    private enum CodingKeys: String, CodingKey { case currentRacketArm, usualHand, intendedDrill }
+    /// Owner admission remains narrower than the legacy general-purpose drill vocabulary.
+    public var isValidOwnerCaptureIntent: Bool {
+        switch captureMode {
+        case nil: intendedDrill == .forehandGroundstroke || intendedDrill == .backhandGroundstroke
+        case .videoMotionMixedReferenceV1: intendedDrill == .otherUnclassified
+        }
+    }
+
+    public var recordingProtocolVersion: String { captureMode?.protocolVersion ?? RecordingDrill.protocolVersion }
+
+    private enum CodingKeys: String, CodingKey { case currentRacketArm, usualHand, intendedDrill, captureMode }
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         guard let drill = RecordingDrill(rawValue: try c.decode(String.self, forKey: .intendedDrill)) else {
             throw PracticeSetupError.invalid("manual development drill")
         }
         self.init(currentRacketArm: try c.decode(PlayingArm.self, forKey: .currentRacketArm),
-                  usualHand: try c.decode(PlayingArm.self, forKey: .usualHand), intendedDrill: drill)
+                  usualHand: try c.decode(PlayingArm.self, forKey: .usualHand), intendedDrill: drill,
+                  captureMode: try c.decodeIfPresent(RecordingCaptureMode.self, forKey: .captureMode))
     }
     public func encode(to encoder: any Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(currentRacketArm, forKey: .currentRacketArm)
         try c.encode(usualHand, forKey: .usualHand)
         try c.encode(intendedDrill.rawValue, forKey: .intendedDrill)
+        try c.encodeIfPresent(captureMode, forKey: .captureMode)
     }
 }
 
@@ -65,7 +81,8 @@ public struct PracticeSetupDraft: Equatable, Sendable, Codable {
                 preferences: PracticeSetupPreferences) throws {
         let unsigned = Unsigned(originInstallationEpoch: originInstallationEpoch, preparationID: preparationID,
             revision: revision, currentRacketArm: preferences.currentRacketArm,
-            usualHand: preferences.usualHand, intendedDrill: preferences.intendedDrill.rawValue)
+            usualHand: preferences.usualHand, intendedDrill: preferences.intendedDrill.rawValue,
+            captureMode: preferences.captureMode)
         identity = try PracticeSetupIdentity(originInstallationEpoch: originInstallationEpoch,
             preparationID: preparationID, revision: revision, canonicalDigest: Self.digest(unsigned))
         self.preferences = preferences
@@ -78,6 +95,7 @@ public struct PracticeSetupDraft: Equatable, Sendable, Codable {
         let currentRacketArm: PlayingArm
         let usualHand: PlayingArm
         let intendedDrill: String
+        let captureMode: RecordingCaptureMode?
     }
     private static func digest(_ value: Unsigned) throws -> String {
         var bytes = Data("PSLPracticeSetupDraft1\n".utf8)
@@ -85,7 +103,7 @@ public struct PracticeSetupDraft: Equatable, Sendable, Codable {
         return RecordingChunkCodec.digest(bytes)
     }
     private enum CodingKeys: String, CodingKey {
-        case originInstallationEpoch, preparationID, revision, currentRacketArm, usualHand, intendedDrill, canonicalDigest
+        case originInstallationEpoch, preparationID, revision, currentRacketArm, usualHand, intendedDrill, canonicalDigest, captureMode
     }
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -106,6 +124,7 @@ public struct PracticeSetupDraft: Equatable, Sendable, Codable {
         try c.encode(preferences.currentRacketArm, forKey: .currentRacketArm)
         try c.encode(preferences.usualHand, forKey: .usualHand)
         try c.encode(preferences.intendedDrill.rawValue, forKey: .intendedDrill)
+        try c.encodeIfPresent(preferences.captureMode, forKey: .captureMode)
     }
 }
 

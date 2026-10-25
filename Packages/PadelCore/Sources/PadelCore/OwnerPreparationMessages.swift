@@ -310,8 +310,8 @@ public struct OwnerPreparation: Codable, Equatable, Sendable {
     public let identity: OwnerPreparationIdentity
     public init(authority: OwnerPracticeIdentity, practiceID: UUID, draft: PracticeSetupDraft) throws {
         guard authority.isCollectionAllowed, authority.phoneInstallationEpoch == draft.identity.originInstallationEpoch,
-              [.forehandGroundstroke, .backhandGroundstroke].contains(draft.preferences.intendedDrill) else {
-            throw OwnerPreparationError.invalid("owner forehand/backhand preparation")
+              draft.preferences.isValidOwnerCaptureIntent else {
+            throw OwnerPreparationError.invalid("owner capture preparation")
         }
         try draft.identity.validate()
         self.authority = authority; self.practiceID = practiceID; self.draft = draft

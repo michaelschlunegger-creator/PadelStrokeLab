@@ -230,10 +230,11 @@ public final class OwnerPreparationWork: @unchecked Sendable {
     private var committed = false
     private var committing = false
 
-    fileprivate init(timeout: TimeInterval) {
+    init(timeout: TimeInterval) {
         deadline = .now() + (timeout.isFinite ? min(60, max(0.001, timeout)) : 10)
     }
     public var isCancelled: Bool { gate.withLock { rejection != nil } }
+    var didCommit: Bool { gate.withLock { committed && !committing } }
     private var rejection: OwnerTransportFailure? {
         stopped ?? (!finished && DispatchTime.now() >= deadline ? .timedOut : nil)
     }
@@ -247,7 +248,7 @@ public final class OwnerPreparationWork: @unchecked Sendable {
             return try operation()
         }
     }
-    @discardableResult fileprivate func stop(_ reason: OwnerTransportFailure) -> Bool {
+    @discardableResult func stop(_ reason: OwnerTransportFailure) -> Bool {
         gate.withLock {
             guard !finished else { return false }
             if stopped == nil { stopped = rejection ?? reason }
@@ -256,8 +257,8 @@ public final class OwnerPreparationWork: @unchecked Sendable {
             return !committing
         }
     }
-    fileprivate func failure() -> OwnerTransportFailure? { gate.withLock { rejection } }
-    fileprivate func close() -> OwnerTransportFailure? {
+    func failure() -> OwnerTransportFailure? { gate.withLock { rejection } }
+    func close() -> OwnerTransportFailure? {
         gate.withLock { stopped = rejection; finished = true; return stopped }
     }
 }
@@ -359,6 +360,9 @@ public final class RecordingConnectivity: NSObject, @unchecked Sendable {
     private var nextDraft: OwnerOperation?
     private var outgoingDraft: (Data, @Sendable (Result<Void, OwnerTransportFailure>) -> Void)?
     private var outgoingDraftScheduled = false
+    private var videoTransport: VideoMotionTransport?
+    private let videoMotionDevice: VideoMotionDevice
+    private let nativeVideoEnabled: Bool
     #if os(iOS) || os(watchOS)
     private let session: WCSession? = WCSession.isSupported() ? .default : nil
     #endif
@@ -389,20 +393,92 @@ public final class RecordingConnectivity: NSObject, @unchecked Sendable {
     }
 
     public convenience init(paths: RecordingPaths) {
-        self.init(paths: paths, backgroundStateProvider: nil, backgroundTimeout: 30)
+        self.init(paths: paths, backgroundStateProvider: nil, backgroundTimeout: 30, enableNativeVideoTransport: true)
     }
 
     /// Readiness/time seams isolate WC for host tests; public construction always uses real WC state.
     init(paths: RecordingPaths, backgroundStateProvider: (@Sendable () -> RecordingBackgroundState)?,
          backgroundTimeout: TimeInterval, ownerTransportAdapter: OwnerTransportAdapter? = nil,
          practiceTransportAdapter: OwnerPracticeTransportAdapter? = nil,
-         practiceDeletionTransportAdapter: OwnerPracticeDeletionTransportAdapter? = nil) {
+         practiceDeletionTransportAdapter: OwnerPracticeDeletionTransportAdapter? = nil,
+         videoMotionDevice: VideoMotionDevice? = nil,
+         videoMotionClock: (@Sendable () -> Double)? = nil,
+         videoMotionAdapter: VideoMotionTransportAdapter? = nil,
+         enableNativeVideoTransport: Bool = false) {
         self.paths = paths; self.backgroundStateProvider = backgroundStateProvider
         self.backgroundTimeout = min(30, max(0.01, backgroundTimeout))
         self.ownerTransportAdapter = ownerTransportAdapter
         self.practiceTransportAdapter = practiceTransportAdapter
         self.practiceDeletionTransportAdapter = practiceDeletionTransportAdapter
+        #if os(watchOS)
+        self.videoMotionDevice = videoMotionDevice ?? .watch
+        #else
+        self.videoMotionDevice = videoMotionDevice ?? .phone
+        #endif
+        nativeVideoEnabled = enableNativeVideoTransport && backgroundStateProvider == nil
+            && ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil
+            && NSClassFromString("XCTestCase") == nil && NSClassFromString("XCTest.XCTestCase") == nil
         super.init()
+        let adapter = videoMotionAdapter ?? (nativeVideoEnabled ? VideoMotionTransportAdapter(
+            reachable: { [weak self] in self?.videoPeerReachable() ?? false },
+            request: { [weak self] data, completion in
+                guard let self else { completion(.failure(.unavailable)); return }
+                self.requestVideoData(data, completion: completion)
+            }) : nil)
+        videoTransport = VideoMotionTransport(device: self.videoMotionDevice,
+            clock: videoMotionClock ?? { ProcessInfo.processInfo.systemUptime }, adapter: adapter,
+            acquire: { [weak self] in
+                guard let self else { return false }
+                return self.lock.withLock {
+                    guard self.pending < Self.capacity else { return false }; self.pending += 1; return true
+                }
+            }, release: { [weak self] in self?.releaseWork() })
+    }
+
+    /// Revalidate exact current scope and owner fences inside work.commit. Return the reducer's
+    /// recorded receipt for control; return nil after authorized clock probes. Never queue Start.
+    public var onVideoMotionRequest: (@Sendable (VideoMotionTransportRequest, OwnerPreparationWork) async throws -> VideoMotionControlReceipt?)? {
+        get { videoTransport?.onRequest }
+        set { videoTransport?.onRequest = newValue }
+    }
+    @discardableResult
+    public func sendVideoMotion(_ control: VideoMotionControlEnvelope, timeout: TimeInterval = 5,
+        completion: @escaping @Sendable (Result<VideoMotionControlReceipt, OwnerTransportFailure>) -> Void) -> UUID {
+        guard let videoTransport else { completion(.failure(.unavailable)); return UUID() }
+        return videoTransport.send(control, timeout: timeout, completion: completion)
+    }
+    /// F schedules calibration before capture, then roughly every five seconds and at Stop.
+    /// These observations are separate from two-second status heartbeats and must remain <=32.
+    @discardableResult
+    public func probeVideoMotionClock(_ scope: VideoMotionTransportScope, timeout: TimeInterval = 5,
+        completion: @escaping @Sendable (Result<VideoMotionClockExchange, OwnerTransportFailure>) -> Void) -> UUID {
+        guard let videoTransport else { completion(.failure(.unavailable)); return UUID() }
+        return videoTransport.probe(scope, timeout: timeout, completion: completion)
+    }
+    public func cancelVideoMotionOperation(_ id: UUID) { videoTransport?.cancel(id) }
+    @discardableResult
+    func receiveVideoMotionData(_ data: Data, timeout: TimeInterval = 5,
+        completion: @escaping @Sendable (Result<Data, OwnerTransportFailure>) -> Void) -> UUID {
+        guard let videoTransport else { completion(.failure(.unavailable)); return UUID() }
+        return videoTransport.receive(data, timeout: timeout, completion: completion)
+    }
+    private func videoPeerReachable() -> Bool {
+        guard nativeVideoEnabled else { return false }
+        #if os(iOS) || os(watchOS)
+        return session?.activationState == .activated && session?.isReachable == true
+        #else
+        return false
+        #endif
+    }
+    private func requestVideoData(_ data: Data,
+        completion: @escaping @Sendable (Result<Data, OwnerTransportFailure>) -> Void) {
+        #if os(iOS) || os(watchOS)
+        guard videoPeerReachable(), let session else { completion(.failure(.unavailable)); return }
+        session.sendMessageData(data, replyHandler: { completion(.success($0)) },
+            errorHandler: { _ in completion(.failure(.unavailable)) })
+        #else
+        completion(.failure(.unavailable))
+        #endif
     }
 
     deinit {
@@ -1407,6 +1483,19 @@ extension RecordingConnectivity: WCSessionDelegate {
                         replyHandler: @escaping (Data) -> Void) {
         // WC's reply closure predates Sendable; the wrapper is only invoked once by the owner path.
         let reply = OwnerNativeReply(replyHandler)
+        if VideoMotionTransportRequest.recognizes(messageData) {
+            receiveVideoMotionData(messageData) { [self] result in
+                switch result {
+                case .success(let bytes): reply.call(bytes)
+                case .failure(let failure):
+                    let response = (try? VideoMotionTransportRequest.decode(messageData)).flatMap {
+                        try? VideoMotionTransportReply(request: $0, sender: videoMotionDevice, failure: failure).encoded()
+                    }
+                    reply.call(response ?? Data())
+                }
+            }
+            return
+        }
         receiveOwnerData(messageData, delivery: .interactive) { result in
             let message: OwnerPreparationMessage?
             switch result {

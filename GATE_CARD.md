@@ -1,4 +1,358 @@
-# Current checkpoint — relevant setup instructions only
+# Current checkpoint — Watch-controlled video/motion architecture
+
+25 October 2026. The owner now explicitly authorizes implementing optional
+Watch-controlled iPhone video/audio plus wrist motion and phone evidence review.
+The checked clean baseline is `feature/guided-padel-setup` at
+`2e6e4df46040c48dd2aaae0e19c3bdfbbad7dde8`, matching its fetched upstream
+(ahead/behind 0/0). Draft PR #3 remains open against
+`feature/watch-recording-storage`; all four exact-head CI checks passed in run
+39938807875. `origin/main` remains the initial commit, so it is not the app-code
+baseline; no merge or source-history rewrite is implied. Prior physical installs
+are not evidence of this candidate's recording or any new video feature.
+
+Xcode 27.0 (27A266a) and both OS27 SDKs are verified with the explicit
+`DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`. An initial unqualified
+version probe failed because the global selection is CommandLineTools; it is
+retained as configuration evidence, not an app build failure or concealed retry.
+
+Scope: local owner-only short recordings, combined start/stop acknowledgements,
+clock/alignment evidence, retained partial assets, synchronised phone replay and
+editable forehand/backhand/contact labels. Non-goals: automatic quality grades,
+cloud upload, guests, professional imports, GPS and longer sets. Capture,
+connectivity, timing, storage and permissions require bounded sequential packages.
+
+The corrected [Astra plan](docs/architecture/261025_Watch_Controlled_Video_Motion_Plan_v1.0.md)
+has SHA-256 `ed74133294a6beee0ff1045e7bd9c6e9a37819bcc70a15a1819814e334394fad`.
+The separate non-Astra reviewer returned **CLEARED FOR DIRECTOR RATIFICATION**;
+both initial blockers (mixed admission and completed-writer proof) are resolved.
+The [review and director ratification](docs/reviews/261025_Video_Motion_Architecture_Review_v1.0.md)
+authorize sequential bounded implementation under the owner's explicit scope
+approval. Working branch: `feature/watch-video-motion`, intentionally stacked on
+the current app rather than initial-only `main`. No existing PR is merged.
+
+## Active package A0 — versioned mixed-mode admission
+
+Allowed production paths: `RecordingDrill.swift`, `PracticeSetupMessages.swift`,
+`OwnerPreparationMessages.swift`, `OwnerRecordingContext.swift` under
+`Packages/PadelCore/Sources/PadelCore/`, plus `PadelStrokeLab/PracticeSetupModel.swift`
+and `PracticeSetupView.swift`. Maximum six production files and 2,500 total new
+or changed lines for this package; split before exceeding either bound. Risk
+domains: owner preparation/admission and identity/schema compatibility. Existing
+motion/Health/transport/storage codecs, signing, OS versions and normal-mode
+forehand/backhand rules are forbidden changes. New capture is not exposed yet.
+
+Tests first: new `VideoMotionAdmissionTests` covers mixed-mode round-trip and
+acceptance, mixed metadata rejected under legacy preparation, mismatched protocol,
+unsupported versions, mode changes requiring fresh identity/acceptance, stale
+acceptance and retained historical canonical bytes/digests. Existing
+`OwnerRecordingContextTests`, `OwnerPreparationMessagesTests`, preparation transport
+and phone setup tests remain regressions. The author writes the failing contract
+before production changes; ordinary verification runs outside the Astra author.
+
+A0 local result: four Core production files changed, 262 total added/deleted lines
+including tests. Expected tests-first compilation RED is retained. Root's targeted
+GREEN plus compatibility regressions passed **117 tests in7suites**, exit0,
+94.628seconds; new admission suite passed. No native capture/UI is exposed.
+See [implementation evidence](docs/testing/261025_Video_Motion_Implementation_Evidence_v1.0.md).
+This does not clear final CI, independent committed-source or physical gates.
+
+## Active package A — durable local sidecars and attempts
+
+Allowed production paths: new `VideoMotionSession.swift`, `VideoMotionStore.swift`
+and `VideoMotionAnnotations.swift` in `Packages/PadelCore/Sources/PadelCore/`.
+Maximum three production files and2,500total changed lines; split before exceeding
+the bound. Risk domain: persistence/data integrity. No native camera, transport,
+Health, raw codec or UI changes. Existing owner/practice/recording identities and
+later whole-practice deletion fences are binding; A alone does not permit capture.
+
+Tests first: `VideoMotionStoreTests` and `VideoMotionAnnotationTests` cover strict
+bounded schema/identity decoding, safe atomic compare/revision publication,
+historical compatibility, malformed/corrupt input, symlink/traversal rejection,
+recovery after interrupted writes, default unclassified/unsure attempts and
+immutable label histories/conflicts. Store capabilities must support later
+partial-media/tombstone integration without bypassing owner publication policy.
+
+A local final result: **26 tests in3suites PASS**, exit0, 0.326seconds, including
+A0. Three production files and two tests total879lines. Expected RED, the genuine
+fixture-ID correction, initial25-test pass, atomic-publication correction and
+final26-test pass are retained separately in the implementation evidence.
+No native capture or camera/Watch control is exposed.
+
+## Active package B — timing and deterministic coordination
+
+Allowed production paths: new `VideoMotionTiming.swift`, `VideoMotionProtocol.swift`
+and the existing `VideoMotionSession.swift` in Core. Maximum three production
+paths/2,500total changed lines; split before the cap. Risk domains: timing/evidence
+integrity and device-control protocol. Pure models/reducer only; no native
+WatchConnectivity, camera, owner-authority mutation, raw writer or UI changes.
+
+Tests first: `VideoMotionTimingTests` covers four-time offset intervals, nonfinite
+and reversed times, epoch mismatches, RTT/coverage, drift/uncertainty and manual
+correction revisions without raw modification. `VideoMotionProtocolTests` covers
+strict bounded/versioned envelopes and owner/session/preparation binding,
+idempotent/conflicting duplicates, stale/reordered operations, actual-start facts
+before Go, terminal no-restart, Start/Stop deadlines and local continuation with
+unknown peer on link loss. Durable journal/sidecar integration must preserve A's
+immutable revisions and byte compatibility; a reducer result never proves native
+media or motion acquisition.
+
+B final local result: **37 tests in5suites PASS**, exit0,0.349seconds, all current
+VideoMotion suites. Two production files/732total lines including unchanged tests;
+A canonical data stays unchanged. B is released for native adapters. Pure reducer
+facts are not native acquisition proof, and a capturing phase is not combined Go.
+The32-observation timing bound requires startup/stop reserves and spaced probes;
+2-second operational heartbeats are separate. Manual alignment revisions are H.
+
+## Active package C — native camera acquisition
+
+A separate Astra author prepares C so it can proceed alongside independent E
+after B passes. Allowed production scope remains new
+`PadelStrokeLab/PhoneVideoCapture.swift`, `VideoCaptureView.swift` and camera/mic
+usage-description keys only in `PadelStrokeLab.xcodeproj/project.pbxproj`.
+Maximum three production paths/2,500total changed lines; two risk domains:
+camera/microphone acquisition/permission and capture lifecycle/concurrency.
+C production is now released after B's37-test pass and C's expected tests-first
+native compilation RED (10tests; missing C APIs, exit65). See implementation
+evidence. C remains unreachable through application navigation until F/G.
+
+Tests first in `PadelStrokeLabTests/PhoneVideoCaptureTests.swift`: denied permissions
+never acquire; preview never adds a microphone; late permission replies after Close
+cannot restart; capture requires active foreground/preview/both permissions;
+background interruption does not auto-resume; finite local deadline; stale-generation
+samples rejected; actual CMSampleBuffer PTS and CoreMedia host-clock conversion;
+invalid/discontinuous clocks never confirm acquisition; exit restores idle timer.
+Hardware seams isolate native acquisition only; actual buffers/clock conversion
+are exercised without camera or microphone use during test/fixture launches.
+
+Director-ratified technical API: MainActor presentation model with one serial
+native session/sample worker, synchronous bounded sink (no Task per buffer),
+supported rear1080p30 format, camera-only preview, microphone input added only
+at explicit Start, and finite132-second phone bound including startup allowance.
+Capture facts remain distinct from D writer acceptance/durability. New view stays
+unreachable from app navigation until orchestration/deletion/export gates pass.
+
+## Active package E — independent sole-delegate video routing
+
+E may proceed alongside C because allowed paths do not overlap and both depend
+on verified B. Allowed production paths: Core `RecordingConnectivity.swift` and
+new `VideoMotionTransport.swift`, maximum two production paths/2,500total changed
+lines. Risk domains: WatchConnectivity and concurrency. Keep the sole WCSession
+delegate, existing owner/raw receipt/deletion routes, capacity/drain semantics
+and no queued/background Start. No native capture or owner-authority changes.
+
+Tests first: `VideoMotionTransportTests` verifies bounded distinct envelope routing,
+request/reply correlation and sender-role checks, full capacity, duplicate/late
+callbacks, timeout/cancel/reachability, stale operation/epoch rejection, counted
+background drains and no offline Start replay. Existing RecordingConnectivity,
+OwnerPreparationTransport and owner receipt/deletion transport tests remain
+regressions. Native hardware defaults stay inaccessible to synthetic fixtures.
+
+One next action: C author implements the released native package; separate Astra
+author defines E's tests, then implements after root records expected RED. Root
+verifies each frozen source separately before D/F. No court/merge readiness.
+
+E expected tests-first RED is recorded: Core compilation exit1 for missing
+VideoMotionTransportScope/Adapter/Request; test-file SHA-256
+`277f1a6e1129304d01bc5af08c2ab4650c6e9b2323f54c09bdaf015013e1203f`, local
+`/tmp/padel-video-motion-e-red.log`. E production is now released within its
+original two-file budget.
+
+E final local result: **72tests in8suites PASS**, exit0,5.014seconds, all current
+VideoMotion plus existing RecordingConnectivity/OwnerPreparationTransport coverage.
+Two production paths/753total lines including unchanged tests. Native transport
+and end-to-end capture remain UNKNOWN. Source is frozen for publication.
+
+C first native build failed at compile on three multi-binding Observation
+declarations, exit65; failed log/result/source manifest retained. Astra corrected
+only those declarations. C source/tests are frozen pending a new native check
+after A1 Core correction freezes; no camera test pass is claimed yet.
+
+## Active A1 — retained edits after ordinary practice End
+
+The [independent scoped source review](docs/reviews/261025_Video_Motion_Foundation_Source_Review_v1.0.md)
+found one retained-update permission defect at frozen `c2c7089`: exact capture
+revision checks incorrectly block completed-session edits after normal retirement.
+C/E may continue without capture exposure; A1 must pass before G/H. It follows E
+so its new tests can compile without E's currently absent planned APIs.
+
+Allowed production paths: Core `VideoMotionSession.swift`, `VideoMotionStore.swift`;
+new tests `VideoMotionRetainedAccessTests.swift`. Maximum two production files and
+2,500total changed lines; domains current owner permission and persistence integrity.
+Keep create/live publish exact-original. Separate retained access uses actual
+current channel snapshot, same owner/epochs/current policy, allowed collection,
+revision/consent-generation at least captured values, unchanged withdrawal barrier,
+no motion-access block, plus existing tombstone/CAS checks. It does not require HR
+permission or an active preparation. G/H still recheck fresh publication fences.
+
+Tests first with real retirePractice/advance/HR/withdraw/reconsent mutations:
+retained labels allowed after ordinary End and HR toggles; exact-live publish
+remains denied; withdrawal/regrant, pending restriction, foreign identity/epochs,
+invalid policy and deleted practice fail. Binding/raw data stay immutable.
+
+A1 tests-first RED recorded: five tests, missing readRetained/publishRetained,
+compile exit1, `/tmp/padel-video-motion-a1-red.log`; original SHA-256
+`9bb1b61a63615bc946dbbe9a81ecb4f0c5c3531ae14dc770b13dd872ed4a786d`.
+C's native check has ended, so A1's two-path production correction is released.
+One next action: Astra implements A1, then root verifies frozen A1 Core and the
+corrected C native package. D must not edit Store until A1 freezes/passes.
+
+A1 local result: **77tests in9suites PASS**, exit0,5.141seconds, including all
+VideoMotion, RecordingConnectivity and OwnerPreparationTransport tests. Fresh
+retained permissions work after normal End without weakening live admission or
+withdrawal/deletion fences. Two production paths/172addedlines including tests;
+exact source manifest and evidence recorded. D may use this frozen Store after
+C native verification passes.
+
+C native check2 failed at compile (exit65): MainActor property access from
+nonisolated deinit. Astra changed only `isolated deinit`; native check3 is
+running with a fresh result path. No native pass or capture exposure is claimed.
+F is read-only planning/test-contract preparation until its dependencies pass.
+
+C native check3: **10tests in1suite PASS**, exit0,0.026seconds. Native paths remain
+blocked under simulator/tests; actual buffers/clocks plus isolated hardware test
+production lifecycle. The C manifest/evidence preserve both compile failures.
+Three production paths/944total lines including tests, no navigation exposure.
+
+## Active package D — playable media persistence
+
+Allowed production paths: new `PadelStrokeLab/PhoneVideoWriter.swift`, Core
+`VideoMotionMedia.swift`, existing Core `VideoMotionStore.swift` and phone
+`PhoneVideoCapture.swift`. Maximum four production paths/2,500total changed lines,
+two domains: media persistence/integrity and source/media timing. No UI/Watch
+orchestration, raw codec, Health, owner identity, signing or OS changes.
+
+Tests first: generated real video/audio samples through production AVAssetWriter;
+short independently playable segments, source PTS/track-range verification,
+rollover/gaps/backpressure, append/finalize failure, interrupted tails, bounded
+active/finalizing segments and storage, symlink/tombstone rejection. Astra writes
+the contract before production; root records expected RED and verifies frozen
+implementation. No real acquisition is exposed until F/G pass.
+
+One next action: D author freezes tests for RED; F author proposes bounded
+orchestration split and test contract read-only. Native source use remains UNKNOWN.
+
+## F split — orchestration test preparation
+
+Director ratifies a bounded split to keep native orchestration reviewable:
+
+- F1 phone coordinator: new `PadelStrokeLab/PhoneVideoMotionCoordinator.swift`,
+  existing `PracticeSetupModel.swift` and `RecordingLibraryModel.swift`.
+- F2 Watch coordinator: new Watch `WatchVideoMotionCoordinator.swift`, existing
+  `WatchRecorderModel.swift`, `WatchRecordingServices.swift`,
+  `OwnerCaptureCoordinator.swift` and Watch `ContentView.swift`.
+- F3 presentation: phone `PracticeSetupView.swift`, `VideoCaptureView.swift`,
+  `ContentView.swift`.
+
+Each is independently capped at2,500total lines, at most the listed production
+paths and two high-risk domains. The two added seams only authorize serialized
+current-authority checks and durable readiness observations; they cannot weaken
+existing owner/Health/raw-engine behavior. F1 tests may be authored now; production
+depends on D's verified writer interface. No feature navigation exposure until
+G retention/deletion gates pass. F3 follows working F1/F2/G.
+
+F1 test contract: current accepted scope under owner publication fences; foreign,
+stale/withdrawn/deleted scope rejection; actual appended both-track evidence,
+not acquisition callbacks; correlated duplicate/late requests; arm expiry and
+foreground closure; independent finite local recording through peer loss;
+Stop/finalization generation safety; spaced clocks with startup/Stop coverage;
+no native camera or duplicated Store authority in fixtures. Test real stores
+with isolated capture/writer hardware. F2 adds completed per-stream motion chunks
+plus post-inspection engine barrier/current-generation proof before countdown,
+native failure after rename, no Pause, local cutoff/120-second limit and unchanged
+ordinary motion-only/Health regressions. F3 adds phone-primary mode/preview,
+truthful waiting/partial labels, Watch minimal controls and theme/accessibility.
+
+Independent source review at `ce9fde8` found no scoped C/A1 blockers. D must derive
+readiness from successful writer appends; acquisition callbacks are insufficient.
+Final exact-head G6 and real paired-device proof remain pending.
+
+## F0 — bounded evidence schema before native orchestration
+
+Director ratifies F0: new Core `VideoMotionEvidence.swift` (or equivalently named
+journal model) plus `VideoMotionSession.swift` only, maximum two production paths
+and2,500total lines. Domains: retained timing/evidence and control identity.
+No Store edits overlap D. Optional versioned evidence must preserve historical
+nil-evidence bytes and raw recordings, bound observations/receipts and canonical
+decoding, reject conflicting duplicate IDs and terminal revival, and retain
+explicit source/runtime epochs. Existing revision publication stores it; no
+unbounded opaque JSON or separate ad-hoc writer authority.
+
+Tests first: canonical/historical round-trip, bounds/nonfinite rejection,
+owner/session/preparation and run/source clock identities, duplicate/conflicting
+operations, terminal persistence across reconstruction, source-clock bridges,
+clock/Go/finalization evidence and immutable successor history. Native facts are
+recorded evidence, not proof supplied by the schema alone.
+
+Independent SDK inspection verified WatchOS27 `CMLogItem.h` explicitly documents
+Mach absolute timestamps. F2 must bracket a scaled `mach_absolute_time` read with
+runtime uptime reads and preserve the resulting offset interval, conversion
+rounding uncertainty and both epochs. Recheck around acquisition/cutoff and
+periodically; unknown/discontinuous coverage blocks linked-alignment claims.
+Do not assume numeric identity, zero offset or extrapolate unsupported coverage.
+
+D/F0 tests-first RED is recorded. D:8native tests/319lines, build-for-testing
+exit65 for missing writer/media APIs; F0:6Core tests/126lines, Swift compile
+exit1 for missing evidence/Session APIs. Original SHA-256 and logs retained in
+implementation evidence. D and F0 production are released within their disjoint
+allowlists. D owns Store/Media/Capture/Writer; F0 owns Evidence/Session. Authors
+do not run builds; root verifies frozen sources. No real acquisition exposure.
+
+F0 final local result: **87tests in10suites PASS**, exit0,6.310seconds, all
+VideoMotion plus connectivity/preparation regressions. Native-to-runtime interval
+conversion fixed the independently challenged nonzero-offset case; frozen old
+canonical bytes remain identical. Manifest/every failed checkpoint retained.
+Two production paths plus243test lines total approximately531changed lines.
+This records evidence only; no native camera/Watch control is exposed.
+
+## Active B1 — native bridge-aware live readiness
+
+Allowed production paths: Core `VideoMotionProtocol.swift` and
+`VideoMotionEvidence.swift` only, maximum two production paths/2,500total lines.
+Domains: source timing/evidence and control readiness. Add bounded optional
+source/runtime bridges to native phone/motion facts; nil preserves historical
+canonical bytes but cannot grant live countdown. Keep native timestamps intact.
+Reuse F0 interval validation for the reducer and history. Separately retained
+bridges remain valid historical evidence; conflicting supplied bridges fail.
+No raw codecs, transport implementation, Health, owner authority or UI changes.
+
+Tests first: nonzero-offset valid full intervals permit exactly one countdown;
+missing/foreign/wrong-epoch/invalid bridges fail; midpoint-only coverage fails
+when either interval endpoint is outside coverage; native values/legacy bytes
+round-trip unchanged; duplicate/stale/terminal/heartbeat/local-limit regressions.
+Old synthetic success fixtures must supply explicit bridges, preserving their
+assertions. E tests may verify bridge wire round-trip without E production edits.
+F1 continues as a draft until D/B1 are stable. D owns Media/Store/Writer/Capture;
+B1 owns Protocol/Evidence. Root builds only frozen shared Core sources.
+
+Independent committed F0 review found a blocking conservative-interval defect:
+source-offset subtraction/uncertainty arithmetic needs outward rounding before
+intersection, not only after converting back to runtime. A bridge must enclose
+its own observed runtime bracket even with large source/runtime offsets.
+Director includes this focused regression/correction in B1's existing Evidence
+allowlist before Go exposure. The previous87-test pass remains evidence of its
+recorded source only; it does not clear this newly identified defect.
+
+B1 final local result: **95tests in11suites PASS**, exit0,6.756seconds. Both
+native-fact bridges/full-interval coverage now gate live countdown; shared
+Evidence logic outward-rounds intermediate offset arithmetic. Nonzero-offset,
+missing/foreign/endpoint/legacy-byte and cancellation regressions pass. Two
+production paths/283changedlines, manifest and all failure evidence retained.
+Physical alignment and the full native workflow remain UNKNOWN.
+
+D first native run failed compile-only on internal Core validators; author is
+using checked public Store APIs. Independent review additionally requires
+bounded cross-track startup/cuts and verification bound to the bytes published.
+Regressions precede those fixes; first-source gaps and partial earlier-segment
+recovery are also addressed within D. No native test pass has occurred for D.
+
+One next action: freeze strengthened D tests/source, verify the real writer;
+F1/F2 drafts prepare integration without exposing capture.
+
+Earlier checkpoints remain historical.
+
+---
+
+# Previous checkpoint — relevant setup instructions only
 
 23 October 2026. Branch `feature/guided-padel-setup`, baseline
 `e38f84fa8aa8e65426b1e52317c2a40ea13c4c20`. The owner explicitly requests a short
